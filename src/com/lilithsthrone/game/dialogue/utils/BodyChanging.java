@@ -459,6 +459,9 @@ public class BodyChanging {
 				?allRaces
 				:getMinorPartsDemonRaces(false);
 		}
+		if(BodyChanging.getTarget().isDoll()) {
+			return Util.newArrayListOfValues(Race.NONE, BodyChanging.getTarget().getFleshSubspecies().getRace());
+		}
 		return allRaces;
 	}
 	
@@ -687,8 +690,13 @@ public class BodyChanging {
 					+"</div>"
 
 					+"<div style='clear:left;'>"
-						+ CharacterModificationUtils.getSelfTransformFootStructureChoiceDiv()
+						+ CharacterModificationUtils.getSelfTransformArmCountDiv()
 						+ CharacterModificationUtils.getSelfTransformWingSizeDiv()
+					+"</div>"
+					
+					+"<div style='clear:left;'>"
+					+ CharacterModificationUtils.getSelfTransformFootStructureChoiceDiv()
+						+ CharacterModificationUtils.getSelfTransformLegConfigurationChoiceDiv()
 					+"</div>"
 					
 					+"<div style='clear:left;'>"
@@ -1653,9 +1661,9 @@ public class BodyChanging {
 			
 			UtilText.nodeContentSB.append(getSelfTransformDescription("vagina"));
 
-			if (!getTarget().isDoll() || debugMenu) {
+//			if (!getTarget().isDoll() || debugMenu) {
 				UtilText.nodeContentSB.append(CharacterModificationUtils.getSelfTransformVaginaChoiceDiv(getRacesForMinorPartSelfTransform()));
-			}
+//			}
 			
 			if (getTarget().hasVagina()) {
 				if(!BodyChanging.getTarget().isDoll() || debugMenu) {
@@ -1789,9 +1797,9 @@ public class BodyChanging {
 			
 			UtilText.nodeContentSB.append(getSelfTransformDescription("penis"));
 
-			if (!getTarget().isDoll() || debugMenu) {
+//			if (!getTarget().isDoll() || debugMenu) {
 				UtilText.nodeContentSB.append(CharacterModificationUtils.getSelfTransformPenisChoiceDiv(getRacesForMinorPartSelfTransform(), false));
-			}
+//			}
 			
 			if (getTarget().hasPenis()) {
 				UtilText.nodeContentSB.append(
