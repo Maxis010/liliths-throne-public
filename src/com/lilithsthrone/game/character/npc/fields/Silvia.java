@@ -9,7 +9,7 @@ import org.w3c.dom.Element;
 import com.lilithsthrone.game.character.CharacterImportSetting;
 import com.lilithsthrone.game.character.EquipClothingSetting;
 import com.lilithsthrone.game.character.GameCharacter;
-import com.lilithsthrone.game.character.attributes.AbstractAttribute;
+import com.lilithsthrone.game.character.body.Body;
 import com.lilithsthrone.game.character.body.coverings.BodyCoveringType;
 import com.lilithsthrone.game.character.body.coverings.Covering;
 import com.lilithsthrone.game.character.body.types.LegType;
@@ -79,7 +79,7 @@ public class Silvia extends NPC {
 	public Silvia(boolean isImported) {
 		super(isImported, new NameTriplet("Silvia"), "Woodward",
 				"Silvia is the older sister of Fae, with whom she runs the clothing stall 'Rainbow's End' in the Farmer's Market at Elis."
-						+ " Being relatively shy and nervous around strangers, Silvia leaves her sister to handles most of the interactions with their stall's customers.",
+						+ " Being relatively shy and nervous around strangers, Silvia leaves her sister to handle most of the interactions with their stall's customers.",
 				31, Month.MAY, 1,
 				15,
 				Gender.F_P_V_B_FUTANARI, Subspecies.FOX_MORPH, RaceStage.GREATER,
@@ -140,7 +140,7 @@ public class Silvia extends NPC {
 		this.setTailGirth(PenetrationGirth.FIVE_THICK);
 		
 		// Core:
-		this.setHeight(175);
+		this.setHeight(195);
 		this.setFemininity(95);
 		this.setMuscle(Muscle.THREE_MUSCULAR.getMedianValue());
 		this.setBodySize(BodySize.TWO_AVERAGE.getMedianValue());
@@ -253,6 +253,21 @@ public class Silvia extends NPC {
 	}
 	
 	@Override
+	public String getArtworkFolderName() {
+		if(this.getBreastRows()>1) {
+			if(this.isVisiblyPregnant()) {
+				return "SilviaMultiBoobPregnant";
+			}
+			return "SilviaMultiBoob";
+		} else {
+			if(this.isVisiblyPregnant()) {
+				return "SilviaPregnant";
+			}
+			return "Silvia";
+		}
+	}
+	
+	@Override
 	public String getSpeechColour() {
 		return "#ffb3ff";
 	}
@@ -298,11 +313,12 @@ public class Silvia extends NPC {
 		return true;
 	}
 
+
 	@Override
-	public String rollForPregnancy(GameCharacter partner, float cumQuantity, boolean directSexInsemination, FertilisationType fertilisationType, AbstractAttribute virilityAttribute) {
-		if(!partner.isPlayer()) { // Only the player can impregnate Fae & Silvia
+	public String rollForPregnancy(GameCharacter partner, Body partnerBody, float cumQuantity, boolean isPartnerVirile, float partnerVirility, boolean directSexInsemination, FertilisationType fertilisationType) {
+		if(partner!=null && !partner.isPlayer()) { // Only the player can impregnate Fae & Silvia
 			return PregnancyDescriptor.NO_CHANCE.getDescriptor(this, partner, directSexInsemination);
 		}
-		return super.rollForPregnancy(partner, cumQuantity, directSexInsemination, fertilisationType, virilityAttribute);
+		return super.rollForPregnancy(partner, partnerBody, cumQuantity, isPartnerVirile, partnerVirility, directSexInsemination, fertilisationType);
 	}
 }

@@ -178,7 +178,7 @@ public class FortressAlphaLeader extends NPC {
 		
 		
 		// Body:
-		this.setAgeAppearanceDifferenceToAppearAsAge(20);
+		this.setAgeAppearanceAbsolute(20);
 		this.setTailType(TailType.DEMON_COMMON);
 		this.setWingType(WingType.NONE);
 		this.setLegType(LegType.DEMON_COMMON);
@@ -338,6 +338,14 @@ public class FortressAlphaLeader extends NPC {
 		return true;
 	}
 
+	@Override
+	public String getArtworkFolderName() {
+		if(this.isVisiblyPregnant()) {
+			return "FyrsiaPregnant";
+		}
+		return "Fyrsia";
+	}
+	
 	@Override
 	public String getDescription() {
 		if(this.isSlave()) {

@@ -25,6 +25,7 @@ import com.lilithsthrone.game.inventory.enchanting.EnchantingUtils;
 import com.lilithsthrone.game.inventory.enchanting.ItemEffect;
 import com.lilithsthrone.main.Main;
 import com.lilithsthrone.utils.Util;
+import com.lilithsthrone.utils.Util.Value;
 import com.lilithsthrone.utils.XMLSaving;
 import com.lilithsthrone.utils.colours.PresetColour;
 
@@ -161,27 +162,34 @@ public abstract class AbstractItem extends AbstractCoreItem implements XMLSaving
 		sb.append(UtilText.parse(target, user, this.getItemType().getSpecialEffect()));
 		
 		if(this.getItemType().getAppliedStatusEffects()!=null) {
-			for(Entry<AbstractStatusEffect, Integer> entry : this.getItemType().getAppliedStatusEffects().entrySet()) {
+			for(Entry<AbstractStatusEffect, Value<String, Integer>> entry : this.getItemType().getAppliedStatusEffects().entrySet()) {
 				AbstractStatusEffect se = entry.getKey();
-				int time = entry.getValue();
-				target.addStatusEffect(se, time);
-				String timeDesc = time+" turns";
-				if(!se.isCombatEffect()) {
-					int timeMinutes = (time/60);
-					if(timeMinutes > 3*60) {
-						timeDesc = timeMinutes/60+" hours";
-					} else {
-						timeDesc = timeMinutes+" minutes";
+				String conditional = entry.getValue().getKey();
+				boolean conditionalParsed = Boolean.valueOf(UtilText.parse(user, target, conditional).trim());
+				if(conditionalParsed) {
+					int time = entry.getValue().getValue();
+					boolean added = target.addStatusEffect(se, time);
+					if(!added) {
+						continue;
 					}
+					String timeDesc = time+" turns";
+					if(!se.isCombatEffect()) {
+						int timeMinutes = (time/60);
+						if(timeMinutes > 3*60) {
+							timeDesc = timeMinutes/60+" hours";
+						} else {
+							timeDesc = timeMinutes+" minutes";
+						}
+					}
+					sb.append(UtilText.parse(target,
+							"<p style='text-align:center; padding-top:0; margin-top:0;'>"
+							+ "[npc.NameIsFull] now "
+							+(se.getBeneficialStatus()==EffectBenefit.DETRIMENTAL?"suffering from [style.italicsBad(":(se.getBeneficialStatus()==EffectBenefit.BENEFICIAL?"benefitting from [style.italicsGood(":"affected by "))
+							+se.getName(target)
+							+(se.getBeneficialStatus()==EffectBenefit.NEUTRAL?"":")]")
+							+ " for "+timeDesc+"!"
+							+ "</p>"));
 				}
-				sb.append(UtilText.parse(target,
-						"<p style='text-align:center; padding-top:0; margin-top:0;'>"
-						+ "[npc.NameIsFull] now "
-						+(se.getBeneficialStatus()==EffectBenefit.DETRIMENTAL?"suffering from [style.italicsBad(":(se.getBeneficialStatus()==EffectBenefit.BENEFICIAL?"benefitting from [style.italicsGood(":"affected by "))
-						+se.getName(target)
-						+(se.getBeneficialStatus()==EffectBenefit.NEUTRAL?"":")]")
-						+ " for "+timeDesc+"!"
-						+ "</p>"));
 			}
 		}
 		
@@ -390,12 +398,12 @@ public abstract class AbstractItem extends AbstractCoreItem implements XMLSaving
 		return itemType.getUnableToBeUsedFromInventoryDescription();
 	}
 	
-	public boolean isAbleToBeUsed(GameCharacter target) {
-		return itemType.isAbleToBeUsed(target);
+	public boolean isAbleToBeUsed(GameCharacter user, GameCharacter target) {
+		return itemType.isAbleToBeUsed(user, target);
 	}
 	
-	public String getUnableToBeUsedDescription(GameCharacter target) {
-		return itemType.getUnableToBeUsedDescription(target);
+	public String getUnableToBeUsedDescription(GameCharacter user, GameCharacter target) {
+		return itemType.getUnableToBeUsedDescription(user, target);
 	}
 
 	public boolean isAbleToBeUsedInCombatAllies(){
@@ -407,7 +415,7 @@ public abstract class AbstractItem extends AbstractCoreItem implements XMLSaving
 	}
 
 	public boolean isAbleToBeUsedInSex(){
-		return !this.isBreakOutOfInventory() && itemType.isAbleToBeUsedInSex();
+		return /* !this.isBreakOutOfInventory() && */ itemType.isAbleToBeUsedInSex();
 	}
 	
 	public boolean isGift() {

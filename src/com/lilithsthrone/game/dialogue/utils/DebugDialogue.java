@@ -124,6 +124,9 @@ public class DebugDialogue {
 				return new Response("Back", "", DEBUG_MENU){
 					@Override
 					public DialogueNode getNextDialogue() {
+						if(Main.game.isInSex()) {
+							return Main.sex.SEX_DIALOGUE;
+						}
 						return Main.game.getDefaultDialogue(false);
 					}
 				};
@@ -162,7 +165,10 @@ public class DebugDialogue {
 					};
 					
 				} else if (index == 4) {
-					return new Response("Reveal bodies: ", "When toggled on, clothing does not conceal inventory slots, and you'll know what all character's genitals look like without first having to see them.", DEBUG_MENU){
+					return new Response("Reveal bodies: ",
+							"When toggled on, clothing does not conceal inventory slots, and you'll know what all character's genitals look like without first having to see them."
+									+ " This also reveals unique NPCs' naked & underwear images.",
+							DEBUG_MENU){
 						@Override
 						public String getTitle() {
 							return "Reveal bodies: "+(Main.game.isConcealedSlotsReveal()?"[style.colourGood(ON)]":"[style.colourDisabled(OFF)]");
@@ -182,7 +188,8 @@ public class DebugDialogue {
 							PlaceType.DOMINION_CANAL_END,
 							PlaceType.DOMINION_ALLEYS_CANAL_CROSSING,
 							PlaceType.SUBMISSION_TUNNELS,
-							PlaceType.getPlaceTypeFromId("innoxia_fields_elis_town_alley")
+							PlaceType.getPlaceTypeFromId("innoxia_fields_elis_town_alley"),
+							PlaceType.getPlaceTypeFromId("innoxia_fields_elis_town_abandoned_bakery")
 							).contains(Main.game.getPlayer().getLocationPlace().getPlaceType())) {
 						return new Response("Spawn attacker", "You can only spawn an attacker on: Dominion's alleyway & canal tiles; Submission's tunnel tiles; Elis alleyway tiles.", null);
 					}
@@ -438,6 +445,15 @@ public class DebugDialogue {
 							Main.saveProperties();
 						}
 					};
+					
+				} else if (index == 15) {
+					return new Response("Reset virginities", "Removes all of your virginity loss information as well as resetting all orifices to being 'virgin'.", DEBUG_MENU){
+						@Override
+						public void effects() {
+							Main.game.getPlayer().completeVirginityReset();
+						}
+					};
+					
 				}
 				
 			} else if(responseTab==2) {
@@ -954,11 +970,25 @@ public class DebugDialogue {
 						+ " F:"+(npc.getFather()!=null?npc.getFather().getName(true):"Deleted NPC")+"<br/>");
 			}
 			for(OffspringSeed os : Main.game.getOffspringNotSpawned(os -> true,true)) {
-				UtilText.nodeContentSB.append("Not yet"+(os.isBorn()?" met ":" born ")+"<span style='color:"+os.getFemininity().getColour().toWebHexString()+";'>"+os.getName()+" "+os.getSurname()+"</span>"
-						+ " ("+os.getSubspecies().getName(os.getBody())+" | "+os.getHalfDemonSubspecies().getName(os.getBody())+")"
-						+ " ("+os.getBody().getCovering(os.getBody().getTorsoType().getBodyCoveringType(os.getBody()), true).getPrimaryColour().getName()+")" // Primary covering colour
-						+ " M:"+(os.getMother()!=null?os.getMother().getName(true):"Deleted NPC")
-						+ " F:"+(os.getFather()!=null?os.getFather().getName(true):"Deleted NPC")+"<br/>");
+				if(!os.isBorn()) {
+					UtilText.nodeContentSB.append("[style.colourBad(Not yet born)] ");
+				} else {
+					UtilText.nodeContentSB.append("Not yet met ");
+				}
+				
+				UtilText.nodeContentSB.append("<span style='color:"+os.getFemininity().getColour().toWebHexString()+";'>"+os.getName()+" "+os.getSurname()+"</span>");
+				
+				UtilText.nodeContentSB.append(" ("+os.getSubspecies().getName(os.getBody()));
+				if(os.getSubspecies()==Subspecies.HALF_DEMON) {
+					UtilText.nodeContentSB.append("/"+os.getHalfDemonSubspecies().getName(os.getBody()));
+				}
+				UtilText.nodeContentSB.append(")");
+				
+				Colour primaryCoveringColour = os.getBody().getCovering(os.getBody().getTorsoType().getBodyCoveringType(os.getBody()), true).getPrimaryColour();
+				UtilText.nodeContentSB.append(" (<span style='color:"+primaryCoveringColour.toWebHexString()+";'>"+primaryCoveringColour.getName()+"</span>)"); // Primary covering colour
+				
+				UtilText.nodeContentSB.append(" M:"+(os.getMother()!=null?os.getMother().getName(true):"Deleted NPC"));
+				UtilText.nodeContentSB.append(" F:"+(os.getFather()!=null?os.getFather().getName(true):"Deleted NPC")+"<br/>");
 			}
 			if(activeOffspring!=null) {
 				for(AbstractFetish f : activeOffspring.getFetishes(true)) {
@@ -1361,7 +1391,8 @@ public class DebugDialogue {
 	private static void initAttacker() {
 		if(Main.game.getPlayer().getWorldLocation()==WorldType.DOMINION) {
 			attacker = new DominionAlleywayAttacker(Gender.getGenderFromUserPreferences(false, false));
-		} else if(Main.game.getPlayer().getLocationPlaceType()==PlaceType.getPlaceTypeFromId("innoxia_fields_elis_town_alley")) {
+		} else if(Main.game.getPlayer().getLocationPlaceType()==PlaceType.getPlaceTypeFromId("innoxia_fields_elis_town_alley")
+				|| Main.game.getPlayer().getLocationPlaceType()==PlaceType.getPlaceTypeFromId("innoxia_fields_elis_town_abandoned_bakery")) {
 			attacker = new ElisAlleywayAttacker(Gender.getGenderFromUserPreferences(false, false));
 		} else {
 			attacker = new SubmissionAttacker(Gender.getGenderFromUserPreferences(false, false));
@@ -1897,7 +1928,7 @@ public class DebugDialogue {
 						+ " leans back in [<i style='color:"+PresetColour.CLOTHING_BLUE_LIGHT.toWebHexString()+";'>brax</i>.<i style='color:"+PresetColour.CLOTHING_PINK_LIGHT.toWebHexString()+";'>his</i>]"
 						+ " chair, wondering what happened to [<i style='color:"+PresetColour.CLOTHING_BLUE_LIGHT.toWebHexString()+";'>arthur</i>.<i style='color:"+PresetColour.CLOTHING_PINK_LIGHT.toWebHexString()+";'>name</i>]"
 						+ " after [<i style='color:"+PresetColour.CLOTHING_BLUE_LIGHT.toWebHexString()+";'>brax</i>.<i style='color:"+PresetColour.CLOTHING_PINK_LIGHT.toWebHexString()+";'>he</i>]"
-						+ " handed [[<i style='color:"+PresetColour.CLOTHING_BLUE_LIGHT.toWebHexString()+";'>arthur</i>.<i style='color:"+PresetColour.CLOTHING_PINK_LIGHT.toWebHexString()+";'>him</i>]] over to Scarlett.<br/>"
+						+ " handed [<i style='color:"+PresetColour.CLOTHING_BLUE_LIGHT.toWebHexString()+";'>arthur</i>.<i style='color:"+PresetColour.CLOTHING_PINK_LIGHT.toWebHexString()+";'>him</i>] over to Scarlett.<br/>"
 					+ "outputs:<br/>"
 					+ "'Brax leans back in his chair, wondering what happened to Arthur after he handed him over to Scarlett.'<br/><br/>"
 					

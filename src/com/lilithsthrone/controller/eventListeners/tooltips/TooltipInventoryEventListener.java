@@ -1,7 +1,9 @@
 package com.lilithsthrone.controller.eventListeners.tooltips;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.w3c.dom.events.Event;
@@ -397,7 +399,7 @@ public class TooltipInventoryEventListener implements EventListener {
 									+ Util.stringsToStringList(clothingBlockingThisSlot, false) + ".");
 							
 						} else if (!renderingTattoos && block != null) {
-							setBlockedTooltipContent("<span style='color:" + PresetColour.GENERIC_MINOR_BAD.toWebHexString() + ";'>Restricted!</span>", UtilText.parse(equippedToCharacter, block.getDescription()));
+							setBlockedTooltipContent("<span style='color:" + PresetColour.GENERIC_BAD.toWebHexString() + ";'>Blocked!</span>", UtilText.parse(equippedToCharacter, block.getDescription()));
 							
 						} else {
 							boolean piercingBlocked=false;
@@ -614,43 +616,93 @@ public class TooltipInventoryEventListener implements EventListener {
 		setBlockedTooltipContent("<span style='color:" + PresetColour.GENERIC_BAD.toWebHexString() + ";'>Blocked!</span>", description);
 	}
 	private void setBlockedTooltipContent(String title, String description){
-		boolean dirty = equippedToCharacter.isDirtySlot(invSlot);
-		Main.mainController.setTooltipSize(TOOLTIP_WIDTH, 144);
-		Main.mainController.setTooltipContent(UtilText.parse(equippedToCharacter,
-				"<div class='title'>"
-						+ Util.capitaliseSentence(invSlot.getName())+ ": "+title
-				+ "</div>"
-				+"<div class='description' style='height:72px; text-align:center;'>"
-					+ (dirty
-						?"[npc.NamePos] "+invSlot.getName()+" "+(invSlot.isPlural()?"are":"is")
-								+ " <span style='color:"+PresetColour.CUM.toWebHexString()+";'>dirty</span>!<br/>"
-						:"")
-					 + UtilText.parse(description)
-				 +"</div>"));
+		setEmptyInventorySlotTooltipContent(title, description);
+//		boolean dirty = equippedToCharacter.isDirtySlot(invSlot);
+//		Main.mainController.setTooltipSize(TOOLTIP_WIDTH, 144);
+//		Main.mainController.setTooltipContent(UtilText.parse(equippedToCharacter,
+//				"<div class='title'>"
+//						+ Util.capitaliseSentence(invSlot.getName())+ ": "+title
+//				+ "</div>"
+//				+"<div class='description' style='height:72px; text-align:center;'>"
+//					+ (dirty
+//						?"[npc.NamePos] "+invSlot.getName()+" "+(invSlot.isPlural()?"are":"is")
+//								+ " <span style='color:"+PresetColour.CUM.toWebHexString()+";'>dirty</span>!<br/>"
+//						:"")
+//					 + UtilText.parse(description)
+//				 +"</div>"));
 	}
-	
-
 
 	private void setEmptyInventorySlotTooltipContent(){
+		setEmptyInventorySlotTooltipContent("", "");
+	}
+
+	private void setEmptyInventorySlotTooltipContent(String title, String description){
 		if(equippedToCharacter==null) {
 			Main.mainController.setTooltipSize(TOOLTIP_WIDTH, 60);
 			Main.mainController.setTooltipContent("<div class='title'>"
-					+ Util.capitaliseSentence(invSlot.getName())
+					+ Util.capitaliseSentence(invSlot.getName())+(title!=null&&!title.isEmpty()?": "+title:"")
 			+ "</div>");
 			return;
 		}
 		boolean dirty = equippedToCharacter.isDirtySlot(invSlot);
-		Main.mainController.setTooltipSize(TOOLTIP_WIDTH, 60+(dirty?56:0));
-		Main.mainController.setTooltipContent(UtilText.parse(equippedToCharacter,
-				"<div class='title'>"
-						+ Util.capitaliseSentence(invSlot.getName())
-				+ "</div>"
-				+ (dirty
-					?"<div class='description' style='height:48px; text-align:center;'>"
-							+ "[npc.NamePos] "+invSlot.getName()+" "+(invSlot.isPlural()?"have":"has")
-							+ " been <span style='color:"+PresetColour.CUM.toWebHexString()+";'>dirtied</span> by sexual fluids!"
-						+ "</div>"
-					:"")));
+		boolean hasDescription = description!=null && !description.isEmpty();
+		
+		Map<GameCharacter, Integer> cummedOnInfo = new HashMap<>();
+		if(Main.game.isInSex()) {
+			for(Entry<GameCharacter, Map<InventorySlot, Integer>> entry : Main.sex.getAmountCummedOnByPartners(equippedToCharacter).entrySet()) {
+				for(Entry<InventorySlot, Integer> areas : entry.getValue().entrySet()) {
+					if(areas.getKey()==invSlot) {
+						cummedOnInfo.put(entry.getKey(), areas.getValue());
+					}
+				}
+			}
+		}
+		int cummedMapSize = cummedOnInfo.size();
+		int descHeight = LINE_HEIGHT*(cummedMapSize+(cummedMapSize>0?1:0)+(dirty?(Main.game.isInSex()&&cummedMapSize==0?2:1):0)+(hasDescription?2:0));
+		if(descHeight>0) {
+			descHeight+=16;
+		}
+		Main.mainController.setTooltipSize(TOOLTIP_WIDTH, 60+(dirty||!cummedOnInfo.isEmpty()||hasDescription?8:0)+descHeight);
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append("<div class='title'>"
+						+ Util.capitaliseSentence(invSlot.getName())+(title!=null&&!title.isEmpty()?": "+title:"")
+				+ "</div>");
+		
+		if(dirty || !cummedOnInfo.isEmpty() || hasDescription) {
+			sb.append("<div class='description' style='min-height:0; height:"+descHeight+"px; text-align:center;'>");
+			
+			if(hasDescription) {
+				sb.append(description);
+				if(dirty) {
+					sb.append("<br/>");
+				}
+			}
+			
+			if(dirty) {
+				sb.append("[npc.NamePos] "+invSlot.getName()+" "+(invSlot.isPlural()?"have":"has")
+						+ " been [style.colourDirty(dirtied)] by sexual fluids!");
+				if(Main.game.isInSex()) {
+					sb.append("<br/>");
+				}
+				if(!cummedOnInfo.isEmpty()) {
+					sb.append("[style.boldDirty(Fluids present:)]");
+					for(Entry<GameCharacter, Integer> entry : cummedOnInfo.entrySet()) {
+						sb.append("<br/>");
+						sb.append(UtilText.parse(entry.getKey(), "[style.fluid("+entry.getValue()+")] of <span style='color:"+entry.getKey().getFemininity().getColour().toWebHexString()+";'>[npc.namePos]</span> [npc.cum+]!"));
+					}
+				} else if(Main.game.isInSex()) {
+					sb.append("[style.italicsDisabled(No fluid is available...)]");
+				}
+			}
+			
+			
+			
+			sb.append("</div>");
+			
+		}
+		
+		Main.mainController.setTooltipContent(UtilText.parse(equippedToCharacter, sb.toString()));
 	}
 	
 	
@@ -1236,18 +1288,39 @@ public class TooltipInventoryEventListener implements EventListener {
 
 		// Core info:
 		tooltipSB.append("<div class='container-half-width titular'>");
-			for(int i=0; i<absClothing.getClothingType().getEquipSlots().size(); i++) {
-				InventorySlot slot = absClothing.getClothingType().getEquipSlots().get(i);
+			boolean nonPiercingSlots = absClothing.getClothingType().getEquipSlots().stream().anyMatch(is->!is.isJewellery());
+			List<InventorySlot> possibleSlots = new ArrayList<>(absClothing.getClothingType().getEquipSlots());
+			if(nonPiercingSlots) {
+				possibleSlots.sort((is1, is2)->absClothing.getSlotEquippedTo()==is1?1:(absClothing.getSlotEquippedTo()==is2?-1:0));
+			}
+			for(int i=0; i<possibleSlots.size(); i++) {
+				InventorySlot slot = possibleSlots.get(i);
 				boolean equipped = absClothing.getSlotEquippedTo() == slot;
-				tooltipSB.append(
-						(equipped || absClothing.getSlotEquippedTo()==null
-							?Util.capitaliseSentence(slot.getName())
-							:"[style.colourDisabled("+Util.capitaliseSentence(slot.getName())+")]")
-						+(i==absClothing.getClothingType().getEquipSlots().size()-1
-							?""
-							:(absClothing.getSlotEquippedTo()!=null
-								?"[style.colourDisabled(/)]"
-								:"/")));
+				if(nonPiercingSlots) { // Slots contain non-piercing slots
+					tooltipSB.append(
+							(equipped || absClothing.getSlotEquippedTo()==null
+								?Util.capitaliseSentence(slot.getName())
+								:"[style.colourDisabled("+Util.capitaliseSentence(slot.getName())+")]")
+							+(i==possibleSlots.size()-1
+								?""
+								:(absClothing.getSlotEquippedTo()!=null
+									?"[style.colourDisabled(/)]"
+									:"/")));
+				} else { // Slots are all piercings, so to abbreviate the slot names, the ' piercing' parts can all be removed, then a final ' piercing' can be appended at the end
+					String slotName = slot.getName().replace(" piercing", "");
+					tooltipSB.append(
+							(equipped || absClothing.getSlotEquippedTo()==null
+								?Util.capitaliseSentence(slotName)
+								:"[style.colourDisabled("+Util.capitaliseSentence(slotName)+")]")
+							+(i==possibleSlots.size()-1
+								?""
+								:(absClothing.getSlotEquippedTo()!=null
+									?"[style.colourDisabled(/)]"
+									:"/")));
+					if(i==possibleSlots.size()-1) {
+						tooltipSB.append(" piercing");
+					}
+				}
 			}
 		tooltipSB.append("</div>");
 		tooltipSB.append("<div class='container-half-width titular'>"
@@ -1649,7 +1722,7 @@ public class TooltipInventoryEventListener implements EventListener {
 		if(block != null) {
 			sb.append(UtilText.parse(equippedToCharacter,
 					"<div class='title'>"
-						+ "<span style='color:" + PresetColour.GENERIC_MINOR_BAD.toWebHexString() + ";'>Restricted!</span>"
+						+ "<span style='color:" + PresetColour.GENERIC_BAD.toWebHexString() + ";'>Blocked!</span>"
 					+ "</div>"
 					+"<div class='description' style='height:72px; text-align:center;'>"
 						+ UtilText.parse(equippedToCharacter, block.getDescription())

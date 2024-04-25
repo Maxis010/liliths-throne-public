@@ -44,9 +44,12 @@
 	Set to false for subspecies like centaurs. -->
 	<bipedalSubspecies>true</bipedalSubspecies>
 	
-	<!-- Whether or not this is a subspecies which prefers to live in an aquatic environment.
-	If set to true, then this subspecies will have the positive & negative aquatic status effects applied to it when in a tile with and without access to water, respectively. -->
-	<aquatic>false</aquatic>
+	<!-- The affinity of the subspecies. Optional. Defaults to AMPHIBIOUS. -->
+	<!--<affinity>AMPHIBIOUS</affinity>-->
+
+	<!-- Whether or not this is a subspecies with either arm or back wings (optional).
+	If set to false (the default) and the NPC or player is winged it will be displayed as winged subspecies (e. g. winged hyena-boy). -->
+	<winged>true</winged>
 	
 	<!-- Any special changes which should be applied to a newly-spawned character of this subspecies.
 	This is applied *after* the parent race's 'applyRaceChanges' method.
@@ -132,12 +135,12 @@
 	
 	<nameHalfDemon>
 		<namesDefault>
-			<name><![CDATA[zahhak]]></name>
-			<namePlural><![CDATA[zahhaks]]></namePlural>
-			<singularMaleName><![CDATA[zahhak]]></singularMaleName>
-			<singularFemaleName><![CDATA[zahhak]]></singularFemaleName>
-			<pluralMaleName><![CDATA[zahhaks]]></pluralMaleName>
-			<pluralFemaleName><![CDATA[zahhaks]]></pluralFemaleName>
+			<name><![CDATA[vritra]]></name>
+			<namePlural><![CDATA[vritras]]></namePlural>
+			<singularMaleName><![CDATA[vritra]]></singularMaleName>
+			<singularFemaleName><![CDATA[vritra]]></singularFemaleName>
+			<pluralMaleName><![CDATA[vritras]]></pluralMaleName>
+			<pluralFemaleName><![CDATA[vritras]]></pluralFemaleName>
 		</namesDefault>
 	</nameHalfDemon>
 	

@@ -54,8 +54,6 @@ public class Util {
 	
 	public static Random random = new Random();
 
-	private static StringBuilder utilitiesStringBuilder = new StringBuilder();
-	
 	private static Map<KeyCode, String> KEY_NAMES = new LinkedHashMap<KeyCode, String>() {
 		private static final long serialVersionUID = 1L;
 	{
@@ -1113,7 +1111,7 @@ public class Util {
 					&& (i==finalSplitSentence.size()-1 || !isEndOfSentence(finalSplitSentence.get(i+1).charAt(0)))) {
 				if(s.contains(",")) {
 					availableCommaIndexes.add(i);
-				} else {
+				} else if(!s.endsWith(". ")) {// Prevents insertions at the very start of new sentences
 					availableIndexes.add(i);
 				}
 				if(debug) {
@@ -1277,7 +1275,7 @@ public class Util {
 	 */
 	public static String addBimbo(String sentence, int frequency) {
 		sentence = insertIntoSentences(sentence, frequency, bimboWords);
-		utilitiesStringBuilder.setLength(0);
+		StringBuilder utilitiesStringBuilder = new StringBuilder();
 		utilitiesStringBuilder.append(sentence);
 		
 		// 1/3 chance of having a bimbo sentence ending: TODO improve so it can be added anywhere
@@ -1315,7 +1313,7 @@ public class Util {
 	private static String[] broWords = new String[] { ", like,", ", like, dude,", ", like, bro,", ", like,", ", um,", ", uh,", ", ah," };
 	public static String addBro(String sentence, int frequency) {
 		sentence = insertIntoSentences(sentence, frequency, broWords);
-		utilitiesStringBuilder.setLength(0);
+		StringBuilder utilitiesStringBuilder = new StringBuilder();
 		utilitiesStringBuilder.append(sentence);
 		
 		// 1/3 chance of having a bimbo sentence ending: TODO improve so it can be added anywhere
@@ -1708,7 +1706,7 @@ public class Util {
 	 */
 	private static <T> String toStringList(Collection<T> items, Function<T, String> stringExtractor, String combiningWord) {
 		Iterator<T> itemIterator = items.iterator();
-		utilitiesStringBuilder.setLength(0);
+		StringBuilder utilitiesStringBuilder = new StringBuilder();
 		try {
 			T currentItem = itemIterator.next();
 	

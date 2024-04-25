@@ -44,6 +44,7 @@ import com.lilithsthrone.game.dialogue.responses.Response;
 import com.lilithsthrone.game.dialogue.responses.ResponseEffectsOnly;
 import com.lilithsthrone.game.dialogue.utils.BodyChanging;
 import com.lilithsthrone.game.dialogue.utils.CharacterModificationUtils;
+import com.lilithsthrone.game.dialogue.utils.CosmeticsDialogue;
 import com.lilithsthrone.game.dialogue.utils.InventoryDialogue;
 import com.lilithsthrone.game.dialogue.utils.InventoryInteraction;
 import com.lilithsthrone.game.dialogue.utils.OptionsDialogue;
@@ -830,7 +831,7 @@ public class CharacterCreation {
 					+ "<p>"
 						+ "Finally, you see his finger trace over your name, and with a smile, he steps to one side and beckons you forwards."
 						+ " [npcMale.speech(Have a good evening, "+(Main.game.getPlayer().getSurname().length()!=0
-								?(Main.game.getPlayer().isFeminine()?"Ms.":"Mr.")+" [pc.surname]"
+								?(Main.game.getPlayer().isFeminine()?"Miss":"Mr.")+" [pc.surname]"
 								:(Main.game.getPlayer().isFeminine()?"Miss":"Sir"))+".)]"
 					+ "</p>"
 					+ "<p>"
@@ -1238,6 +1239,14 @@ public class CharacterCreation {
 						}
 					};
 				}
+			
+			} else if(index==2) {
+				return new Response("Save/Load", "Save/Load tattoo presets.", CosmeticsDialogue.TATTOO_SAVE_LOAD) {
+					@Override
+					public void effects() {
+						CosmeticsDialogue.initTattooSaveLoadDialogue(CHOOSE_ADVANCED_APPEARANCE_TATTOOS_ADD);
+					}
+				};
 			
 			} else if(index==0) {
 				return new Response("Back", "Decide not to get this tattoo and return to the main selection screen.", CHOOSE_ADVANCED_APPEARANCE_TATTOOS);

@@ -218,7 +218,7 @@ public class Minotallys extends NPC {
 		
 		// Body:
 		this.setSubspeciesOverride(Subspecies.LILIN);
-		this.setAgeAppearanceDifferenceToAppearAsAge(20);
+		this.setAgeAppearanceAbsolute(20);
 //		this.setTailType(TailType.DEMON_COMMON);
 //		this.setWingType(WingType.DEMON_COMMON);
 		this.setHornType(HornType.STRAIGHT);
@@ -377,9 +377,9 @@ public class Minotallys extends NPC {
 	}
 	
 	@Override
-	public void hourlyUpdate() {
+	public void hourlyUpdate(int hour) {
 		if(!Main.game.getCharactersPresent().contains(this)) {
-			if(Main.game.getHourOfDay()<7 || Main.game.getHourOfDay()>21) {
+			if(hour<7 || hour>21) {
 				this.setLocation(WorldType.getWorldTypeFromId("innoxia_fields_elis_town_hall_f1"), PlaceType.getPlaceTypeFromId("innoxia_fields_elis_town_hall_f1_minotallys_room"), true);
 			} else {
 				this.setLocation(WorldType.getWorldTypeFromId("innoxia_fields_elis_town_hall_f1"), PlaceType.getPlaceTypeFromId("innoxia_fields_elis_town_hall_f1_minotallys_office"));
@@ -438,7 +438,7 @@ public class Minotallys extends NPC {
 		
 		// Body:
 		this.setSubspeciesOverride(Subspecies.LILIN);
-		this.setAgeAppearanceDifferenceToAppearAsAge(25);
+		this.setAgeAppearanceAbsolute(25);
 		this.setTailType(TailType.DEMON_COMMON);
 		this.setTailGirth(PenetrationGirth.THREE_AVERAGE);
 		this.setWingType(WingType.DEMON_COMMON);

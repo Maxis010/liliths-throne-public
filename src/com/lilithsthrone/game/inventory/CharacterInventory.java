@@ -527,7 +527,10 @@ public class CharacterInventory implements XMLSaving {
 				+ getUniqueClothingCount() - getUniqueQuestClothingCount()
 				+ getUniqueItemCount() - getUniqueQuestItemCount();
 	}
-	
+
+	/**
+	 * @return true if this inventory contains any unique clothing, weapons, or items.
+	 */
 	public boolean isAnyQuestItemPresent() {
 		return getUniqueQuestWeaponCount()>0 || getUniqueQuestClothingCount()>0 || getUniqueQuestItemCount()>0;
 	}
@@ -1108,13 +1111,14 @@ public class CharacterInventory implements XMLSaving {
 		if(getClothingInSlot(slot)!=null) {
 			visibleClothing.add(getClothingInSlot(slot));
 		}
-		
+
 		if(getInventorySlotsConcealed(character).get(slot)!=null) {
 			visibleClothing.addAll(getInventorySlotsConcealed(character).get(slot));
 		}
-		
+
 		if(!visibleClothing.isEmpty()) {
 			List<InventorySlot> slotsToCheck = visibleClothing.stream().map(c -> c.getSlotEquippedTo()).collect(Collectors.toList());
+			Set<InventorySlot> slotsAlreadyChecked = new HashSet<>(slotsToCheck);
 			
 			while(!slotsToCheck.isEmpty()) {
 				for(InventorySlot checkSlot : new ArrayList<>(slotsToCheck)) {
@@ -1123,7 +1127,10 @@ public class CharacterInventory implements XMLSaving {
 						visibleClothing = visibleClothing.stream().filter(cl -> cl.getSlotEquippedTo()!=checkSlot).collect(Collectors.toList()); // Remove clothing which is concealed
 						for(AbstractClothing c : checkClothingSlot) {
 							visibleClothing.add(c);
-							slotsToCheck.add(c.getSlotEquippedTo());
+							if(!slotsAlreadyChecked.contains(c.getSlotEquippedTo())) {
+								slotsToCheck.add(c.getSlotEquippedTo());
+								slotsAlreadyChecked.add(c.getSlotEquippedTo());
+							}
 						}
 					}
 					slotsToCheck.remove(checkSlot);
@@ -1838,7 +1845,8 @@ public class CharacterInventory implements XMLSaving {
 
 		// The supplied clothing cannot be displaced in this manner!
 		if (!displacementTypeFound) {
-			throw new IllegalArgumentException("The supplied clothing cannot be displaced in this manner!");
+			new IllegalArgumentException("The supplied clothing ("+clothing.getClothingType().getId()+") cannot be displaced in this manner ("+dt.getDescription()+")!").printStackTrace();
+			return false;
 		}
 
 		// Is able to be displaced!
@@ -2174,7 +2182,7 @@ public class CharacterInventory implements XMLSaving {
 		if(area==CoverableArea.TESTICLES) { // There are no proper checks in clothing for testicle access, so use penis access:
 			return isCoverableAreaExposed(character, CoverableArea.PENIS, justVisible);
 		}
-		if(area==CoverableArea.ANUS && character.getGenitalArrangement()==GenitalArrangement.CLOACA) { // If asshole is within cloace, it's in the vagina position:
+		if(area==CoverableArea.ANUS && character.getGenitalArrangement()==GenitalArrangement.CLOACA) { // If asshole is within cloaca, it's in the vagina position:
 			return isCoverableAreaExposed(character, CoverableArea.VAGINA, justVisible);
 		}
 		

@@ -1528,7 +1528,7 @@ public abstract class AbstractClothing extends AbstractCoreItem implements XMLSa
 	 * null should be passed as the argument for 'slotToBeEquippedTo' in order to return non-slot-specific descriptions.
 	 * 
 	 * @param equippedToCharacter The character this clothing is equipped to.
-	 * @param slotToBeEquippedTo The slot for which this clothing's effects effects are to be described.
+	 * @param slotToBeEquippedTo The slot for which this clothing's effects are to be described.
 	 * @param verbose true if you want a lengthy description of each effect.
 	 * @return A List of Strings describing extra features of this ClothingType.
 	 */
@@ -1551,6 +1551,25 @@ public abstract class AbstractClothing extends AbstractCoreItem implements XMLSa
 				} else {
 					descriptionsList.add("[style.boldDirty(Dirty)]");
 				}
+			}
+		}
+		
+		if(slotToBeEquippedTo!=null && dirty && Main.game.isInSex()) {
+			Map<GameCharacter, Integer> cummedOnInfo = new HashMap<>();
+			for(Entry<GameCharacter, Map<InventorySlot, Integer>> entry : Main.sex.getAmountCummedOnByPartners(equippedToCharacter).entrySet()) {
+				for(Entry<InventorySlot, Integer> areas : entry.getValue().entrySet()) {
+					if(areas.getKey()==slotToBeEquippedTo) {
+						cummedOnInfo.put(entry.getKey(), areas.getValue());
+					}
+				}
+			}
+			if(!cummedOnInfo.isEmpty()) {
+				descriptionsList.add("[style.boldDirty(Fluids present:)]");
+				for(Entry<GameCharacter, Integer> entry : cummedOnInfo.entrySet()) {
+					descriptionsList.add(UtilText.parse(entry.getKey(), "[style.fluid("+entry.getValue()+")] of <span style='color:"+entry.getKey().getFemininity().getColour().toWebHexString()+";'>[npc.namePos]</span> [npc.cum+]!"));
+				}
+			} else {
+				descriptionsList.add("[style.italicsDisabled(No fluid is available...)]");
 			}
 		}
 
@@ -1975,6 +1994,10 @@ public abstract class AbstractClothing extends AbstractCoreItem implements XMLSa
 		this.getEffects().removeIf(e -> (e.getPrimaryModifier() == TFModifier.CLOTHING_ATTRIBUTE || e.getPrimaryModifier() == TFModifier.CLOTHING_MAJOR_ATTRIBUTE) && e.getPotency().isNegative());
 	}
 
+	public void removeServitudeEnchantment() {
+		this.getEffects().removeIf(e -> (e.getSecondaryModifier() == TFModifier.CLOTHING_SERVITUDE));
+	}
+	
 	public boolean isSealed() {
 		if(this.isUnlocked()) {
 			return false;
@@ -2197,6 +2220,10 @@ public abstract class AbstractClothing extends AbstractCoreItem implements XMLSa
 				
 			} else if(this.getEffects().stream().anyMatch(ie->ie.getSecondaryModifier() != TFModifier.CLOTHING_VIBRATION)) {
 				return "of "+(coloured?"<"+tag+" style='color:"+PresetColour.TRANSFORMATION_GENERIC.toWebHexString()+";'>transformation</"+tag+">":"transformation");
+				
+			} else if(this.getEffects().stream().anyMatch(ie->ie.getPrimaryModifier() == TFModifier.CLOTHING_CREAMPIE_RETENTION)) {
+				return "of "+(coloured?"<"+tag+" style='color:"+PresetColour.CUM.toWebHexString()+";'>plugging</"+tag+">":"plugging");
+				
 			}
 		}
 		return "";
@@ -2422,6 +2449,13 @@ public abstract class AbstractClothing extends AbstractCoreItem implements XMLSa
 		}
 		if(block!=null && Collections.disjoint(block.getRequiredTags(), tags)) {
 			return new Value<>(false, UtilText.parse("[style.colourBad(" + UtilText.parse(clothingOwner, block.getDescription()) + ")]"));
+		}
+
+		if(tags.contains(ItemTag.FITS_MUZZLES_EXCLUSIVE) && !clothingOwner.isFaceMuzzle()) {
+			return new Value<>(false, UtilText.parse(clothingOwner,"The "+this.getName()+" "+(plural?"are":"is")+" only suitable for muzzles, and as such, [npc.name] cannot wear "+(plural?"them":"it")+"."));
+		}
+		if(tags.contains(ItemTag.FITS_BEAKS_EXCLUSIVE) && !clothingOwner.isFaceBeak()) {
+			return new Value<>(false, UtilText.parse(clothingOwner,"The "+this.getName()+" "+(plural?"are":"is")+" only suitable for beaks, and as such, [npc.name] cannot wear "+(plural?"them":"it")+"."));
 		}
 		
 		if(tags.contains(ItemTag.FITS_TAUR_BODY) && clothingOwner.getLegConfiguration()!=LegConfiguration.QUADRUPEDAL) {
