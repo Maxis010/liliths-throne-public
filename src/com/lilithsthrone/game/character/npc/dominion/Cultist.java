@@ -66,7 +66,7 @@ public class Cultist extends RandomNPC {
 		if(isImported) {
 			return;
 		}
-		
+
 		// Pre-setup
 		this.addFetish(Fetish.FETISH_ORAL_RECEIVING);
 		this.addFetish(Fetish.FETISH_ORAL_GIVING);
@@ -75,7 +75,7 @@ public class Cultist extends RandomNPC {
 		this.addFetish(Fetish.FETISH_IMPREGNATION);
 		this.setLevel(15);
 		this.setGenderIdentity(Gender.F_P_V_B_FUTANARI);
-		
+
 		// Setup
 		setupNPC(Subspecies.DEMON,
 				RaceStage.GREATER,
@@ -87,7 +87,7 @@ public class Cultist extends RandomNPC {
 				false,
 				false,
 				false);
-		
+
 		// Post-setup
 		if(this.getFetishDesire(Fetish.FETISH_NON_CON_DOM).isNegative()) {
 			this.setFetishDesire(Fetish.FETISH_NON_CON_DOM, FetishDesire.TWO_NEUTRAL);
@@ -95,7 +95,7 @@ public class Cultist extends RandomNPC {
 		if(this.getFetishDesire(Fetish.FETISH_PENIS_GIVING).isNegative()) {
 			this.setFetishDesire(Fetish.FETISH_PENIS_GIVING, FetishDesire.TWO_NEUTRAL);
 		}
-		this.setAgeAppearanceDifferenceToAppearAsAge(18+Util.random.nextInt(10));
+		this.setAgeAppearanceAbsolute(18+Util.random.nextInt(10));
 
 		this.setVaginaVirgin(false);
 		this.setAssVirgin(false);
@@ -106,7 +106,7 @@ public class Cultist extends RandomNPC {
 		this.setPlayerKnowsName(true);
 		this.setDescription("As a high-ranking member of the 'Cult of Lilith', it's obvious to anyone that this demon is extremely powerful."
 				+" You aren't exactly 'anyone', however, and as you get close to her, you can almost physically feel the power of her arcane aura as it comes into contact with yours...");
-		
+
 		inventory.setMoney(100);
 	}
 	
@@ -120,7 +120,7 @@ public class Cultist extends RandomNPC {
 			this.setFetishDesire(Fetish.FETISH_PENIS_GIVING, FetishDesire.TWO_NEUTRAL);
 		}
 		if(Main.isVersionOlderThan(Game.loadingVersion, "0.2.11")) {
-			this.setAgeAppearanceDifferenceToAppearAsAge(18+Util.random.nextInt(10));
+			this.setAgeAppearanceAbsolute(18+Util.random.nextInt(10));
 		}
 		if(Main.isVersionOlderThan(Game.loadingVersion, "0.3.3.6")) {
 			this.setLevel(15);
@@ -220,7 +220,7 @@ public class Cultist extends RandomNPC {
 		setHandNailPolish(new Covering(BodyCoveringType.MAKEUP_NAIL_POLISH_HANDS, colourForNails));
 		setFootNailPolish(new Covering(BodyCoveringType.MAKEUP_NAIL_POLISH_FEET, colourForNails));
 	}
-	
+
 	public void setRequestedAnal(boolean requestedAnal) {
 		this.requestedAnal = requestedAnal;
 	}

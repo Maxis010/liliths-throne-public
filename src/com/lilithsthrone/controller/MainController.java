@@ -90,6 +90,7 @@ import com.lilithsthrone.game.dialogue.utils.EnchantmentDialogue;
 import com.lilithsthrone.game.dialogue.utils.GiftDialogue;
 import com.lilithsthrone.game.dialogue.utils.InventoryDialogue;
 import com.lilithsthrone.game.dialogue.utils.InventoryInteraction;
+import com.lilithsthrone.game.dialogue.utils.MiscDialogue;
 import com.lilithsthrone.game.dialogue.utils.OptionsDialogue;
 import com.lilithsthrone.game.dialogue.utils.PhoneDialogue;
 import com.lilithsthrone.game.dialogue.utils.SpellManagement;
@@ -276,7 +277,7 @@ public class MainController implements Initializable {
 	}
 
 	public boolean isPhoneDisabled() {
-		return !Main.game.isStarted() || !Main.game.isInNewWorld();
+		return !Main.game.isStarted() || !Main.game.isInNewWorld() || Main.game.getCurrentDialogueNode().isPhoneDisabled();
 	}
 	
 	public void openPhone() {
@@ -310,6 +311,10 @@ public class MainController implements Initializable {
 		if(!Main.game.isInNewWorld() && !Main.game.isInSex()) {
 			return true;
 		}
+		if(Main.game.isInSex() && Main.game.getCurrentDialogueNode().isInventoryForcedDisabledInSex()) {
+			return true;
+		}
+		
 		if (Main.game.getCurrentDialogueNode().getDialogueNodeType() == DialogueNodeType.INVENTORY
 				|| Main.game.isInCombat()
 				/*|| Main.game.isInSex()*/) {
@@ -512,6 +517,7 @@ public class MainController implements Initializable {
 						
 						if(event.getCode()==KeyCode.END && Main.DEBUG){
 
+							
 //							System.out.println(Main.sex.getSexPace(Main.game.getPlayer()));
 //							System.out.println(Main.sex.isSexPaceForced(Main.game.getPlayer()));
 							
@@ -598,7 +604,7 @@ public class MainController implements Initializable {
 //								if(npc.isUnique() && !npc.hasArtwork()
 ////										&& (npc.getWorldLocation().getWorldRegion()==WorldRegion.DOMINION)
 ////										&& npc.isFeminine()
-//										&& npc.getFaceType().getBodyCoveringType(npc).getCategory()!=BodyCoveringCategory.MAIN_SKIN
+//										&& npc.getFaceType().getBodyCoveringType(npc).getCategory()==BodyCoveringCategory.MAIN_SKIN
 ////										&& npc.isAbleToBeImpregnated()
 ////										&& npc.isFeminine()
 ////										&& (npc.getClass().getName().contains("dominion.") || npc.getClass().getName().contains("submission."))
@@ -797,6 +803,17 @@ public class MainController implements Initializable {
 									enterConsumed = true;
 									Main.mainController.getWebEngine().executeScript("document.getElementById('hiddenPField').innerHTML=document.getElementById('new_save_name').value;");
 									BodyChanging.saveBody(Main.mainController.getWebEngine().getDocument().getElementById("hiddenPField").getTextContent(), false);
+									Main.game.setContent(new Response("Save", "", Main.game.getCurrentDialogueNode()));
+								}
+							}
+						}
+						if(Main.game.getCurrentDialogueNode() == CosmeticsDialogue.TATTOO_SAVE_LOAD){
+							if((boolean) Main.mainController.getWebEngine().executeScript("document.getElementById('new_save_name') === document.activeElement")) {
+								allowInput = false;
+								if (event.getCode() == KeyCode.ENTER) {
+									enterConsumed = true;
+									Main.mainController.getWebEngine().executeScript("document.getElementById('hiddenPField').innerHTML=document.getElementById('new_save_name').value;");
+									EnchantmentDialogue.saveEnchant(Main.mainController.getWebEngine().getDocument().getElementById("hiddenPField").getTextContent(), false, CosmeticsDialogue.TATTOO_SAVE_LOAD);
 									Main.game.setContent(new Response("Save", "", Main.game.getCurrentDialogueNode()));
 								}
 							}
@@ -1332,7 +1349,11 @@ public class MainController implements Initializable {
 			}
 		}
 		
-		if (currentNode.equals(BodyChanging.BODY_CHANGING_ASS)
+		if(currentNode.equals(MiscDialogue.DOLL_BROCHURE)
+				|| currentNode.equals(MiscDialogue.DOLL_BROCHURE_INTERNAL)) {
+			MiscController.initDollBrochureListeners();
+			
+		} else if (currentNode.equals(BodyChanging.BODY_CHANGING_ASS)
 				|| currentNode.equals(ScarlettsShop.HELENAS_SHOP_CUSTOM_SLAVE_BODY_ASS)) {
 			CreationController.initAnusCapacityListeners();
 			CreationController.initAnusDepthListeners();
@@ -1570,6 +1591,8 @@ public class MainController implements Initializable {
 				|| currentNode.equals(CosmeticsDialogue.BEAUTICIAN_TATTOOS_ADD)
 				|| currentNode.equals(SuccubisSecrets.SHOP_BEAUTY_SALON_TATTOOS_ADD)) {
 			CreationController.initTattooAddListeners();
+		} else if(currentNode.equals(CosmeticsDialogue.TATTOO_SAVE_LOAD)) {
+			FileController.initTattooSaveLoadListeners();
 		} else if (currentNode.equals(CharacterCreation.CHOOSE_APPEARANCE)) {
 			CreationController.initAgeListeners();
 			CreationController.initBirthdayListeners();

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.lilithsthrone.game.character.GameCharacter;
+import com.lilithsthrone.game.character.attributes.Attribute;
 import com.lilithsthrone.game.character.body.CoverableArea;
 import com.lilithsthrone.game.character.body.tags.BodyPartTag;
 import com.lilithsthrone.game.character.body.types.ArmType;
@@ -672,6 +673,17 @@ public class CMSpecialAttack {
         @Override
         public float getCritStatusEffectDurationMultiplier() {
         	return 2;
+        }
+        @Override
+        public List<String> getCritRequirements(GameCharacter source, GameCharacter target, List<GameCharacter> enemies, List<GameCharacter> allies) {
+            return Util.newArrayListOfValues((target!=null?UtilText.parse(target,"[npc.NameHasFull]"):"Defender has")+" less than 25% "+Attribute.HEALTH_MAXIMUM.getColouredName("span")+" remaining.");
+        }
+        @Override
+        public boolean canCrit(int turnIndex, GameCharacter source, GameCharacter target, List<GameCharacter> enemies, List<GameCharacter> allies) {
+            if(target.getHealthPercentage()<0.25f) {
+                return true;
+            }
+            return false;
         }
     };
 

@@ -700,11 +700,11 @@ public abstract class AbstractItemType extends AbstractCoreType {
 		return "This item cannot be used in this way!";
 	}
 	
-	public boolean isAbleToBeUsed(GameCharacter target) {
+	public boolean isAbleToBeUsed(GameCharacter user, GameCharacter target) {
 		return true;
 	}
 	
-	public String getUnableToBeUsedDescription(GameCharacter target) {
+	public String getUnableToBeUsedDescription(GameCharacter user, GameCharacter target) {
 		return "This item cannot be used in this way!";
 	}
 	

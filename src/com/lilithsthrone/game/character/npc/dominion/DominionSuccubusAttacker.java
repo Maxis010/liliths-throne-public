@@ -53,17 +53,17 @@ public class DominionSuccubusAttacker extends RandomNPC {
 	
 	public DominionSuccubusAttacker(boolean isImported, NPCGenerationFlag... generationFlags) {
 		super(isImported, false, generationFlags);
-		
+
 		if (isImported) {
 			return;
 		}
-		
+
 		// Pre-setup
 		this.setLevel(Util.random.nextInt(5)+4);
-		
+
 		this.addFetish(Fetish.FETISH_DEFLOWERING);
 		this.addFetish(Fetish.FETISH_DOMINANT);
-		
+
 		// Setup
 		this.setupNPC(Subspecies.DEMON,
 				RaceStage.GREATER,
@@ -76,18 +76,18 @@ public class DominionSuccubusAttacker extends RandomNPC {
 				true,
 				true,
 				generationFlags);
-		
+
 		// Post-setup
 		this.removePersonalityTrait(PersonalityTrait.PRUDE);
 		this.setSexualOrientation(SexualOrientation.AMBIPHILIC);
-		this.setAgeAppearanceDifferenceToAppearAsAge(18+Util.random.nextInt(10));
-		
+		this.setAgeAppearanceAbsolute(18+Util.random.nextInt(10));
+
 		this.setVaginaVirgin(false);
 		this.setAssVirgin(false);
 		this.setFaceVirgin(false);
 		this.setNippleVirgin(false);
 		this.setPenisVirgin(false);
-		
+
 		inventory.setMoney(50);
 
 		this.addSpell(Spell.ARCANE_AROUSAL);
@@ -102,7 +102,7 @@ public class DominionSuccubusAttacker extends RandomNPC {
 			this.setFetishDesire(Fetish.FETISH_NON_CON_DOM, FetishDesire.TWO_NEUTRAL);
 		}
 		if(Main.isVersionOlderThan(Game.loadingVersion, "0.2.11")) {
-			this.setAgeAppearanceDifferenceToAppearAsAge(18+Util.random.nextInt(10));
+			this.setAgeAppearanceAbsolute(18+Util.random.nextInt(10));
 		}
 	}
 
@@ -114,7 +114,7 @@ public class DominionSuccubusAttacker extends RandomNPC {
 		
 		Main.game.getCharacterUtils().equipClothingFromOutfitType(this, OutfitType.MUGGER, settings);
 	}
-	
+
 	@Override
 	public String getDescription() {
 		if(isSlave()) {

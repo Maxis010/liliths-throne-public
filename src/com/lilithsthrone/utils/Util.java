@@ -1111,7 +1111,7 @@ public class Util {
 					&& (i==finalSplitSentence.size()-1 || !isEndOfSentence(finalSplitSentence.get(i+1).charAt(0)))) {
 				if(s.contains(",")) {
 					availableCommaIndexes.add(i);
-				} else {
+				} else if(!s.endsWith(". ")) {// Prevents insertions at the very start of new sentences
 					availableIndexes.add(i);
 				}
 				if(debug) {

@@ -63,6 +63,7 @@ import com.lilithsthrone.game.character.persona.NameTriplet;
 import com.lilithsthrone.game.character.persona.Occupation;
 import com.lilithsthrone.game.character.persona.PersonalityTrait;
 import com.lilithsthrone.game.character.persona.SexualOrientation;
+import com.lilithsthrone.game.character.pregnancy.FertilisationType;
 import com.lilithsthrone.game.character.race.RaceStage;
 import com.lilithsthrone.game.character.race.Subspecies;
 import com.lilithsthrone.game.combat.DamageType;
@@ -101,7 +102,7 @@ public class Lunexis extends NPC {
 		super(isImported, new NameTriplet("Lunexis"), "Lunettemartu",
 				"One of Lunette's recognised daughters, Lunexis is particularly strong, dominant, and brutal."
 						+ " Delighting in destruction, chaos, and mayhem, she is used by her elder lilin mother as a living weapon, who tasks her with destroying towns and villages which have displeased her.",
-				48, Month.JANUARY, 15,
+				517, Month.JANUARY, 15,
 				35,
 				null, null, null,
 				new CharacterInventory(10_000),
@@ -119,6 +120,9 @@ public class Lunexis extends NPC {
 		loadNPCVariablesFromXML(this, null, parentElement, doc, settings);
 		if(Main.isVersionOlderThan(Game.loadingVersion, "0.4.4.5")) {
 			setupPerks(true);
+		}
+		if(Main.isVersionOlderThan(Game.loadingVersion, "0.4.9.8")) {
+			this.setAge(517);
 		}
 	}
 
@@ -169,7 +173,7 @@ public class Lunexis extends NPC {
 		
 		
 		// Body:
-		this.setAgeAppearanceDifferenceToAppearAsAge(28);
+		this.setAgeAppearanceAbsolute(28);
 		this.setBody(Gender.F_P_V_B_FUTANARI, Subspecies.DEMON, RaceStage.GREATER, false);
 		this.setWingType(WingType.NONE);
 		this.setHornType(HornType.CURVED);
@@ -758,7 +762,7 @@ public class Lunexis extends NPC {
 			applyTrainingSexCounts(meraxis, new SexType(SexAreaOrifice.ARMPITS, SexAreaPenetration.PENIS), 0.05f);
 			for(int i=0; i<2+Util.random.nextInt(3); i++) {
 				meraxis.guaranteePregnancyOnNextRoll();
-				meraxis.rollForPregnancy(Subspecies.DEMON, Subspecies.HORSE_MORPH, 2500, true);
+				meraxis.rollForPregnancy(Subspecies.DEMON, Subspecies.HORSE_MORPH, 2500, true, FertilisationType.NORMAL);
 				meraxis.endPregnancy(true);
 			}
 	}
@@ -802,7 +806,7 @@ public class Lunexis extends NPC {
 			applyTrainingSexCountsAurokaris(aurokaris, new SexType(SexAreaOrifice.MOUTH, SexAreaPenetration.PENIS), 0.1f);
 			
 			aurokaris.guaranteePregnancyOnNextRoll();
-			aurokaris.rollForPregnancy(Subspecies.DEMON, Subspecies.HORSE_MORPH, 2500, true);
+			aurokaris.rollForPregnancy(Subspecies.DEMON, Subspecies.HORSE_MORPH, 2500, true, FertilisationType.NORMAL);
 			ItemEffectType.MOTHERS_MILK.applyEffect(null, null, null, 0, aurokaris, aurokaris, null);
 			ItemEffectType.MOTHERS_MILK.applyEffect(null, null, null, 0, aurokaris, aurokaris, null);
 			ItemEffectType.MOTHERS_MILK.applyEffect(null, null, null, 0, aurokaris, aurokaris, null);

@@ -19,6 +19,7 @@ import org.w3c.dom.NodeList;
 
 import com.lilithsthrone.controller.xmlParsing.XMLUtil;
 import com.lilithsthrone.game.Game;
+import com.lilithsthrone.game.PropertyValue;
 import com.lilithsthrone.game.character.CharacterImportSetting;
 import com.lilithsthrone.game.character.EquipClothingSetting;
 import com.lilithsthrone.game.character.GameCharacter;
@@ -1233,6 +1234,24 @@ public abstract class NPC extends GameCharacter implements XMLSaving {
 		}
 	}
 	
+	// Utility methods for determining sex behaviour in encounter post-defeat scenes:
+
+	public boolean isPostCombatNoSex() {
+		return (!this.isAttractedTo(Main.game.getPlayer()) || this.hasFlag(NPCFlagValue.genericNPCBetrayedByPlayer)) && !Main.game.isNonConEnabled();
+	}
+
+	public boolean isPostCombatWantsSex() {
+		return (this.isAttractedTo(Main.game.getPlayer()) && !this.hasFlag(NPCFlagValue.genericNPCBetrayedByPlayer)) || !Main.game.isNonConEnabled();
+	}
+
+	public boolean isPostCombatRapePlay() {
+		return (this.isAttractedTo(Main.game.getPlayer()) && !this.hasFlag(NPCFlagValue.genericNPCBetrayedByPlayer))
+				&& this.hasFetish(Fetish.FETISH_NON_CON_SUB)
+				&& Main.game.isNonConEnabled()
+				&& Main.getProperties().hasValue(PropertyValue.rapePlayAtSexStart);
+	}
+	
+	
 	public boolean isKnowsPlayerGender() {
 		return NPCFlagValues.contains(NPCFlagValue.knowsPlayerGender);
 	}
@@ -1757,7 +1776,7 @@ public abstract class NPC extends GameCharacter implements XMLSaving {
 			}
 			
 			body.getAss().setAssSize(null, AssSize.FIVE_HUGE.getValue());
-			body.getAss().setAssSize(null, HipSize.FIVE_VERY_WIDE.getValue());
+			body.getAss().setHipSize(null, HipSize.FIVE_VERY_WIDE.getValue());
 		}
 		
 		//Breasts:

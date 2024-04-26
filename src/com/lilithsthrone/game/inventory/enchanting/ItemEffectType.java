@@ -30,6 +30,7 @@ import com.lilithsthrone.game.character.body.types.WingType;
 import com.lilithsthrone.game.character.body.valueEnums.AssSize;
 import com.lilithsthrone.game.character.body.valueEnums.BodyHair;
 import com.lilithsthrone.game.character.body.valueEnums.BodyMaterial;
+import com.lilithsthrone.game.character.body.valueEnums.BreastShape;
 import com.lilithsthrone.game.character.body.valueEnums.CoveringPattern;
 import com.lilithsthrone.game.character.body.valueEnums.CumProduction;
 import com.lilithsthrone.game.character.body.valueEnums.CupSize;
@@ -116,9 +117,12 @@ public class ItemEffectType {
 	};
 	
 	public static AbstractItemEffectType USED_CONDOM_DRINK = new AbstractItemEffectType(Util.newArrayListOfValues(
-			"Provides a slimy snack."),
+			"Provides a dose of stored cum."),
 			PresetColour.GENERIC_SEX) {
-		
+		@Override
+		public boolean isBreakOutOfInventory() {
+			return true;
+		}
 		@Override
 		public String itemEffectOverride(TFModifier primaryModifier, TFModifier secondaryModifier, TFPotency potency, int limit, GameCharacter user, GameCharacter target, ItemEffectTimer timer) {
 			return ""; // THIS EFFECT IS NOT USED, AS AbstractFilledCondom OVERRIDES THE USUAL AbstractItem's applyEffects() METHOD!!!
@@ -2201,6 +2205,9 @@ public class ItemEffectType {
 			} else if(primaryModifier == TFModifier.CLOTHING_CONDOM) {
 				return Util.newArrayListOfValues(TFModifier.ARCANE_BOOST);
 				
+			} else if(primaryModifier == TFModifier.CLOTHING_CREAMPIE_RETENTION) {
+				return TFModifier.getClothingCreampieRetentionList();
+				
 			} else {
 				return getClothingTFSecondaryModifiers(primaryModifier);
 			}
@@ -2312,6 +2319,38 @@ public class ItemEffectType {
 					effectsList.add("[style.boldSex(+0.5)] [style.boldArousal(arousal/turn)] [style.boldSex(in sex)]");
 				}
 				
+			} else if(primaryModifier == TFModifier.CLOTHING_CREAMPIE_RETENTION) {
+				String area = "";
+				switch(secondaryModifier) {
+					case TF_FACE:
+						area = "stomach";
+						break;
+					case TF_ASS:
+						area = "ass";
+						break;
+					case TF_VAGINA:
+						area = "pussy";
+						break;
+					case TF_VAGINA_URETHRA:
+						area = "vaginal urethra";
+						break;
+					case TF_PENIS_URETHRA:
+						area = "penile urethra";
+						break;
+					case TF_BREASTS:
+						area = "breasts";
+						break;
+					case TF_BREASTS_CROTCH:
+						area = target.getBreastCrotchShape()==BreastShape.UDDERS?"udders":"crotch boobs";
+						break;
+					case TF_SPINNERET:
+						area = "spinneret";
+						break;
+					default:
+						break;
+				}
+				effectsList.add("[style.colourExcellent(Retains)] "+area+" creampies");
+				
 			} else {
 				return getClothingTFDescriptions(primaryModifier, secondaryModifier, potency, limit, user, target);
 			}
@@ -2365,6 +2404,9 @@ public class ItemEffectType {
 			} else if(primaryModifier == TFModifier.TF_MOD_FETISH_BODY_PART) {
 				return TFModifier.getTFBodyPartFetishList();
 				
+			} else if(primaryModifier == TFModifier.CLOTHING_CREAMPIE_RETENTION) {
+				return TFModifier.getClothingCreampieRetentionList();
+				
 			} else {
 				return getClothingTFSecondaryModifiers(primaryModifier);
 			}
@@ -2417,6 +2459,38 @@ public class ItemEffectType {
 				} else if(potency==TFPotency.MINOR_DRAIN) {
 					effectsList.add("[style.boldMinorBad(Slightly decreases)] [style.boldLust(desire)] for [style.boldFetish("+secondaryModifier.getName()+" fetish)]");
 				}
+				
+			} else if(primaryModifier == TFModifier.CLOTHING_CREAMPIE_RETENTION) {
+				String area = "";
+				switch(secondaryModifier) {
+					case TF_FACE:
+						area = "stomach";
+						break;
+					case TF_ASS:
+						area = "ass";
+						break;
+					case TF_VAGINA:
+						area = "pussy";
+						break;
+					case TF_VAGINA_URETHRA:
+						area = "vaginal urethra";
+						break;
+					case TF_PENIS_URETHRA:
+						area = "penile urethra";
+						break;
+					case TF_BREASTS:
+						area = "breasts";
+						break;
+					case TF_BREASTS_CROTCH:
+						area = target.getBreastCrotchShape()==BreastShape.UDDERS?"udders":"crotch boobs";
+						break;
+					case TF_SPINNERET:
+						area = "spinneret";
+						break;
+					default:
+						break;
+				}
+				effectsList.add("[style.colourExcellent(Retains)] "+area+" creampies");
 				
 			} else {
 				return getClothingTFDescriptions(primaryModifier, secondaryModifier, potency, limit, user, target);
