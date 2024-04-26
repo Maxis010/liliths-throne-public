@@ -21160,7 +21160,7 @@ public abstract class GameCharacter implements XMLSaving {
 				
 				pregnantLitter = Main.game.getFamily().addLitter(new Litter(Main.game.getDateNow(), Main.game.getDateNow(), this, partner, fertilisationType, offspring));
 				if(partner==null) {
-					pregnantLitter.setFatherRace(partnerBody.getSubspecies());
+					Main.game.getFamily().getLitter(pregnantLitter).setFatherRace(partnerBody.getSubspecies());
 				}
 				this.resetAllPregnancyReactions();
 			}
