@@ -10,6 +10,11 @@ import java.util.Map.Entry;
 
 import com.lilithsthrone.game.character.npc.misc.NPCOffspring;
 import com.lilithsthrone.game.character.npc.misc.OffspringSeed;
+import com.lilithsthrone.game.dialogue.responses.Response;
+import com.lilithsthrone.game.dialogue.responses.ResponseEffectsOnly;
+import com.lilithsthrone.game.inventory.ItemGeneration;
+import com.lilithsthrone.game.inventory.item.AbstractItem;
+import com.lilithsthrone.game.inventory.item.ItemType;
 import org.w3c.dom.Document;
 
 import com.lilithsthrone.controller.xmlParsing.Element;
@@ -608,4 +613,44 @@ public abstract class AbstractEncounter {
 		return placeTypeIds;
 	}
 
+	public static Response exploreArea() {
+		return exploreArea("this area");
+	}
+
+	public static Response exploreArea(String areaDescription) {
+		return new ResponseEffectsOnly(
+				"Explore",
+				"Explore " + areaDescription + ". Although you don't think you're any more or less likely to find anything by doing this, at least you won't have to keep travelling back and forth..."){
+			@Override
+			public int getSecondsPassed() {
+				return 30*60;
+			}
+			@Override
+			public void effects() {
+				DialogueNode dn = Main.game.getActiveWorld().getCell(Main.game.getPlayer().getLocation()).getDialogue(true, true);
+				Main.game.setContent(new Response("", "", dn));
+			}
+		};
+	}
+
+	public static Response useOffspringMap() {
+		if(!Main.game.getPlayer().hasItemType(ItemType.OFFSPRING_MAP)) {
+			return new Response("Offspring Map",
+							UtilText.parse("You do not have an offspring map..."
+									+ "<br/><i>An offspring map can be purchased from [vanessa.name] in City Hall.</i>"),
+					null);
+		} else if (!ItemType.OFFSPRING_MAP.isAbleToBeUsed(Main.game.getPlayer())) {
+			return new Response("Offspring Map",
+					ItemType.OFFSPRING_MAP.getUnableToBeUsedDescription(null),
+					null);
+		} else {
+			return new ResponseEffectsOnly("Offspring Map",
+					ItemType.OFFSPRING_MAP.getUseTooltipDescription(null, null)) {
+				@Override
+				public void effects() {
+					Main.game.getPlayer().useItem(Main.game.getItemGen().generateItem(ItemType.OFFSPRING_MAP), null, false);
+				}
+			};
+		}
+    }
 }

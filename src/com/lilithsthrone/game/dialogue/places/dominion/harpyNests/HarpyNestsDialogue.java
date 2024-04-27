@@ -10,10 +10,13 @@ import com.lilithsthrone.game.character.quests.QuestLine;
 import com.lilithsthrone.game.character.race.Subspecies;
 import com.lilithsthrone.game.dialogue.DialogueFlagValue;
 import com.lilithsthrone.game.dialogue.DialogueNode;
+import com.lilithsthrone.game.dialogue.encounters.AbstractEncounter;
 import com.lilithsthrone.game.dialogue.encounters.Encounter;
 import com.lilithsthrone.game.dialogue.responses.Response;
 import com.lilithsthrone.game.dialogue.responses.ResponseEffectsOnly;
 import com.lilithsthrone.game.dialogue.utils.UtilText;
+import com.lilithsthrone.game.inventory.item.AbstractItem;
+import com.lilithsthrone.game.inventory.item.AbstractItemType;
 import com.lilithsthrone.game.inventory.item.ItemType;
 import com.lilithsthrone.main.Main;
 import com.lilithsthrone.world.WorldType;
@@ -297,20 +300,10 @@ public class HarpyNestsDialogue {
 							};
 							
 				} else {
-					return new ResponseEffectsOnly(
-							"Explore",
-							"Explore the walkways. Although you don't think you're any more or less likely to find anything by doing this, at least you won't have to keep travelling back and forth..."){
-								@Override
-								public int getSecondsPassed() {
-									return 30*60;
-								}
-								@Override
-								public void effects() {
-									DialogueNode dn = Main.game.getActiveWorld().getCell(Main.game.getPlayer().getLocation()).getDialogue(true, true);
-									Main.game.setContent(new Response("", "", dn));
-								}
-							};
+					return AbstractEncounter.exploreArea("the walkways");
 				}
+			} else if (index == 2) {
+				return AbstractEncounter.useOffspringMap();
 			}
 			return null;
 		}
