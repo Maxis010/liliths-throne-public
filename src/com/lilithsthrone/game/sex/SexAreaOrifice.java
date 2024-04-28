@@ -2174,11 +2174,11 @@ public enum SexAreaOrifice implements SexAreaInterface {
 		}
 		@Override
 		public CoverableArea getRelatedCoverableArea(GameCharacter owner) {
-			return CoverableArea.THIGHS;
+			return CoverableArea.ARMPITS;
 		}
 		@Override
 		public InventorySlot getRelatedInventorySlot(GameCharacter owner) {
-			return InventorySlot.LEG;
+			return InventorySlot.TORSO_UNDER;
 		}
 		@Override
 		public float getCapacity(GameCharacter owner, boolean currentlyStretchedValue) {
