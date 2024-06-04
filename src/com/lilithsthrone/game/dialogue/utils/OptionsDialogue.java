@@ -296,7 +296,7 @@ public class OptionsDialogue {
 	private static String getJavaVersionInformation() {
 		StringBuilder sb = new StringBuilder();
 		String version = System.getProperty("java.version");
-		
+
 		sb.append("<p style='text-align:center;'>"
 					+ "Your java version: "+version);
 		if (version.equals("1.8.0_172")) {
@@ -584,7 +584,7 @@ public class OptionsDialogue {
 	}
 	
 	private static boolean confirmReset = false;
-	
+
 	public static final DialogueNode OPTIONS = new DialogueNode("Options", "Options", true) {
 		
 		@Override
@@ -1029,7 +1029,7 @@ public class OptionsDialogue {
 							return "Defaults";
 						}
 					}
-					
+
 					@Override
 					public void effects() {
 						if (confirmReset) {
@@ -1228,7 +1228,7 @@ public class OptionsDialogue {
 							return "Defaults";
 						}
 					}
-					
+
 					@Override
 					public void effects() {
 						if (confirmReset) {
@@ -1884,7 +1884,7 @@ public class OptionsDialogue {
 							for (AbstractSubspecies subspecies : Subspecies.getAllSubspecies()) {
 								Main.getProperties().setFeminineFurryPreference(subspecies, subspecies.getDefaultFemininePreference());
 								Main.getProperties().setMasculineFurryPreference(subspecies, subspecies.getDefaultMasculinePreference());
-								
+
 								Main.getProperties().setFeminineSubspeciesPreference(subspecies, subspecies.getSubspeciesPreferenceDefault());
 								Main.getProperties().setMasculineSubspeciesPreference(subspecies, subspecies.getSubspeciesPreferenceDefault());
 							}
@@ -3023,6 +3023,12 @@ public class OptionsDialogue {
 					"Toggles whether or not characters with a reptilian or amphibious head type will spawn with human-like hair on their heads.",
 					Main.getProperties().hasValue(PropertyValue.scalyHairContent)));
 			
+			UtilText.nodeContentSB.append(getContentPreferenceDiv("LIP_LISP",
+					PresetColour.BASE_GREEN_DARK,
+					"Lip lisps",
+					"Toggles whether or not characters with very large lips will speak with a lisp.",
+					Main.getProperties().hasValue(PropertyValue.lipLispContent)));
+
 			UtilText.nodeContentSB.append(getBreastsContentPreferenceVariableDiv(
 					"PREGNANCY_BREAST_GROWTH",
 					PresetColour.BASE_PINK,

@@ -381,6 +381,7 @@ public abstract class GameCharacter implements XMLSaving {
 	private Map<InventorySlot, SizedStack<Covering>> lipstickMarks;
 	/** Clothing which has been temporarily unequipped as part of a scene which requires this character to be naked. */
 	private Map<InventorySlot, AbstractClothing> holdingClothing;
+	private List<SexAreaOrifice> creampieRetentionAreas;
 	
 	
 	// Attributes, perks & status effects:
@@ -633,6 +634,7 @@ public abstract class GameCharacter implements XMLSaving {
 		}
 		
 		savedOutfits = new ArrayList<>();
+		creampieRetentionAreas = new ArrayList<>();
 		
 		scars = new HashMap<>();
 		tattoos = new HashMap<>();
@@ -720,7 +722,7 @@ public abstract class GameCharacter implements XMLSaving {
 		addictions = new ArrayList<>();
 		psychoactiveFluidsIngested = new HashSet<>();
 		
-		// Start all attributes and bonus attributes at 0:
+		// Start all attributes at their starting value and bonus attributes at 0:
 		for(AbstractAttribute a : Attribute.getAllAttributes()) {
 			attributes.put(a, (float) a.getBaseValue());
 			bonusAttributes.put(a, 0f);
@@ -906,6 +908,16 @@ public abstract class GameCharacter implements XMLSaving {
 					element.appendChild(elementId);
 					elementId.setTextContent(id);
 				}
+			}
+		}
+		
+		if(!creampieRetentionAreas.isEmpty()) {
+			Element creampieRetentionAreasElement = doc.createElement("creampieRetentionAreas");
+			characterCoreInfo.appendChild(creampieRetentionAreasElement);
+			for(SexAreaOrifice orifice : creampieRetentionAreas) {
+				Element e = doc.createElement("area");
+				creampieRetentionAreasElement.appendChild(e);
+				e.setTextContent(orifice.toString());
 			}
 		}
 		
@@ -1916,6 +1928,19 @@ public abstract class GameCharacter implements XMLSaving {
 			Main.game.getCharacterUtils().appendToImportLog(log, "<br/>Loaded mana: "+character.getMana());
 		}
 
+		Element creampieRetentionAreasElement = (Element) element.getElementsByTagName("creampieRetentionAreas").item(0);
+		if(creampieRetentionAreasElement!=null) {
+			NodeList areaEntries = creampieRetentionAreasElement.getElementsByTagName("area");
+			for(int i=0; i<areaEntries.getLength(); i++) {
+				Element e = ((Element)areaEntries.item(i));
+				try {
+					SexAreaOrifice orifice = SexAreaOrifice.valueOf(e.getTextContent());
+					character.addCreampieRetentionArea(orifice);
+				}catch(Exception ex){
+				}
+			}
+		}
+		
 		// Knows area map:
 		try {
 			if(Main.isVersionOlderThan(version, "0.2.10")) {
@@ -3465,7 +3490,7 @@ public abstract class GameCharacter implements XMLSaving {
 			artworkList.clear();
 			artworkFolderName = folder;
 		}
-
+		
 		if(!folder.isEmpty()) {
 			if(!this.isUnique() || this.isPlayer()) {
 				File f = new File("data/images/"+Main.game.getId()+"/characters/" + folder);
@@ -3547,7 +3572,7 @@ public abstract class GameCharacter implements XMLSaving {
 		if(getBody()==null) {
 			return false;
 		}
-		return getRace()==Race.DOLL;
+		return getBody().isDoll();
 	}
 	
 	/**
@@ -3739,30 +3764,53 @@ public abstract class GameCharacter implements XMLSaving {
 				infoScreenSB.append(".");
 			}
 		}
+
+		infoScreenSB.append("</p>");
 		
+		infoScreenSB.append("<h6>Relationships</h6>"
+				+ "<p>");
 		String relationships = this.getRelationshipStrTo(Main.game.getPlayer());
 		
 		if(!this.isRaceConcealed()) {
 			if(!this.isPlayer()) {
-				infoScreenSB.append(
-							"<br/>"
-							+ (this.getPartyLeader()!=null
-									?UtilText.parse(this, this.getPartyLeader(), "[npc.She] [npc.is] currently following [npc2.name] around as [npc2.her] [style.colourCompanion(companion)]. ")
-									:"")
-							+ (!relationships.isEmpty()
-									?UtilText.parse(this, "[npc.She] is your <span style='color:"+this.getFemininity().getColour().toWebHexString()+"'>"+relationships+"</span>. ")
-									:"")
-							+ AffectionLevel.getDescription(this, Main.game.getPlayer(), true));
-				int affection = (int)this.getAffection(Main.game.getPlayer());
-				infoScreenSB.append(" (<span style='color:"+this.getAffectionLevel(Main.game.getPlayer()).getColour().toWebHexString()+";'>"+(affection>0?"+":"")+affection+"</span>)");
+				StringBuilder relationshipsSB = new StringBuilder();
+				if(this.getPartyLeader()!=null) {
+					relationshipsSB.append(UtilText.parse(this, this.getPartyLeader(), "[npc.She] [npc.is] currently following [npc2.name] around as [npc2.her] [style.colourCompanion(companion)]. "));
+				}
 
-				if(!this.getAffectionMap().isEmpty()) {
+				if(!relationships.isEmpty()) {
+					if(relationshipsSB.length()>0) {
+						relationshipsSB.append("<br/>");
+					}
+					relationshipsSB.append(UtilText.parse(this, "[npc.She] is your <span style='color:"+this.getFemininity().getColour().toWebHexString()+"'>"+relationships+"</span>. "));
+				}
+
+				if(this.isPlayerKnowsName() || Main.game.isDebugMode()) {
+					for(NPC npc : Main.game.getAllNPCs()) {
+						if(this!=npc && (Main.game.getPlayer().getCharactersEncounteredAsGameCharacters(true).contains(npc) || Main.game.isDebugMode())) {
+							String relationshipToOtherNpc = this.getRelationshipStrTo(npc);
+							if(!relationshipToOtherNpc.isEmpty()) {
+								if(relationshipsSB.length()>0) {
+									relationshipsSB.append("<br/>");
+								}
+								relationshipsSB.append(UtilText.parse(this, npc, "[npc.She] is [npc2.namePos] <span style='color:"+this.getFemininity().getColour().toWebHexString()+"'>"+relationshipToOtherNpc+"</span>. "));
+							}
+						}
+					}
+				}
+				
+				if(relationshipsSB.length()>0) {
+					infoScreenSB.append(relationshipsSB.toString());
 					infoScreenSB.append("<br/>");
 				}
+				
+				int affection = (int)this.getAffection(Main.game.getPlayer());
+				infoScreenSB.append(AffectionLevel.getDescription(this, Main.game.getPlayer(), true)+" (<span style='color:"+this.getAffectionLevel(Main.game.getPlayer()).getColour().toWebHexString()+";'>"+(affection>0?"+":"")+affection+"</span>)");
+				
 				for(Entry<String, Float> entry : this.getAffectionMap().entrySet()) {
 					try {
 						GameCharacter target = Main.game.getNPCById(entry.getKey());
-						if(Main.game.getPlayer().getCharactersEncounteredAsGameCharacters(true).contains(target)) {
+						if(Main.game.getPlayer().getCharactersEncounteredAsGameCharacters(true).contains(target) || Main.game.isDebugMode()) {
 							if(!target.isPlayer()
 									&& (target.isUnique()
 											|| (target.isElemental() && ((Elemental)target).getSummoner().isUnique())
@@ -3800,9 +3848,9 @@ public abstract class GameCharacter implements XMLSaving {
 					infoScreenSB.append(Util.stringsToStringList(slaveNames, false)+".");
 				}
 			}
+			infoScreenSB.append("</p>");
 			
-			infoScreenSB.append("<br/>"
-					+ "<h6>Personality</h6>"
+			infoScreenSB.append("<h6>Personality</h6>"
 					+ "<p>");
 			int i=0;
 			for(PersonalityTrait trait : this.getPersonalityTraits()) {
@@ -4475,6 +4523,10 @@ public abstract class GameCharacter implements XMLSaving {
 	public void setBirthday(LocalDateTime birthday) {
 		this.birthday = birthday;
 	}
+	
+	public void setAge(int years) {
+		this.birthday = LocalDateTime.of(Main.game.getStartingDate().getYear()-(years-MINIMUM_AGE), birthday.getMonth(), (birthday.getMonth()==Month.FEBRUARY&&birthday.getDayOfMonth()==29?28:birthday.getDayOfMonth()), 12, 0);
+	}
 
 	public AgeCategory getAppearsAsAge() {
 		return AgeCategory.valueOf(getAppearsAsAgeValue());
@@ -5006,8 +5058,18 @@ public abstract class GameCharacter implements XMLSaving {
 	}
 	
 	public void setSlaveJob(int hour, SlaveJob slaveJob) {
+		if(hour>=workHours.length) {
+			new ArrayIndexOutOfBoundsException().printStackTrace();
+			return;
+		}
 		workHours[hour] = slaveJob;
 		recalculateSleepHours();
+	}
+	
+	public void setSlaveJob24Hours(SlaveJob slaveJob) {
+		for(int i=0; i<workHours.length; i++) {
+			workHours[i] = slaveJob;
+		}
 	}
 	
 	/**
@@ -5015,8 +5077,7 @@ public abstract class GameCharacter implements XMLSaving {
 	 */
 	public boolean isAsleep() {
 		if(Main.game.isInSex() && Main.sex.getAllParticipants().contains(this)) {
-			Value<ImmobilisationType, GameCharacter> value = Main.sex.getImmobilisationType(this);
-			return value!=null && value.getKey()==ImmobilisationType.SLEEP;
+			return Main.sex.getImmobilisationTypes(this).containsKey(ImmobilisationType.SLEEP);
 		}
 		return this.hasStatusEffect(StatusEffect.SLEEPING) || this.hasStatusEffect(StatusEffect.SLEEPING_HEAVY);
 	}
@@ -5028,8 +5089,9 @@ public abstract class GameCharacter implements XMLSaving {
 	
 	public boolean isAffectedBySleepingStatusEffect() {
 		return this.isPlayer()
-				|| (!this.isUnique()
-						&& (this.isSlave() && this.getOwner().isPlayer()) || Main.game.getPlayer().getFriendlyOccupants().contains(this.getId()));
+//				|| (!this.isUnique() || (this.isSlave() && this.getOwner().isPlayer())) // This makes all NPCs sleep, often at very inconvenient times (such as during encounters and combat...)
+				|| (this.isSlave() && this.getOwner().isPlayer())
+				|| Main.game.getPlayer().getFriendlyOccupants().contains(this.getId());
 	}
 	
 	public boolean isSleepingAtHour(int hour) {
@@ -6163,14 +6225,22 @@ public abstract class GameCharacter implements XMLSaving {
 			result.add(Relationship.HalfSibling);
 		}
 
-		if(character.getNonCommonNodes(1,0).contains(this))
-			result.add(Relationship.Pibling);
-		if(character.getNonCommonNodes(2,0).contains(this))
-			result.add(Relationship.GrandPibling);
-		if(character.getNonCommonNodes(1,1).contains(this))
+		if(!result.contains(Relationship.Parent)) { // Cannot be aunt/uncle if a parent
+			if(character.getNonCommonNodes(1,0).contains(this)) {
+				result.add(Relationship.Pibling);
+			}
+			if(character.getNonCommonNodes(2,0).contains(this)) {
+				result.add(Relationship.GrandPibling);
+			}
+		}
+		if(character.getNonCommonNodes(1,1).contains(this)) {
 			result.add(Relationship.Cousin);
-		if(character.getNonCommonNodes(0,1).contains(this))
-			result.add(Relationship.Nibling);
+		}
+		if(!result.contains(Relationship.Child)) { // Cannot be niece/nephew if a child
+			if(character.getNonCommonNodes(0,1).contains(this)) {
+				result.add(Relationship.Nibling);
+			}
+		}
 
 		result.removeAll(Arrays.asList(excludedRelationships));
 		
@@ -7461,7 +7531,7 @@ public abstract class GameCharacter implements XMLSaving {
 			incrementStatusEffectDuration(se, -secondsPassed);
 			
 			if(appliedSe.getSecondsRemaining()<0
-					&& (!se.isConditionsMet(this) || se.getApplicationLength()>0)) { // If getApplicationLength() is not -1, then this status effect should be removed and re-checked, even if isConditionsMet() is returning true.
+					&& (!se.isConditionsMet(this) || se.getApplicationLength(this)>0)) { // If getApplicationLength() is not -1, then this status effect should be removed and re-checked, even if isConditionsMet() is returning true.
 				tempListStatusEffects.add(se);
 			}
 		}
@@ -7479,7 +7549,7 @@ public abstract class GameCharacter implements XMLSaving {
 						|| (se.getCategory()==StatusEffectCategory.INVENTORY && requiresInventoryStatusEffectCheck)
 						|| (se.getCategory()==StatusEffectCategory.ATTRIBUTE && requiresAttributeStatusEffectCheck)) {
 					if(se.isConditionsMet(this)) {
-						addStatusEffect(se, se.getApplicationLength()); // Default application length is -1
+						addStatusEffect(se, se.getApplicationLength(this)); // Default application length is -1
 					}
 				}
 			}
@@ -7877,7 +7947,7 @@ public abstract class GameCharacter implements XMLSaving {
 								+ "[npc.speech(You know you want it!)]",
 						"[npc.Name] blows a kiss at you, before winking suggestively in your direction.",
 						"Biting [npc.her] lip and putting on [npc.her] most smouldering look, [npc.name] runs [npc.her] hands slowly up [npc.her] inner thighs.",
-						"As [npc.name] gives you [npc.her] most innocent look, [npc.she] blows you a little kiss.",
+						"[npc.Name] gives you [npc.her] most innocent look and blows you a kiss.",
 						"Turning around, [npc.name] lets out a playful giggle as [npc.she] gives [npc.her] [npc.ass+] a slap.",
 						"[npc.Name] slowly runs [npc.her] [npc.hands] up the length of [npc.her] body, before pouting at you."));
 				
@@ -7903,7 +7973,7 @@ public abstract class GameCharacter implements XMLSaving {
 								+ "[npc.speech(You know you want a taste of this!)]",
 						"[npc.Name] blows a kiss at you, before winking suggestively in your direction.",
 						"Smiling confidently at you, [npc.name] slowly runs [npc.her] hands up [npc.her] inner thighs.",
-						"As [npc.name] gives you [npc.her] most seductive look, [npc.she] blows you a kiss.",
+						"[npc.Name] gives you [npc.her] most seductive look and blows you a kiss.",
 						"Turning around, [npc.name] lets out a playful laugh as [npc.she] gives [npc.her] [npc.ass+] a slap.",
 						"[npc.Name] tries to look as commanding as possible as [npc.she] smirks playfully at you."));
 				
@@ -7934,7 +8004,7 @@ public abstract class GameCharacter implements XMLSaving {
 			for(GameCharacter character : Main.sex.getAllParticipants(false)) {
 				if(!character.equals(this) && character.hasTraitActivated(Perk.OBJECT_OF_DESIRE)) {
 					increment++;
-					continue; // Prevent this from stacking
+					break; // Prevent this from stacking
 				}
 			}
 		}
@@ -8723,7 +8793,7 @@ public abstract class GameCharacter implements XMLSaving {
 							partnerCummedInside = true;
 							
 						} else if(partnerPresent) {
-							if((Main.sex.getSexManager() != null && Main.sex.getSexManager().getCharacterOrgasmBehaviour(partner)==OrgasmBehaviour.CREAMPIE)
+							if((Main.sex.getSexManager() != null && (Main.sex.getSexManager().getCharacterOrgasmBehaviour(partner)==OrgasmBehaviour.CREAMPIE || Main.sex.getSexManager().getCharacterOrgasmBehaviour(partner)==OrgasmBehaviour.KNOT))
 								|| partner.getFetishDesire(Fetish.FETISH_CUM_STUD).isPositive()
 								|| (performingArea==SexAreaOrifice.VAGINA && partner.hasFetish(Fetish.FETISH_IMPREGNATION))) {
 								partnerCummedInside = true;
@@ -9233,7 +9303,7 @@ public abstract class GameCharacter implements XMLSaving {
 							thisCummedInside = true;
 							
 						} else {
-							if((Main.sex.getSexManager() != null && Main.sex.getSexManager().getCharacterOrgasmBehaviour(this)==OrgasmBehaviour.CREAMPIE)
+							if((Main.sex.getSexManager() != null && (Main.sex.getSexManager().getCharacterOrgasmBehaviour(this)==OrgasmBehaviour.CREAMPIE || Main.sex.getSexManager().getCharacterOrgasmBehaviour(this)==OrgasmBehaviour.KNOT))
 								|| this.getFetishDesire(Fetish.FETISH_CUM_STUD).isPositive()
 								|| (targetedArea==SexAreaOrifice.VAGINA && this.hasFetish(Fetish.FETISH_IMPREGNATION))) {
 								thisCummedInside = true;
@@ -9999,7 +10069,7 @@ public abstract class GameCharacter implements XMLSaving {
 
 		addSexTypeWeighting(new SexType(SexParticipantType.NORMAL, SexAreaPenetration.PENIS, SexAreaOrifice.BREAST), target, request, mainSexTypes, 1);
 		addSexTypeWeighting(new SexType(SexParticipantType.NORMAL, SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE), target, request, mainSexTypes, 1);
-		addSexTypeWeighting(new SexType(SexParticipantType.NORMAL, SexAreaPenetration.TAIL, SexAreaOrifice.BREAST), target, request, mainSexTypes, 0.5f);
+//		addSexTypeWeighting(new SexType(SexParticipantType.NORMAL, SexAreaPenetration.TAIL, SexAreaOrifice.BREAST), target, request, mainSexTypes, 0.5f);
 		addSexTypeWeighting(new SexType(SexParticipantType.NORMAL, SexAreaPenetration.TAIL, SexAreaOrifice.NIPPLE), target, request, mainSexTypes, 0.5f);
 		
 		// Self-breasts:
@@ -10015,7 +10085,7 @@ public abstract class GameCharacter implements XMLSaving {
 		addSexTypeWeighting(new SexType(SexParticipantType.NORMAL, SexAreaOrifice.BREAST, SexAreaPenetration.PENIS), target, request, mainSexTypes, 1);
 		addSexTypeWeighting(new SexType(SexParticipantType.NORMAL, SexAreaOrifice.NIPPLE, SexAreaPenetration.PENIS), target, request, mainSexTypes, 1);
 		if(selfBreastDesired) {
-			addSexTypeWeighting(new SexType(SexParticipantType.NORMAL, SexAreaOrifice.BREAST, SexAreaPenetration.TAIL), target, request, mainSexTypes, 0.5f);
+//			addSexTypeWeighting(new SexType(SexParticipantType.NORMAL, SexAreaOrifice.BREAST, SexAreaPenetration.TAIL), target, request, mainSexTypes, 0.5f);
 			addSexTypeWeighting(new SexType(SexParticipantType.NORMAL, SexAreaOrifice.NIPPLE, SexAreaPenetration.TAIL), target, request, mainSexTypes, 0.5f);
 		}
 
@@ -10029,7 +10099,7 @@ public abstract class GameCharacter implements XMLSaving {
 	
 			addSexTypeWeighting(new SexType(SexParticipantType.NORMAL, SexAreaPenetration.PENIS, SexAreaOrifice.BREAST_CROTCH), target, request, mainSexTypes, 1);
 			addSexTypeWeighting(new SexType(SexParticipantType.NORMAL, SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE_CROTCH), target, request, mainSexTypes, 1);
-			addSexTypeWeighting(new SexType(SexParticipantType.NORMAL, SexAreaPenetration.TAIL, SexAreaOrifice.BREAST_CROTCH), target, request, mainSexTypes, 0.5f);
+//			addSexTypeWeighting(new SexType(SexParticipantType.NORMAL, SexAreaPenetration.TAIL, SexAreaOrifice.BREAST_CROTCH), target, request, mainSexTypes, 0.5f);
 			addSexTypeWeighting(new SexType(SexParticipantType.NORMAL, SexAreaPenetration.TAIL, SexAreaOrifice.NIPPLE_CROTCH), target, request, mainSexTypes, 0.5f);
 		}
 		
@@ -15554,8 +15624,47 @@ public abstract class GameCharacter implements XMLSaving {
 	
 	// Area reveals: TODO All reveals need to take in character being revealed
 
+	private String getAreaRevealWhileImmobilised(GameCharacter characterBeingRevealed, GameCharacter characterReacting, String areaString, boolean plural) {
+		StringBuilder sb = new StringBuilder();
+		GameCharacter immobiliser = null;
+		Map<ImmobilisationType, GameCharacter> immobilisation = Main.sex.getImmobilisationTypes(characterReacting);
+		// Prioritise sleeping, then command, then any other:
+		if(immobilisation.containsKey(ImmobilisationType.SLEEP)) {
+			sb.append("[npc.Name] [npc.verb(remain)] asleep and thus unable to react as [npc2.namePos] "+areaString+" "+(plural?"are":"is")+" revealed.");
+			
+		} else if(immobilisation.containsKey(ImmobilisationType.COMMAND)) {
+			sb.append("[npc.Name] [npc.verb(remain)] completely motionless and doesn't react as [npc2.namePos] "+areaString+" "+(plural?"are":"is")+" revealed.");
+			
+		} else {
+			Entry<ImmobilisationType, GameCharacter> entry = immobilisation.entrySet().iterator().next();
+			switch(entry.getKey()) {
+				case CHAINS:
+					sb.append("[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] "+areaString+" "+(plural?"are":"is")+" revealed, but the chains binding [npc.her] body in place keep [npc.herHim] immobilised.");
+				case ROPE:
+					sb.append("[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] "+areaString+" "+(plural?"are":"is")+" revealed, but the ropes binding [npc.her] body in place keep [npc.herHim] immobilised.");
+				case COCOON:
+					sb.append("[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] "+areaString+" "+(plural?"are":"is")+" revealed, but [npc.her] cocoon's strong webbing keeps [npc.herHim] locked in place.");
+				case TAIL_CONSTRICTION:
+					immobiliser = entry.getValue();
+					sb.append("[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] "+areaString+" "+(plural?"are":"is")+" revealed, but [npc3.name] [npc3.verb(use)] [npc3.her] long tail to keep [npc.herHim] constricted and firmly locked in place.");
+				case TENTACLE_RESTRICTION:
+					immobiliser = entry.getValue();
+					sb.append("[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] "+areaString+" "+(plural?"are":"is")+" revealed, but [npc3.name] [npc3.verb(use)] [npc3.her] [npc3.tentacles] to keep [npc.herHim] firmly held in place.");
+				case WITCH_SEAL:
+					sb.append("[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] "+areaString+" "+(plural?"are":"is")+" revealed, but the Witch's Seal keeps [npc.herHim] locked in place.");
+				case SLEEP:
+				case COMMAND:
+					sb.append("[npc.Name] [npc.do]n't react as [npc2.namePos] "+areaString+" "+(plural?"are":"is")+" revealed.");
+			}
+		}
+		if(immobiliser!=null) {
+			return UtilText.parse(Util.newArrayListOfValues(characterReacting, characterBeingRevealed, immobiliser), sb.toString());
+		} else {
+			return UtilText.parse(characterReacting, characterBeingRevealed, sb.toString());
+		}
+	}
+	
 	public String getAssRevealDescription(GameCharacter characterBeingRevealed, GameCharacter characterReacting, boolean locationSpecific) {
-		
 		if(locationSpecific) {
 			switch(this.getGenitalArrangement()) {
 				case CLOACA:
@@ -15573,93 +15682,30 @@ public abstract class GameCharacter implements XMLSaving {
 //			selfPace = Main.sex.getSexPace(characterBeingRevealed);
 			reactingPace = Main.sex.getSexPace(characterReacting);
 		}
-		
-		StringBuilder sb = new StringBuilder();
-		
-		if(characterBeingRevealed.isPlayer()) {
-			if(Main.game.isInSex() && Main.sex.isCharacterImmobilised(characterReacting)) {
-				Value<ImmobilisationType, GameCharacter> immobilisation = Main.sex.getImmobilisationType(characterReacting);
-				switch(immobilisation.getKey()) {
-					case CHAINS:
-						return UtilText.parse(characterReacting, "[npc.Name] tries to make a move as your [pc.asshole+] is revealed, but the chains binding [npc.her] body in place keep [npc.herHim] immobilised.");
-					case ROPE:
-						return UtilText.parse(characterReacting, "[npc.Name] tries to make a move as your [pc.asshole+] is revealed, but the ropes binding [npc.her] body in place keep [npc.herHim] immobilised.");
-					case COCOON:
-						return UtilText.parse(characterReacting, "[npc.Name] tries to make a move as your [pc.asshole+] is revealed, but [npc.her] cocoon's strong webbing keeps [npc.herHim] locked in place.");
-					case TAIL_CONSTRICTION:
-						return UtilText.parse(characterReacting, immobilisation.getValue(),
-								"[npc.Name] tries to make a move as your [pc.asshole+] is revealed, but [npc2.name] [npc2.verb(use)] [npc2.her] long tail to keep [npc.herHim] constricted and firmly locked in place.");
-					case TENTACLE_RESTRICTION:
-						return UtilText.parse(characterReacting, immobilisation.getValue(),
-								"[npc.Name] tries to make a move as your [pc.asshole+] is revealed, but [npc2.name] [npc2.verb(use)] [npc2.her] [npc2.tentacles] to keep [npc.herHim] firmly held in place.");
-					case WITCH_SEAL:
-						return UtilText.parse(characterReacting, "[npc.Name] tries to make a move as your [pc.asshole+] is revealed, but the Witch's Seal keeps [npc.herHim] locked in place.");
-					case COMMAND:
-						return UtilText.parse(characterReacting, "[npc.Name] [npc.verb(remain)] completely motionless and doesn't react as your [pc.asshole+] is revealed.");
-					case SLEEP:
-						return UtilText.parse(characterReacting, "[npc.Name] [npc.verb(remain)] asleep and thus unable to react as your [pc.asshole+] is revealed.");
-				}
-			}
-			
-//			sb.append("<p>");
-			switch(reactingPace) {
-				case DOM_GENTLE:
-					sb.append(UtilText.parse(characterReacting, "[npc.Name] lets out a soft [npc.moan] as your [pc.asshole+] is revealed."));
-					break;
-				case DOM_NORMAL:
-					sb.append(UtilText.parse(characterReacting, "[npc.Name] lets out [npc.a_moan+] as your [pc.asshole+] is revealed."));
-					break;
-				case DOM_ROUGH:
-					sb.append(UtilText.parse(characterReacting, "[npc.Name] lets out a hungry growl as your [pc.asshole+] is revealed."));
-					break;
-				case SUB_EAGER:
-					sb.append(UtilText.parse(characterReacting, "[npc.Name] lets out [npc.a_moan+] as your [pc.asshole+] is revealed."));
-					break;
-				case SUB_NORMAL:
-					sb.append(UtilText.parse(characterReacting, "[npc.Name] lets out [npc.a_moan] as your [pc.asshole+] is revealed."));
-					break;
-				case SUB_RESISTING:
-					sb.append(UtilText.parse(characterReacting, "[npc.Name] lets out [npc.a_sob+] as your [pc.asshole+] is revealed."));
-					break;
-				default:
-					sb.append(UtilText.parse(characterReacting, "[npc.Name] lets out [npc.a_moan] as your [pc.asshole+] is revealed."));
-					break;
-			}
-//			sb.append("</p>");
-			
-		} else {
-			if(Main.game.isInSex() && Main.sex.isCharacterImmobilised(characterReacting)) {
-				Value<ImmobilisationType, GameCharacter> immobilisation = Main.sex.getImmobilisationType(characterReacting);
-				switch(immobilisation.getKey()) {
-					case CHAINS:
-						return UtilText.parse(characterReacting, characterBeingRevealed,
-								"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.asshole+] is revealed, but the chains binding [npc.her] body in place keep [npc.herHim] immobilised.");
-					case ROPE:
-						return UtilText.parse(characterReacting, characterBeingRevealed,
-								"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.asshole+] is revealed, but the ropes binding [npc.her] body in place keep [npc.herHim] immobilised.");
-					case COCOON:
-						return UtilText.parse(characterReacting, characterBeingRevealed,
-								"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.asshole+] is revealed, but [npc.her] cocoon's strong webbing keeps [npc.herHim] locked in place.");
-					case TAIL_CONSTRICTION:
-						return UtilText.parse(Util.newArrayListOfValues(characterReacting, characterBeingRevealed, immobilisation.getValue()),
-								"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.asshole+] is revealed, but [npc3.name] [npc3.verb(use)] [npc3.her] long tail to keep [npc.herHim] constricted and firmly locked in place.");
-					case TENTACLE_RESTRICTION:
-						return UtilText.parse(Util.newArrayListOfValues(characterReacting, characterBeingRevealed, immobilisation.getValue()),
-								"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.asshole+] is revealed, but [npc3.name] [npc3.verb(use)] [npc3.her] [npc3.tentacles] to keep [npc.herHim] firmly held in place.");
-					case WITCH_SEAL:
-						return UtilText.parse(characterReacting, characterBeingRevealed,
-								"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.asshole+] is revealed, but the Witch's Seal keeps [npc.herHim] locked in place.");
-					case COMMAND:
-						return UtilText.parse(characterReacting, characterBeingRevealed,
-								"[npc.Name] [npc.verb(remain)] completely motionless and doesn't react as [npc2.namePos] [npc2.asshole+] is revealed.");
-					case SLEEP:
-						return UtilText.parse(characterReacting, characterBeingRevealed,
-								"[npc.Name] [npc.verb(remain)] asleep and thus unable to react as  [npc2.namePos] [npc2.asshole+] is revealed.");
-				}
-			}
+
+		if(Main.game.isInSex() && Main.sex.isCharacterImmobilised(characterReacting)) {
+			return getAreaRevealWhileImmobilised(characterBeingRevealed, characterReacting, "[npc2.asshole+]", false);
 		}
 		
-		return sb.toString();
+		if(characterBeingRevealed.isPlayer()) {
+			switch(reactingPace) {
+				case DOM_GENTLE:
+					return UtilText.parse(characterReacting, "[npc.Name] lets out a soft [npc.moan] as your [pc.asshole+] is revealed.");
+				case DOM_NORMAL:
+					return UtilText.parse(characterReacting, "[npc.Name] lets out [npc.a_moan+] as your [pc.asshole+] is revealed.");
+				case DOM_ROUGH:
+					return UtilText.parse(characterReacting, "[npc.Name] lets out a hungry growl as your [pc.asshole+] is revealed.");
+				case SUB_EAGER:
+					return UtilText.parse(characterReacting, "[npc.Name] lets out [npc.a_moan+] as your [pc.asshole+] is revealed.");
+				case SUB_NORMAL:
+					return UtilText.parse(characterReacting, "[npc.Name] lets out [npc.a_moan] as your [pc.asshole+] is revealed.");
+				case SUB_RESISTING:
+					return UtilText.parse(characterReacting, "[npc.Name] lets out [npc.a_sob+] as your [pc.asshole+] is revealed.");
+				default:
+					return UtilText.parse(characterReacting, "[npc.Name] lets out [npc.a_moan] as your [pc.asshole+] is revealed.");
+			}
+		}
+		return "";
 	}
 
 	public String getBreastsRevealDescription(GameCharacter characterBeingRevealed, GameCharacter characterReacting) {
@@ -15673,27 +15719,7 @@ public abstract class GameCharacter implements XMLSaving {
 		
 		if(characterBeingRevealed.isPlayer()) {
 			if(Main.game.isInSex() && Main.sex.isCharacterImmobilised(characterReacting)) {
-				Value<ImmobilisationType, GameCharacter> immobilisation = Main.sex.getImmobilisationType(characterReacting);
-				switch(immobilisation.getKey()) {
-					case CHAINS:
-						return UtilText.parse(characterReacting, "[npc.Name] [npc.verb(try)] to make a move as your [pc.breasts+] are revealed, but the chains binding [npc.her] body in place keep [npc.herHim] immobilised.");
-					case ROPE:
-						return UtilText.parse(characterReacting, "[npc.Name] [npc.verb(try)] to make a move as your [pc.breasts+] are revealed, but the ropes binding [npc.her] body in place keep [npc.herHim] immobilised.");
-					case COCOON:
-						return UtilText.parse(characterReacting, "[npc.Name] tries to make a move as your [pc.breasts+] are revealed, but [npc.her] cocoon's strong webbing keeps [npc.herHim] locked in place.");
-					case TAIL_CONSTRICTION:
-						return UtilText.parse(characterReacting, immobilisation.getValue(),
-								"[npc.Name] tries to make a move as your [pc.breasts+] are revealed, but [npc2.name] [npc2.verb(use)] [npc2.her] long tail to keep [npc.herHim] constricted and firmly locked in place.");
-					case TENTACLE_RESTRICTION:
-						return UtilText.parse(characterReacting, immobilisation.getValue(),
-								"[npc.Name] tries to make a move as your [pc.breasts+] are revealed, but [npc2.name] [npc2.verb(use)] [npc2.her] [npc2.tentacles] to keep [npc.herHim] firmly held in place.");
-					case WITCH_SEAL:
-						return UtilText.parse(characterReacting, "[npc.Name] tries to make a move as your [pc.breasts+] are revealed, but the Witch's Seal keeps [npc.herHim] locked in place.");
-					case COMMAND:
-						return UtilText.parse(characterReacting, "[npc.Name] [npc.verb(remain)] completely motionless and doesn't react as your [pc.breasts+] are revealed.");
-					case SLEEP:
-						return UtilText.parse(characterReacting, "[npc.Name] [npc.verb(remain)] asleep and thus unable to react as your [pc.breasts] are revealed.");
-				}
+				return getAreaRevealWhileImmobilised(characterBeingRevealed, characterReacting, "[npc2.breasts+]", true);
 			}
 			
 			StringBuilder sb = new StringBuilder();
@@ -15918,33 +15944,7 @@ public abstract class GameCharacter implements XMLSaving {
 			
 		} else {
 			if(Main.game.isInSex() && Main.sex.isCharacterImmobilised(characterReacting)) {
-				Value<ImmobilisationType, GameCharacter> immobilisation = Main.sex.getImmobilisationType(characterReacting);
-				switch(immobilisation.getKey()) {
-					case CHAINS:
-						return UtilText.parse(characterReacting, characterBeingRevealed,
-								"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.breasts+] are revealed, but the chains binding [npc.her] body in place keep [npc.herHim] immobilised.");
-					case ROPE:
-						return UtilText.parse(characterReacting, characterBeingRevealed,
-								"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.breasts+] are revealed, but the ropes binding [npc.her] body in place keep [npc.herHim] immobilised.");
-					case COCOON:
-						return UtilText.parse(characterReacting, characterBeingRevealed,
-								"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.breasts+] are revealed, but [npc.her] cocoon's strong webbing keeps [npc.herHim] locked in place.");
-					case TAIL_CONSTRICTION:
-						return UtilText.parse(Util.newArrayListOfValues(characterReacting, characterBeingRevealed, immobilisation.getValue()),
-								"[npc.Name] tries to make a move as [npc2.namePos] [npc2.breasts+] are revealed, but [npc3.name] [npc3.verb(use)] [npc3.her] long tail to keep [npc.herHim] constricted and firmly locked in place.");
-					case TENTACLE_RESTRICTION:
-						return UtilText.parse(Util.newArrayListOfValues(characterReacting, characterBeingRevealed, immobilisation.getValue()),
-								"[npc.Name] tries to make a move as [npc2.namePos] [npc2.breasts+] are revealed, but [npc3.name] [npc3.verb(use)] [npc3.her] [npc3.tentacles] to keep [npc.herHim] firmly held in place.");
-					case WITCH_SEAL:
-						return UtilText.parse(characterReacting, characterBeingRevealed,
-								"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.breasts+] are revealed, but the Witch's Seal keeps [npc.herHim] locked in place.");
-					case COMMAND:
-						return UtilText.parse(characterReacting, characterBeingRevealed,
-								"[npc.Name] [npc.verb(remain)] completely motionless and doesn't react as [npc2.namePos] [npc2.breasts+] are revealed.");
-					case SLEEP:
-						return UtilText.parse(characterReacting, characterBeingRevealed,
-								"[npc.Name] [npc.verb(remain)] asleep and thus unable to react as [npc2.namePos] [npc2.breasts+] are revealed.");
-				}
+				return getAreaRevealWhileImmobilised(characterBeingRevealed, characterReacting, "[npc2.breasts+]", true);
 			}
 			return "";
 		}
@@ -15964,27 +15964,7 @@ public abstract class GameCharacter implements XMLSaving {
 		
 		if(characterBeingRevealed.equals(npcReacting)) {
 			if(Main.game.isInSex() && Main.sex.isCharacterImmobilised(characterReacting)) {
-				Value<ImmobilisationType, GameCharacter> immobilisation = Main.sex.getImmobilisationType(characterReacting);
-				switch(immobilisation.getKey()) {
-					case CHAINS:
-						return UtilText.parse(characterReacting, "[npc.Name] [npc.verb(try)] to make a move as [npc.her] [npc.crotchBoobs+] are revealed, but the chains binding [npc.her] body in place keep [npc.herHim] immobilised.");
-					case ROPE:
-						return UtilText.parse(characterReacting, "[npc.Name] [npc.verb(try)] to make a move as [npc.her] [npc.crotchBoobs+] are revealed, but the ropes binding [npc.her] body in place keep [npc.herHim] immobilised.");
-					case COCOON:
-						return UtilText.parse(characterReacting, "[npc.Name] tries to make a move as [npc.her] [npc.crotchBoobs+] are revealed, but [npc.her] cocoon's strong webbing keeps [npc.herHim] locked in place.");
-					case TAIL_CONSTRICTION:
-						return UtilText.parse(characterReacting, immobilisation.getValue(),
-								"[npc.Name] tries to make a move as [npc.her] [npc.crotchBoobs+] are revealed, but [npc2.name] [npc2.verb(use)] [npc2.her] long tail to keep [npc.herHim] constricted and firmly locked in place.");
-					case TENTACLE_RESTRICTION:
-						return UtilText.parse(characterReacting, immobilisation.getValue(),
-								"[npc.Name] tries to make a move as [npc.her] [npc.crotchBoobs+] are revealed, but [npc2.name] [npc2.verb(use)] [npc2.her] [npc2.tentacles] to keep [npc.herHim] firmly held in place.");
-					case WITCH_SEAL:
-						return UtilText.parse(characterReacting, "[npc.Name] tries to make a move as [npc.her] [npc.crotchBoobs+] are revealed, but the Witch's Seal keeps [npc.herHim] locked in place.");
-					case COMMAND:
-						return UtilText.parse(characterReacting, "[npc.Name] [npc.verb(remain)] completely motionless and doesn't react as [npc.her] [npc.crotchBoobs+] are revealed.");
-					case SLEEP:
-						return UtilText.parse(characterReacting, "[npc.Name] [npc.verb(remain)] asleep and thus unable to react as your [pc.crotchBoobs+] are revealed.");
-				}
+				return getAreaRevealWhileImmobilised(characterBeingRevealed, characterReacting, "[npc2.crotchBoobs+]", true);
 			}
 			
 			switch(reactingPace) {
@@ -16010,33 +15990,7 @@ public abstract class GameCharacter implements XMLSaving {
 			
 		} else {
 			if(Main.game.isInSex() && Main.sex.isCharacterImmobilised(characterReacting)) {
-				Value<ImmobilisationType, GameCharacter> immobilisation = Main.sex.getImmobilisationType(characterReacting);
-				switch(immobilisation.getKey()) {
-					case CHAINS:
-						return UtilText.parse(characterReacting, characterBeingRevealed,
-								"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.crotchBoobs+] are revealed, but the chains binding [npc.her] body in place keep [npc.herHim] immobilised.");
-					case ROPE:
-						return UtilText.parse(characterReacting, characterBeingRevealed,
-								"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.crotchBoobs+] are revealed, but the ropes binding [npc.her] body in place keep [npc.herHim] immobilised.");
-					case COCOON:
-						return UtilText.parse(characterReacting, characterBeingRevealed,
-								"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.crotchBoobs+] are revealed, but [npc.her] cocoon's strong webbing keeps [npc.herHim] locked in place.");
-					case TAIL_CONSTRICTION:
-						return UtilText.parse(Util.newArrayListOfValues(characterReacting, characterBeingRevealed, immobilisation.getValue()),
-								"[npc.Name] tries to make a move as [npc2.namePos] [npc2.crotchBoobs+] are revealed, but [npc3.name] [npc3.verb(use)] [npc3.her] long tail to keep [npc.herHim] constricted and firmly locked in place.");
-					case TENTACLE_RESTRICTION:
-						return UtilText.parse(Util.newArrayListOfValues(characterReacting, characterBeingRevealed, immobilisation.getValue()),
-								"[npc.Name] tries to make a move as [npc2.namePos] [npc2.crotchBoobs+] are revealed, but [npc3.name] [npc3.verb(use)] [npc3.her] [npc3.tentacles] to keep [npc.herHim] firmly held in place.");
-					case WITCH_SEAL:
-						return UtilText.parse(characterReacting, characterBeingRevealed,
-								"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.crotchBoobs+] are revealed, but the Witch's Seal keeps [npc.herHim] locked in place.");
-					case COMMAND:
-						return UtilText.parse(characterReacting, characterBeingRevealed,
-								"[npc.Name] [npc.verb(remain)] completely motionless and doesn't react as [npc2.namePos] [npc2.crotchBoobs+] are revealed.");
-					case SLEEP:
-						return UtilText.parse(characterReacting, characterBeingRevealed,
-								"[npc.Name] [npc.verb(remain)] asleep and thus unable to react as [npc2.namePos] [npc2.crotchBoobs+] are revealed.");
-				}
+				return getAreaRevealWhileImmobilised(characterBeingRevealed, characterReacting, "[npc2.crotchBoobs+]", true);
 			}
 			
 			switch(reactingPace) {
@@ -16076,32 +16030,7 @@ public abstract class GameCharacter implements XMLSaving {
 		}
 		
 		if(Main.game.isInSex() && Main.sex.isCharacterImmobilised(characterReacting)) {
-			Value<ImmobilisationType, GameCharacter> immobilisation = Main.sex.getImmobilisationType(characterReacting);
-			switch(immobilisation.getKey()) {
-				case CHAINS:
-					return UtilText.parse(characterReacting, characterBeingRevealed,
-							"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.cock+] is revealed, but the chains binding [npc.her] body in place keep [npc.herHim] immobilised.");
-				case ROPE:
-					return UtilText.parse(characterReacting, characterBeingRevealed,
-							"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.cock+] is revealed, but the ropes binding [npc.her] body in place keep [npc.herHim] immobilised.");
-				case COCOON:
-					return UtilText.parse(characterReacting, characterBeingRevealed,
-							"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.cock+] is revealed, but [npc.her] cocoon's strong webbing keeps [npc.herHim] locked in place.");
-				case TAIL_CONSTRICTION:
-					return UtilText.parse(Util.newArrayListOfValues(characterReacting, characterBeingRevealed, immobilisation.getValue()),
-							"[npc.Name] tries to make a move as [npc2.namePos] [npc2.cock+] is revealed, but [npc3.name] [npc3.verb(use)] [npc3.her] long tail to keep [npc.herHim] constricted and firmly locked in place.");
-				case TENTACLE_RESTRICTION:
-					return UtilText.parse(Util.newArrayListOfValues(characterReacting, characterBeingRevealed, immobilisation.getValue()),
-							"[npc.Name] tries to make a move as [npc2.namePos] [npc2.cock+] is revealed, but [npc3.name] [npc3.verb(use)] [npc3.her] [npc3.tentacles] to keep [npc.herHim] firmly held in place.");
-				case WITCH_SEAL:
-					return UtilText.parse(characterReacting, characterBeingRevealed,
-							"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.cock+] is revealed, but the Witch's Seal keeps [npc.herHim] locked in place.");
-				case COMMAND:
-					return UtilText.parse(characterReacting, characterBeingRevealed,
-							"[npc.Name] [npc.verb(remain)] completely motionless and doesn't react as [npc2.namePos] [npc2.cock+] is revealed.");
-				case SLEEP:
-					return UtilText.parse(characterReacting, "[npc.Name] [npc.verb(remain)] asleep and thus unable to react as your [pc.cock+] is revealed.");
-			}
+			return getAreaRevealWhileImmobilised(characterBeingRevealed, characterReacting, "[npc2.cock+]", false);
 		}
 		
 		StringBuilder sb = new StringBuilder();
@@ -16438,33 +16367,7 @@ public abstract class GameCharacter implements XMLSaving {
 		}
 
 		if(Main.game.isInSex() && Main.sex.isCharacterImmobilised(characterReacting)) {
-			Value<ImmobilisationType, GameCharacter> immobilisation = Main.sex.getImmobilisationType(characterReacting);
-			switch(immobilisation.getKey()) {
-				case CHAINS:
-					return UtilText.parse(characterReacting, characterBeingRevealed,
-							"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.pussy+] is revealed, but the chains binding [npc.her] body in place keep [npc.herHim] immobilised.");
-				case ROPE:
-					return UtilText.parse(characterReacting, characterBeingRevealed,
-							"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.pussy+] is revealed, but the ropes binding [npc.her] body in place keep [npc.herHim] immobilised.");
-				case COCOON:
-					return UtilText.parse(characterReacting, characterBeingRevealed,
-							"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.pussy+] is revealed, but [npc.her] cocoon's strong webbing keeps [npc.herHim] locked in place.");
-				case TAIL_CONSTRICTION:
-					return UtilText.parse(Util.newArrayListOfValues(characterReacting, characterBeingRevealed, immobilisation.getValue()),
-							"[npc.Name] tries to make a move as [npc2.namePos] [npc2.pussy+] is revealed, but [npc3.name] [npc3.verb(use)] [npc3.her] long tail to keep [npc.herHim] constricted and firmly locked in place.");
-				case TENTACLE_RESTRICTION:
-					return UtilText.parse(Util.newArrayListOfValues(characterReacting, characterBeingRevealed, immobilisation.getValue()),
-							"[npc.Name] tries to make a move as [npc2.namePos] [npc2.pussy+] is revealed, but [npc3.name] [npc3.verb(use)] [npc3.her] [npc3.tentacles] to keep [npc.herHim] firmly held in place.");
-				case WITCH_SEAL:
-					return UtilText.parse(characterReacting, characterBeingRevealed,
-							"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] [npc2.pussy+] is revealed, but the Witch's Seal keeps [npc.herHim] locked in place.");
-				case COMMAND:
-					return UtilText.parse(characterReacting, characterBeingRevealed,
-							"[npc.Name] [npc.verb(remain)] completely motionless and doesn't react as [npc2.namePos] [npc2.pussy+] is revealed.");
-				case SLEEP:
-					return UtilText.parse(characterReacting, characterBeingRevealed,
-							"[npc.Name] [npc.verb(remain)] asleep and thus unable to react as [npc2.namePos] [npc2.pussy+] is revealed.");
-			}
+			return getAreaRevealWhileImmobilised(characterBeingRevealed, characterReacting, "[npc2.pussy+]", false);
 		}
 		
 		StringBuilder sb = new StringBuilder();
@@ -16605,33 +16508,7 @@ public abstract class GameCharacter implements XMLSaving {
 		}
 
 		if(Main.game.isInSex() && Main.sex.isCharacterImmobilised(characterReacting)) {
-			Value<ImmobilisationType, GameCharacter> immobilisation = Main.sex.getImmobilisationType(characterReacting);
-			switch(immobilisation.getKey()) {
-				case CHAINS:
-					return UtilText.parse(characterReacting, characterBeingRevealed,
-							"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] genderless mound is revealed, but the chains binding [npc.her] body in place keep [npc.herHim] immobilised.");
-				case ROPE:
-					return UtilText.parse(characterReacting, characterBeingRevealed,
-							"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] genderless mound is revealed, but the ropes binding [npc.her] body in place keep [npc.herHim] immobilised.");
-				case COCOON:
-					return UtilText.parse(characterReacting, characterBeingRevealed,
-							"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] genderless mound is revealed, but [npc.her] cocoon's strong webbing keeps [npc.herHim] locked in place.");
-				case TAIL_CONSTRICTION:
-					return UtilText.parse(Util.newArrayListOfValues(characterReacting, characterBeingRevealed, immobilisation.getValue()),
-							"[npc.Name] tries to make a move as [npc2.namePos] genderless mound is revealed, but [npc3.name] [npc3.verb(use)] [npc3.her] long tail to keep [npc.herHim] constricted and firmly locked in place.");
-				case TENTACLE_RESTRICTION:
-					return UtilText.parse(Util.newArrayListOfValues(characterReacting, characterBeingRevealed, immobilisation.getValue()),
-							"[npc.Name] tries to make a move as [npc2.namePos] genderless mound is revealed, but [npc3.name] [npc3.verb(use)] [npc3.her] [npc3.tentacles] to keep [npc.herHim] firmly held in place.");
-				case WITCH_SEAL:
-					return UtilText.parse(characterReacting, characterBeingRevealed,
-							"[npc.Name] [npc.verb(try)] to make a move as [npc2.namePos] genderless mound is revealed, but the Witch's Seal keeps [npc.herHim] locked in place.");
-				case COMMAND:
-					return UtilText.parse(characterReacting, characterBeingRevealed,
-							"[npc.Name] [npc.verb(remain)] completely motionless and doesn't react as [npc2.namePos] genderless mound is revealed.");
-				case SLEEP:
-					return UtilText.parse(characterReacting, characterBeingRevealed,
-							"[npc.Name] [npc.verb(remain)] asleep and thus unable to react as [npc2.namePos] genderless mound is revealed.");
-			}
+			return getAreaRevealWhileImmobilised(characterBeingRevealed, characterReacting, "genderless mound", false);
 		}
 		
 		StringBuilder sb = new StringBuilder();
@@ -16675,7 +16552,7 @@ public abstract class GameCharacter implements XMLSaving {
 	// Penetrations:
 	
 	private static String generateGenericPenetrationDescription(GameCharacter characterPenetrating, SexAreaPenetration penetrationType, GameCharacter characterPenetrated, SexAreaInterface orifice) {
-		boolean immobile = Main.sex.isCharacterImmobilised(characterPenetrating) && Main.sex.getImmobilisationType(characterPenetrating).getKey()==ImmobilisationType.COMMAND;
+		boolean immobile = Main.sex.isCharacterImmobilised(characterPenetrating) && Main.sex.isCharacterInanimateFromImmobilisation(characterPenetrating);
 		
 		// Kissing:
 		if(penetrationType == SexAreaPenetration.TONGUE && orifice == SexAreaOrifice.MOUTH) {
@@ -17211,7 +17088,7 @@ public abstract class GameCharacter implements XMLSaving {
 		
 		String ownerName = characterPenetrating.equals(characterPenetrated)?"[npc2.her]":"[npc2.namePos]";
 
-		boolean immobile = Main.sex.isCharacterImmobilised(characterPenetrating) && Main.sex.getImmobilisationType(characterPenetrating).getKey()==ImmobilisationType.COMMAND;
+		boolean immobile = Main.sex.isCharacterImmobilised(characterPenetrating) && Main.sex.isCharacterInanimateFromImmobilisation(characterPenetrating);
 		if(immobile) {
 			if(characterPenetrating.isAsleep()) {
 				return UtilText.parse(characterPenetrating, characterPenetrated,
@@ -17232,7 +17109,12 @@ public abstract class GameCharacter implements XMLSaving {
 	
 	public boolean isWantingToFullyPenetrate(GameCharacter target) {
 		if(Main.game.isInSex()) {
-			return (Main.sex.getSexPace(this)==SexPace.DOM_ROUGH && !target.equals(this)) || Objects.equals(Main.sex.getCharacterKnotting(this), target) || target.isWantingToBeFullyPenetrated(this);
+			if(target.isAsleep()) {
+				return false;
+			}
+			return (Main.sex.getSexPace(this)==SexPace.DOM_ROUGH && !target.equals(this))
+					|| Objects.equals(Main.sex.getCharacterKnotting(this), target)
+					|| target.isWantingToBeFullyPenetrated(this);
 		}
 		return (this.hasFetish(Fetish.FETISH_SADIST) && !target.equals(this)) || target.isWantingToBeFullyPenetrated(this);
 	}
@@ -17440,9 +17322,9 @@ public abstract class GameCharacter implements XMLSaving {
 		
 		boolean feelsKnot = orifice.isOrifice() && ((SexAreaOrifice)orifice).isInternalOrifice() && characterPenetrating.isFullPenetrationTooShort(penetrationType, characterPenetrated, (SexAreaOrifice)orifice);
 
-		boolean immobilePenetrating = Main.sex.isCharacterImmobilised(characterPenetrating) && Main.sex.getImmobilisationType(characterPenetrating).getKey()==ImmobilisationType.COMMAND;
+		boolean immobilePenetrating = Main.sex.isCharacterImmobilised(characterPenetrating) && Main.sex.isCharacterInanimateFromImmobilisation(characterPenetrating);
 		boolean sleepingPenetrating = characterPenetrating.isAsleep();
-		boolean immobilePenetrated = Main.sex.isCharacterImmobilised(characterPenetrated) && Main.sex.getImmobilisationType(characterPenetrated).getKey()==ImmobilisationType.COMMAND;
+		boolean immobilePenetrated = Main.sex.isCharacterImmobilised(characterPenetrated) && Main.sex.isCharacterInanimateFromImmobilisation(characterPenetrated);
 		boolean sleepingPenetrated = characterPenetrated.isAsleep();
 		
 		if(penetrationType == SexAreaPenetration.FINGER && orifice == SexAreaPenetration.PENIS) {
@@ -18197,9 +18079,9 @@ public abstract class GameCharacter implements XMLSaving {
 		
 		boolean knotting = penetrationType==SexAreaPenetration.PENIS && Main.game.isInSex() && Objects.equals(Main.sex.getCharacterKnotting(characterPenetrating), characterPenetrated);
 
-		boolean immobile = Main.sex.isCharacterImmobilised(characterPenetrating) && Main.sex.getImmobilisationType(characterPenetrating).getKey()==ImmobilisationType.COMMAND;
+		boolean immobile = Main.sex.isCharacterImmobilised(characterPenetrating) && Main.sex.isCharacterInanimateFromImmobilisation(characterPenetrating);
 		boolean sleeping = characterPenetrating.isAsleep();
-		boolean immobile2 = Main.sex.isCharacterImmobilised(characterPenetrated) && Main.sex.getImmobilisationType(characterPenetrated).getKey()==ImmobilisationType.COMMAND;
+		boolean immobile2 = Main.sex.isCharacterImmobilised(characterPenetrated) && Main.sex.isCharacterInanimateFromImmobilisation(characterPenetrated);
 		boolean sleeping2 = characterPenetrated.isAsleep();
 		
 		if(!Main.game.isInSex() || Main.sex.isDom(characterPenetrating)) { // The character doing the penetrating is the dom:
@@ -18284,7 +18166,12 @@ public abstract class GameCharacter implements XMLSaving {
 					sb.append(" to comfortably accommodate the full length of [npc.her] "+nameLength+".");
 				}
 				// Core penetration information is displayed last:
-				sb.append("<br/>[style.italicsBad([npc.Name] [npc.is] holding back and only inserting [style.sizeShort("+comfortable+")] of [npc.her] "+name+" so as not to cause [npc2.name] discomfort!)]");
+				sb.append("<br/>[style.italicsBad([npc.Name] [npc.is] holding back and only inserting [style.sizeShort("+comfortable+")] of [npc.her] "+name);
+				if(sleeping2) {
+					sb.append(" so as not to wake [npc2.name] up!)]");
+				} else {
+					sb.append(" so as not to cause [npc2.name] discomfort!)]");
+				}
 				
 				
 			} else {
@@ -18302,7 +18189,9 @@ public abstract class GameCharacter implements XMLSaving {
 							+(internalOrifice==SexAreaOrifice.MOUTH?"down":"into")+" [npc2.her] "+orificeName+"!");
 					
 					
-				} else if(characterPenetrated.hasFetish(Fetish.FETISH_SIZE_QUEEN) && Main.sex.getSexPace(characterPenetrated)!=SexPace.SUB_RESISTING) {
+				} else if(characterPenetrated.hasFetish(Fetish.FETISH_SIZE_QUEEN)
+						&& Main.sex.getSexPace(characterPenetrated)!=SexPace.SUB_RESISTING
+						&& !immobile2) {
 					if(internalOrifice==SexAreaOrifice.MOUTH) {
 						sb.append("Encouraged by [npc2.namePos] eager [npc2.moans] betraying the fact that [npc2.sheIsFull] a "+Fetish.FETISH_SIZE_QUEEN.getName(characterPenetrated)
 									+ ", [npc.name] [npc.verb(thrust)] [npc.her] "+name+" [style.italicsMinorGood(as deep as physically possible)] down [npc2.her] "+orificeName+"!");
@@ -18605,7 +18494,7 @@ public abstract class GameCharacter implements XMLSaving {
 		
 		String orificeName = orifice.getName(characterPenetrated);
 
-		boolean immobilePenetrated = Main.sex.isCharacterImmobilised(characterPenetrated) && Main.sex.getImmobilisationType(characterPenetrated).getKey()==ImmobilisationType.COMMAND;
+		boolean immobilePenetrated = Main.sex.isCharacterImmobilised(characterPenetrated) && Main.sex.isCharacterInanimateFromImmobilisation(characterPenetrated);
 		
 		if(internalOrifice==SexAreaOrifice.MOUTH) {
 			orificeName = "throat";
@@ -19001,7 +18890,9 @@ public abstract class GameCharacter implements XMLSaving {
 	}
 
 	public String getStretchingFinishedDescription(SexAreaOrifice orifice) {
-		boolean immobile = Main.sex.getAllParticipants().contains(this) && Main.sex.isCharacterImmobilised(this) && Main.sex.getImmobilisationType(this).getKey()==ImmobilisationType.COMMAND;
+		boolean immobile = Main.sex.getAllParticipants().contains(this)
+				&& Main.sex.isCharacterImmobilised(this)
+				&& (Main.sex.getImmobilisationTypes(this).containsKey(ImmobilisationType.COMMAND) || Main.sex.getImmobilisationTypes(this).containsKey(ImmobilisationType.SLEEP));
 		
 		String prefix = "[npc.Name] [npc.verb(let)] out [npc.a_moan+]";
 		if(immobile) {
@@ -19090,7 +18981,7 @@ public abstract class GameCharacter implements XMLSaving {
 		} catch (Exception e) {
 			fluidOwner = null;
 		}
-		return ingestFluid(fluidOwner, fluid.getCumSubspecies(), fluid.getCumHalfDemonSubspecies(), fluid.getFluid(), orificeIngestedThrough, fluid.getMillilitres());
+		return ingestFluid(fluidOwner, fluid.getBody(), fluid.getFluid(), orificeIngestedThrough, fluid.getMillilitres());
 	}
 
 	public String ingestFluid(FluidStored fluid, SexAreaOrifice orificeIngestedThrough, float millilitres) {
@@ -19100,14 +18991,25 @@ public abstract class GameCharacter implements XMLSaving {
 		} catch (Exception e) {
 			fluidOwner = null;
 		}
-		return ingestFluid(fluidOwner, fluid.getCumSubspecies(), fluid.getCumHalfDemonSubspecies(), fluid.getFluid(), orificeIngestedThrough, millilitres);
+		return ingestFluid(fluidOwner, fluid.getBody(), fluid.getFluid(), orificeIngestedThrough, millilitres);
 	}
 	
 	public String ingestFluid(GameCharacter charactersFluid, FluidInterface fluid, SexAreaOrifice orificeIngestedThrough, float millilitres) {
-		return ingestFluid(charactersFluid, charactersFluid.getSubspecies(), charactersFluid.getHalfDemonSubspecies(), fluid, orificeIngestedThrough, millilitres);
+		return ingestFluid(charactersFluid, charactersFluid.getBody(), fluid, orificeIngestedThrough, millilitres);
 	}
 
 	public String ingestFluid(GameCharacter charactersFluid, AbstractSubspecies subspecies, AbstractSubspecies halfDemonSubspecies, AbstractFluidType fluidType, SexAreaOrifice orificeIngestedThrough, float millilitres) {
+		return ingestFluid(
+				charactersFluid,
+				subspecies==Subspecies.HALF_DEMON
+					?Main.game.getCharacterUtils().generateHalfDemonBody(charactersFluid, charactersFluid==null?Gender.M_P_MALE:charactersFluid.getGender(), halfDemonSubspecies, false)
+					:Main.game.getCharacterUtils().generateBody(charactersFluid, charactersFluid==null?Gender.M_P_MALE:charactersFluid.getGender(), subspecies, charactersFluid==null?RaceStage.GREATER:charactersFluid.getRaceStage()),
+				fluidType,
+				orificeIngestedThrough,
+				millilitres);
+	}
+	
+	public String ingestFluid(GameCharacter charactersFluid, Body body, AbstractFluidType fluidType, SexAreaOrifice orificeIngestedThrough, float millilitres) {
 		FluidInterface fluid = null;
 		switch(fluidType.getBaseType()) {
 			case CUM:
@@ -19120,7 +19022,17 @@ public abstract class GameCharacter implements XMLSaving {
 				fluid = new FluidMilk(fluidType, false);
 				break;
 		}
-		return ingestFluid(charactersFluid, subspecies, halfDemonSubspecies, fluid, orificeIngestedThrough, millilitres);
+		return ingestFluid(charactersFluid, body, fluid, orificeIngestedThrough, millilitres);
+	}
+
+	public String ingestFluid(GameCharacter charactersFluid, AbstractSubspecies subspecies, AbstractSubspecies halfDemonSubspecies, FluidInterface fluid, SexAreaOrifice orificeIngestedThrough, float millilitres) {
+		return ingestFluid(charactersFluid, 
+				subspecies==Subspecies.HALF_DEMON
+					?Main.game.getCharacterUtils().generateHalfDemonBody(charactersFluid, charactersFluid==null?Gender.M_P_MALE:charactersFluid.getGender(), halfDemonSubspecies, false)
+					:Main.game.getCharacterUtils().generateBody(charactersFluid, charactersFluid==null?Gender.M_P_MALE:charactersFluid.getGender(), subspecies, charactersFluid==null?RaceStage.GREATER:charactersFluid.getRaceStage()),
+				fluid,
+				orificeIngestedThrough,
+				millilitres);
 	}
 	
 	/**
@@ -19129,15 +19041,15 @@ public abstract class GameCharacter implements XMLSaving {
 	 * @param addictive Is this fluid addictive or not.
 	 * @return A <b>formatted paragraph</b> description of addiction increasing/satisfied, or an empty String if no addictive effects occur.
 	 */
-	public String ingestFluid(GameCharacter charactersFluid, AbstractSubspecies subspecies, AbstractSubspecies halfDemonSubspecies, FluidInterface fluid, SexAreaOrifice orificeIngestedThrough, float millilitres) {
+	public String ingestFluid(GameCharacter charactersFluid, Body cumBody, FluidInterface fluid, SexAreaOrifice orificeIngestedThrough, float millilitres) {
 		StringBuilder fluidIngestionSB = new StringBuilder();
 		
-		List<FluidModifier> modifiers = fluid.getFluidModifiers();
+		Set<FluidModifier> modifiers = new HashSet<>(fluid.getFluidModifiers());
 		
 		boolean found = false;
 		
 		if((orificeIngestedThrough.equals(SexAreaOrifice.VAGINA) || orificeIngestedThrough.equals(SexAreaOrifice.URETHRA_VAGINA)) && this.isVisiblyPregnant()) { // Limit intake based on 250ml max for pregnant characters:
-			millilitres = Math.min(millilitres, 250-this.getTotalFluidInArea(orificeIngestedThrough));
+			millilitres = Math.min(millilitres, Body.MAXIMUM_CREAMPIE_WHILE_PREGNANT-this.getTotalFluidInArea(orificeIngestedThrough));
 		}
 		
 		FluidStored newFluid;
@@ -19145,7 +19057,7 @@ public abstract class GameCharacter implements XMLSaving {
 			if(charactersFluid!=null) {
 				newFluid = new FluidStored(charactersFluid, ((FluidCum) fluid), millilitres);
 			} else {
-				newFluid = new FluidStored("", subspecies, halfDemonSubspecies, ((FluidCum) fluid), millilitres);
+				newFluid = new FluidStored("", cumBody, ((FluidCum) fluid), millilitres);
 			}
 		} else if(fluid instanceof FluidMilk) {
 			newFluid = new FluidStored(charactersFluid==null?null:charactersFluid.getId(), ((FluidMilk)fluid), millilitres);
@@ -19172,8 +19084,7 @@ public abstract class GameCharacter implements XMLSaving {
 						orificeIngestedThrough,
 						new FluidStored(
 								charactersFluid==null?"":charactersFluid.getId(),
-								subspecies!=null?subspecies:charactersFluid.getSubspecies(),
-								charactersFluid==null?halfDemonSubspecies:charactersFluid.getHalfDemonSubspecies(),
+								cumBody,
 								(FluidCum)fluid, millilitres));
 			}
 			
@@ -19283,12 +19194,20 @@ public abstract class GameCharacter implements XMLSaving {
 		
 		if((this.getBodyMaterial()==BodyMaterial.SLIME || orificeIngestedThrough == SexAreaOrifice.VAGINA)
 				&& fluid.getType().getBaseType()==FluidTypeBase.CUM) {
-			if(charactersFluid!=null) {
-				fluidIngestionSB.append(rollForPregnancy(charactersFluid, millilitres, Main.game.isInSex()));
-				
-			} else if(subspecies!=null) {
-				fluidIngestionSB.append(rollForPregnancy(subspecies, halfDemonSubspecies, millilitres, Main.game.isInSex()));
-			}
+//			if(charactersFluid!=null) {
+//				System.out.println(UtilText.parse(this, charactersFluid, "1a: Rolling for [npc.name] ingesting [npc2.namePos] "+fluid.getName(charactersFluid)));
+//			} else {
+//				System.out.println(UtilText.parse(this, "1b: Rolling for [npc.name] ingesting "+fluid.getName(null)));
+//			}
+			fluidIngestionSB.append(this.rollForPregnancy(charactersFluid, cumBody, millilitres, newFluid.isCumVirile(), newFluid.getVirility(), Main.game.isInSex(), FertilisationType.NORMAL));
+			//GGameCharacter partner, Body partnerBody, float cumQuantity, boolean isPartnerVirile, float partnerVirility, boolean directSexInsemination, FertilisationType fertilisationType
+			
+//			if(charactersFluid!=null) {
+//				fluidIngestionSB.append(this.rollForPregnancy(charactersFluid, millilitres, Main.game.isInSex()));
+//				
+//			} else {
+//				fluidIngestionSB.append(this.rollForPregnancy(cumBody, millilitres, Main.game.isInSex()));
+//			}
 		}
 		
 		for(FluidModifier mod : modifiers) {
@@ -20730,9 +20649,16 @@ public abstract class GameCharacter implements XMLSaving {
 								//Util.logGetNpcByIdError("performImpregnationCheck()", fs.getCharactersFluidID());
 							}
 						}
-						if(partner!=null) {
-							rollForPregnancy(partner, fs.getMillilitres(), directSexImpregnation);
-						}
+//						if(partner!=null) {
+//							System.out.println(UtilText.parse(this, partner, "2a: Rolling for [npc.name] impregnated by [npc2.namePos] "+fs.getFluid().getName(partner)));
+//						} else {
+//							System.out.println(UtilText.parse(this, "2b: Rolling for [npc.name] impregnated by "+fs.getFluid().getName(null)));
+//						}
+						this.rollForPregnancy(partner, fs.getBody(), fs.getMillilitres(), fs.isCumVirile(), fs.getVirility(), directSexImpregnation, FertilisationType.NORMAL);
+						
+//						if(partner!=null) {
+//							this.rollForPregnancy(partner, fs.getMillilitres(), directSexImpregnation);
+//						}
 					}
 				}
 			}
@@ -20753,23 +20679,285 @@ public abstract class GameCharacter implements XMLSaving {
 	public boolean isImpregnationPhysicallyPossible() {
 		return !this.isDoll() && !this.isElemental();
 	}
+
+	/**
+	 * @return false if this character has the MENOPAUSE StatusEffect, or if they have the BARREN perk and FERTILITY attribute is <= 0.
+	 */
+	public boolean isFertile() {
+		return !this.hasStatusEffect(StatusEffect.MENOPAUSE)
+				&& (this.getAttributeValue(Attribute.FERTILITY) > 0 || !this.hasTraitActivated(Perk.BARREN));
+	}
+	/**
+	 * @return false if this character has the FIRING_BLANKS perk and virilityAttribute attribute is <= 0.
+	 */
+	public boolean isVirile(AbstractAttribute virilityAttribute) {
+		return this.getAttributeValue(virilityAttribute) > 0 || !this.hasTraitActivated(Perk.FIRING_BLANKS);
+	}
 	
-	public String rollForPregnancy(GameCharacter partner, float cumQuantity, boolean directSexInsemination) {
-		return rollForPregnancy(partner, cumQuantity, directSexInsemination, Attribute.VIRILITY);
+//	public String rollForPregnancy(GameCharacter partner, float cumQuantity, boolean directSexInsemination) {
+//		return rollForPregnancy(partner, cumQuantity, directSexInsemination, Attribute.VIRILITY);
+//	}
+//
+//	public String rollForPregnancy(GameCharacter partner, float cumQuantity, boolean directSexInsemination, AbstractAttribute virilityAttribute) {
+//		return rollForPregnancy(partner, cumQuantity, directSexInsemination, FertilisationType.NORMAL, Attribute.VIRILITY);
+//	}
+//	
+//	public String rollForPregnancy(GameCharacter partner, float cumQuantity, boolean directSexInsemination, FertilisationType fertilisationType, AbstractAttribute virilityAttribute) {
+//		// Elemental handling:
+//		if(this.isElemental()) {
+//			return PregnancyDescriptor.NO_CHANCE.getDescriptor(this, partner, directSexInsemination)
+//					+"<p style='text-align:center;'>[style.italicsMinorBad(Elementals cannot get pregnant!)]"
+//					+ "</p>";
+//		}
+//		if(partner.isElemental()) {
+//			return PregnancyDescriptor.NO_CHANCE.getDescriptor(this, partner, directSexInsemination)
+//					+"<p style='text-align:center;'>"
+//						+ "[style.italicsMinorBad(Elementals cannot impregnate anyone!)]"
+//					+ "</p>";
+//		}
+//		
+//		// Doll handling:
+//		if(this.isDoll()) {
+//			return PregnancyDescriptor.NO_CHANCE.getDescriptor(this, partner, directSexInsemination)
+//					+"<p style='text-align:center;'>[style.italicsMinorBad(Dolls cannot get pregnant!)]"
+//					+ "</p>";
+//		}
+//		if(partner.isDoll()) {
+//			return PregnancyDescriptor.NO_CHANCE.getDescriptor(this, partner, directSexInsemination)
+//					+"<p style='text-align:center;'>"
+//						+ "[style.italicsMinorBad(Dolls cannot impregnate anyone!)]"
+//					+ "</p>";
+//		}
+//		
+//		if(isVisiblyPregnant()) {
+//			return PregnancyDescriptor.ALREADY_PREGNANT.getDescriptor(this, partner, directSexInsemination);
+//		}
+//		if(this.getIncubationLitter(SexAreaOrifice.VAGINA)!=null) {
+//			return PregnancyDescriptor.ALREADY_PREGNANT_EGGS.getDescriptor(this, partner, directSexInsemination);
+//		}
+//		
+//		float pregnancyChance = 0.1f;
+//		
+//		boolean partnerVirile = partner.isVirile(virilityAttribute);
+//		boolean selfFertile = this.isFertile();
+//		
+//		if(!partnerVirile || !selfFertile || !isAbleToBeImpregnated()) {
+//			pregnancyChance = 0;
+//			
+//		} else if(isAbleToBeImpregnated()) {
+//			pregnancyChance += (partner.getAttributeValue(virilityAttribute)/100f)/2f;
+//			pregnancyChance += (getAttributeValue(Attribute.FERTILITY)/100f)/2f;
+//			pregnancyChance = Math.max(0, Math.min(pregnancyChance, 1));
+//		}
+//		if(guaranteePregnancyOnNextRoll) {
+//			pregnancyChance = 1;
+//			guaranteePregnancyOnNextRoll = false;
+//		}
+//		
+//		PregnancyPossibility pregPoss = new PregnancyPossibility(this.getId(), partner.getId(), pregnancyChance);
+//		
+//		this.addPotentialPartnerAsMother(pregPoss);
+//		partner.addPotentialPartnerAsFather(pregPoss);
+//		
+//		String pregnancyDescription = PregnancyDescriptor.getPregnancyDescriptorBasedOnProbability(pregnancyChance).getDescriptor(this, partner, directSexInsemination);
+//		
+//		// Now roll for pregnancy:
+//		if (!isPregnant()) {
+//			if (!hasStatusEffect(StatusEffect.PREGNANT_0)) {
+//				addStatusEffect(StatusEffect.PREGNANT_0, (60 * 60) * (4 + Util.random.nextInt(5)));
+//			}
+//			if (pregnancyChance>0 && Math.random() <= pregnancyChance) {
+//				AbstractRace litterSizeBasedOn = null;
+//				
+//				if (this.getBodyMaterial() == BodyMaterial.SLIME) {
+//					litterSizeBasedOn = Race.SLIME;
+//				} else {
+//					AbstractVaginaType vaginaType = getVaginaType();
+//					if(vaginaType.getRace()==Race.HUMAN) {
+//						litterSizeBasedOn = Optional.ofNullable(partner.getPenisType().getRace()).orElseGet(partner::getRace);
+//					} else {
+//						litterSizeBasedOn = Optional.ofNullable(vaginaType.getRace()).orElseGet(this::getRace);
+//					}
+//				}
+//				
+//				int minimumNumberOfChildren = litterSizeBasedOn.getNumberOfOffspringLow();
+//				int maximumNumberOfChildren = litterSizeBasedOn.getNumberOfOffspringHigh();
+//				
+//
+//				if(this.hasTraitActivated(Perk.FETISH_BROODMOTHER)) {
+//					maximumNumberOfChildren *= 2;
+//				}
+//				if(partner.hasTraitActivated(Perk.FETISH_SEEDER)) {
+//					maximumNumberOfChildren *= 2;
+//				}
+//				
+//				int numberOfChildren = minimumNumberOfChildren + Util.random.nextInt((maximumNumberOfChildren-minimumNumberOfChildren)+1);
+//				
+//				if(this.hasStatusEffect(StatusEffect.BROODMOTHER_PILL)) {
+//					numberOfChildren *= 2;
+//				}
+//				if(partner.hasStatusEffect(StatusEffect.BROODMOTHER_PILL)) {
+//					numberOfChildren *= 2;
+//				}
+//				
+//				List<OffspringSeed> offspring = new ArrayList<>(numberOfChildren);
+//				for (int i = 0; i < numberOfChildren; i++) { // Add children here:
+//					OffspringSeed os = new OffspringSeed(this, partner);
+//					offspring.add(os);
+//					try {
+//						Main.game.addOffspringSeed(os, false);
+//					} catch (Exception e) {
+//						e.printStackTrace();
+//					}
+//				}
+//				
+//				pregnantLitter = new Litter(Main.game.getDateNow(), Main.game.getDateNow(), this, partner, fertilisationType, offspring);
+//				this.resetAllPregnancyReactions();
+//			}
+//		}
+//		
+//		return pregnancyDescription;
+//	}
+
+//	/**
+//	 * A variation for the pregnancy check when the owner of the cum is null.
+//	 * @param partnerSubspecies The subspecies of the cum owner (if they were to exist).
+//	 * @param partnerSubspecies The half-demon subspecies of the cum owner (if they were to exist).
+//	 * @param cumQuantity How much cum is in this character's orifice (usually the vagina).
+//	 * @param directSexInsemination true if this method is calculated from someone directly cumming inside this character, as opposed to ingesting cum from a container.
+//	 */
+//	public String rollForPregnancy(AbstractSubspecies partnerSubspecies, AbstractSubspecies partnerHalfDemonSubspecies, float cumQuantity, boolean directSexInsemination) {
+//		return rollForPregnancy(partnerSubspecies, partnerHalfDemonSubspecies, cumQuantity, directSexInsemination, FertilisationType.NORMAL);
+//	}
+	
+//	public String rollForPregnancy(Body partnerBody, float cumQuantity, boolean directSexInsemination) {
+//		return rollForPregnancy(partnerBody, cumQuantity, directSexInsemination, FertilisationType.NORMAL);
+//	}
+	
+	/**
+	 * A variation for the pregnancy check when the owner of the cum is null.
+	 * @param partnerSubspecies The subspecies of the cum owner (if they were to exist).
+	 * @param partnerHalfDemonSubspecies The half-demon subspecies of the cum owner (if they were to exist).
+	 * @param cumQuantity How much cum is in this character's orifice (usually the vagina).
+	 * @param directSexInsemination true if this method is calculated from someone directly cumming inside this character, as opposed to ingesting cum from a container.
+	 * @param fertilisationType The type of fertilisation which is occurring (either NORMAL from cum or TRIBBING from Amazon's Secret effect).
+	 */
+	public String rollForPregnancy(AbstractSubspecies partnerSubspecies, AbstractSubspecies partnerHalfDemonSubspecies, float cumQuantity, boolean directSexInsemination, FertilisationType fertilisationType) {
+		return rollForPregnancy(
+				partnerSubspecies==Subspecies.HALF_DEMON
+					?Main.game.getCharacterUtils().generateHalfDemonBody(null, Gender.M_P_MALE, partnerHalfDemonSubspecies, false)
+					:Main.game.getCharacterUtils().generateBody(null, Gender.M_P_MALE, partnerSubspecies, RaceStage.GREATER),
+				cumQuantity,
+				directSexInsemination,
+				fertilisationType);
+	}
+	
+//	public String rollForPregnancy(Body partnerBody, float cumQuantity, boolean directSexInsemination, FertilisationType fertilisationType) {
+//		if(partnerBody.getRace()==Race.ELEMENTAL) {
+//			return PregnancyDescriptor.NO_CHANCE.getDescriptor(this, null, directSexInsemination)
+//					+"<p style='text-align:center;'>[style.italicsMinorBad(Elementals cannot impregnate anyone!)]<br/>[style.italicsDisabled(I will add support for impregnating/being impregnated by elementals later on!)]</p>";
+//		}
+//		
+//		if(isVisiblyPregnant()) {
+//			return PregnancyDescriptor.ALREADY_PREGNANT.getDescriptor(this, null, directSexInsemination);
+//		}
+//		if(this.getIncubationLitter(SexAreaOrifice.VAGINA)!=null) {
+//			return PregnancyDescriptor.ALREADY_PREGNANT_EGGS.getDescriptor(this, null, directSexInsemination);
+//		}
+//		
+//		float pregnancyChance = 0.1f;
+//		int baseVirility = 25;
+//		boolean selfFertile = this.isFertile();
+//		
+//		if(selfFertile && isAbleToBeImpregnated()) {
+//			pregnancyChance += (baseVirility/100f)/2f;
+//			pregnancyChance += (getAttributeValue(Attribute.FERTILITY)/100f)/2f;
+//			pregnancyChance = Math.max(0, Math.min(pregnancyChance, 1));
+//		} else {
+//			pregnancyChance = 0;
+//		}
+//		if(guaranteePregnancyOnNextRoll) {
+//			pregnancyChance = 1;
+//			guaranteePregnancyOnNextRoll = false;
+//		}
+//		
+//		String partnerId = Subspecies.getIdFromSubspecies(partnerBody.getSubspecies()) + Main.game.getSecondsPassed(); // This should be fine as this method is never used in sex? :s
+//		PregnancyPossibility pregPoss = new PregnancyPossibility(this.getId(), partnerId, pregnancyChance);
+//		
+//		this.addPotentialPartnerAsMother(pregPoss);
+//		
+//		String pregnancyDescription = PregnancyDescriptor.getPregnancyDescriptorBasedOnProbability(pregnancyChance).getDescriptor(this, null, directSexInsemination);
+//		
+//		// Now roll for pregnancy:
+//		if (!isPregnant()) {
+//			if (!hasStatusEffect(StatusEffect.PREGNANT_0)) {
+//				addStatusEffect(StatusEffect.PREGNANT_0, (60 * 60) * (4 + Util.random.nextInt(5)));
+//			}
+//			if (Math.random() <= pregnancyChance) {
+//				AbstractRace litterSizeBasedOn = null;
+//				
+//				if (this.getBodyMaterial() == BodyMaterial.SLIME) {
+//					litterSizeBasedOn = Race.SLIME;
+//				} else {
+//					AbstractVaginaType vaginaType = getVaginaType();
+//					if (vaginaType.getRace()==Race.HUMAN) {
+//						litterSizeBasedOn = partnerBody.getRace();
+//					} else {
+//						litterSizeBasedOn = Optional.ofNullable(vaginaType.getRace()).orElseGet(this::getRace);
+//					}
+//				}
+//				
+//				int minimumNumberOfChildren = litterSizeBasedOn.getNumberOfOffspringLow();
+//				int maximumNumberOfChildren = litterSizeBasedOn.getNumberOfOffspringHigh();
+//				
+//				if (hasTraitActivated(Perk.FETISH_BROODMOTHER)) {
+//					maximumNumberOfChildren *= 2;
+//				}
+//				
+//				int numberOfChildren = minimumNumberOfChildren + Util.random.nextInt((maximumNumberOfChildren-minimumNumberOfChildren)+1);
+//				
+//				List<OffspringSeed> offspring = new ArrayList<>(numberOfChildren);
+//				for (int i = 0; i < numberOfChildren; i++) { // Add children here:
+//					OffspringSeed os = new OffspringSeed(this, partnerBody);
+//					offspring.add(os);
+//					try {
+//						Main.game.addOffspringSeed(os, false);
+//					} catch (Exception e) {
+//						e.printStackTrace();
+//					}
+//				}
+//				
+//				pregnantLitter = new Litter(Main.game.getDateNow(), Main.game.getDateNow(), this, null, fertilisationType, offspring);
+//				pregnantLitter.setFatherRace(partnerBody.getSubspecies());
+//				this.resetAllPregnancyReactions();
+//			}
+//		}
+//		
+//		return pregnancyDescription;
+//	}
+
+	
+	//TODO new methods:
+	// For null partner
+	public String rollForPregnancy(Body partnerBody, float cumQuantity, boolean directSexInsemination, FertilisationType fertilisationType) {
+		return rollForPregnancy(null, partnerBody, cumQuantity, true, 25, directSexInsemination, fertilisationType);
+	}
+	
+	public String rollForPregnancy(GameCharacter partner, Body partnerBody, float cumQuantity, boolean directSexInsemination, FertilisationType fertilisationType, AbstractAttribute partnerVirilityAttribute) {
+		if(partner==null) {
+			return rollForPregnancy(partnerBody, cumQuantity, directSexInsemination, fertilisationType);
+		}
+		return rollForPregnancy(partner, partnerBody, cumQuantity, partner.isVirile(partnerVirilityAttribute), partner.getAttributeValue(partnerVirilityAttribute), directSexInsemination, fertilisationType);
 	}
 
-	public String rollForPregnancy(GameCharacter partner, float cumQuantity, boolean directSexInsemination, AbstractAttribute virilityAttribute) {
-		return rollForPregnancy(partner, cumQuantity, directSexInsemination, FertilisationType.NORMAL, Attribute.VIRILITY);
-	}
-	
-	public String rollForPregnancy(GameCharacter partner, float cumQuantity, boolean directSexInsemination, FertilisationType fertilisationType, AbstractAttribute virilityAttribute) {
+	public String rollForPregnancy(GameCharacter partner, Body partnerBody, float cumQuantity, boolean isPartnerVirile, float partnerVirility, boolean directSexInsemination, FertilisationType fertilisationType) {
 		// Elemental handling:
 		if(this.isElemental()) {
 			return PregnancyDescriptor.NO_CHANCE.getDescriptor(this, partner, directSexInsemination)
 					+"<p style='text-align:center;'>[style.italicsMinorBad(Elementals cannot get pregnant!)]"
 					+ "</p>";
 		}
-		if(partner.isElemental()) {
+		if(partnerBody.getRace()==Race.ELEMENTAL) {
 			return PregnancyDescriptor.NO_CHANCE.getDescriptor(this, partner, directSexInsemination)
 					+"<p style='text-align:center;'>"
 						+ "[style.italicsMinorBad(Elementals cannot impregnate anyone!)]"
@@ -20782,14 +20970,14 @@ public abstract class GameCharacter implements XMLSaving {
 					+"<p style='text-align:center;'>[style.italicsMinorBad(Dolls cannot get pregnant!)]"
 					+ "</p>";
 		}
-		if(partner.isDoll()) {
+		if(partnerBody.isDoll()) {
 			return PregnancyDescriptor.NO_CHANCE.getDescriptor(this, partner, directSexInsemination)
 					+"<p style='text-align:center;'>"
 						+ "[style.italicsMinorBad(Dolls cannot impregnate anyone!)]"
 					+ "</p>";
 		}
 		
-		if(isVisiblyPregnant()) {
+		if(this.isVisiblyPregnant()) {
 			return PregnancyDescriptor.ALREADY_PREGNANT.getDescriptor(this, partner, directSexInsemination);
 		}
 		if(this.getIncubationLitter(SexAreaOrifice.VAGINA)!=null) {
@@ -20798,33 +20986,40 @@ public abstract class GameCharacter implements XMLSaving {
 		
 		float pregnancyChance = 0.1f;
 		
-		boolean partnerVirile = partner.getAttributeValue(virilityAttribute) > 0 || !partner.hasPerkAnywhereInTree(Perk.FIRING_BLANKS);
-		boolean selfFertile = (getAttributeValue(Attribute.FERTILITY) > 0 || !hasPerkAnywhereInTree(Perk.BARREN)) && !this.hasStatusEffect(StatusEffect.MENOPAUSE);
+		boolean selfFertile = this.isFertile();
 		
-		if(!partnerVirile || !selfFertile || !isAbleToBeImpregnated()) {
+		if(!isPartnerVirile || !selfFertile || !this.isAbleToBeImpregnated()) {
 			pregnancyChance = 0;
 			
-		} else if(isAbleToBeImpregnated()) {
-			pregnancyChance += (partner.getAttributeValue(virilityAttribute)/100f)/2f;
-			pregnancyChance += (getAttributeValue(Attribute.FERTILITY)/100f)/2f;
+		} else if(this.isAbleToBeImpregnated()) {
+			pregnancyChance += (partnerVirility/100f)/2f;
+			pregnancyChance += (this.getAttributeValue(Attribute.FERTILITY)/100f)/2f;
 			pregnancyChance = Math.max(0, Math.min(pregnancyChance, 1));
 		}
 		if(guaranteePregnancyOnNextRoll) {
 			pregnancyChance = 1;
 			guaranteePregnancyOnNextRoll = false;
 		}
-		
-		PregnancyPossibility pregPoss = new PregnancyPossibility(this.getId(), partner.getId(), pregnancyChance);
+
+		String partnerId;
+		if(partner!=null) {
+			partnerId = partner.getId();
+		} else {
+			partnerId = Subspecies.getIdFromSubspecies(partnerBody.getSubspecies()) + Main.game.getSecondsPassed(); // This should be fine as this method is never used in sex? :s
+		}
+		PregnancyPossibility pregPoss = new PregnancyPossibility(this.getId(), partnerId, pregnancyChance);
 		
 		this.addPotentialPartnerAsMother(pregPoss);
-		partner.addPotentialPartnerAsFather(pregPoss);
+		if(partner!=null) {
+			partner.addPotentialPartnerAsFather(pregPoss);
+		}
 		
 		String pregnancyDescription = PregnancyDescriptor.getPregnancyDescriptorBasedOnProbability(pregnancyChance).getDescriptor(this, partner, directSexInsemination);
 		
 		// Now roll for pregnancy:
-		if (!isPregnant()) {
-			if (!hasStatusEffect(StatusEffect.PREGNANT_0)) {
-				addStatusEffect(StatusEffect.PREGNANT_0, (60 * 60) * (4 + Util.random.nextInt(5)));
+		if (!this.isPregnant()) {
+			if (!this.hasStatusEffect(StatusEffect.PREGNANT_0)) {
+				this.addStatusEffect(StatusEffect.PREGNANT_0, (60 * 60) * (4 + Util.random.nextInt(5)));
 			}
 			if (pregnancyChance>0 && Math.random() <= pregnancyChance) {
 				AbstractRace litterSizeBasedOn = null;
@@ -20832,9 +21027,9 @@ public abstract class GameCharacter implements XMLSaving {
 				if (this.getBodyMaterial() == BodyMaterial.SLIME) {
 					litterSizeBasedOn = Race.SLIME;
 				} else {
-					AbstractVaginaType vaginaType = getVaginaType();
+					AbstractVaginaType vaginaType = this.getVaginaType();
 					if(vaginaType.getRace()==Race.HUMAN) {
-						litterSizeBasedOn = Optional.ofNullable(partner.getPenisType().getRace()).orElseGet(partner::getRace);
+						litterSizeBasedOn = Optional.ofNullable(partnerBody.getPenisType().getRace()).orElseGet(partnerBody::getRace);
 					} else {
 						litterSizeBasedOn = Optional.ofNullable(vaginaType.getRace()).orElseGet(this::getRace);
 					}
@@ -20847,7 +21042,7 @@ public abstract class GameCharacter implements XMLSaving {
 				if(this.hasTraitActivated(Perk.FETISH_BROODMOTHER)) {
 					maximumNumberOfChildren *= 2;
 				}
-				if(partner.hasTraitActivated(Perk.FETISH_SEEDER)) {
+				if(partner!=null && partner.hasTraitActivated(Perk.FETISH_SEEDER)) {
 					maximumNumberOfChildren *= 2;
 				}
 				
@@ -20856,13 +21051,13 @@ public abstract class GameCharacter implements XMLSaving {
 				if(this.hasStatusEffect(StatusEffect.BROODMOTHER_PILL)) {
 					numberOfChildren *= 2;
 				}
-				if(partner.hasStatusEffect(StatusEffect.BROODMOTHER_PILL)) {
+				if(partner!=null && partner.hasStatusEffect(StatusEffect.BROODMOTHER_PILL)) {
 					numberOfChildren *= 2;
 				}
 				
 				List<OffspringSeed> offspring = new ArrayList<>(numberOfChildren);
 				for (int i = 0; i < numberOfChildren; i++) { // Add children here:
-					OffspringSeed os = new OffspringSeed(this, partner);
+					OffspringSeed os = new OffspringSeed(this, partner, partnerBody);
 					offspring.add(os);
 					try {
 						Main.game.addOffspringSeed(os, false);
@@ -20872,116 +21067,16 @@ public abstract class GameCharacter implements XMLSaving {
 				}
 				
 				pregnantLitter = new Litter(Main.game.getDateNow(), Main.game.getDateNow(), this, partner, fertilisationType, offspring);
+				if(partner==null) {
+					pregnantLitter.setFatherRace(partnerBody.getSubspecies());
+				}
 				this.resetAllPregnancyReactions();
 			}
 		}
 		
 		return pregnancyDescription;
-	}
-
-	/**
-	 * A variation for the pregnancy check when the owner of the cum is null.
-	 * @param partnerSubspecies The subspecies of the cum owner (if they were to exist).
-	 * @param partnerSubspecies The half-demon subspecies of the cum owner (if they were to exist).
-	 * @param cumQuantity How much cum is in this character's orifice (usually the vagina).
-	 * @param directSexInsemination true if this method is calculated from someone directly cumming inside this character, as opposed to ingesting cum from a container.
-	 */
-	public String rollForPregnancy(AbstractSubspecies partnerSubspecies, AbstractSubspecies partnerHalfDemonSubspecies, float cumQuantity, boolean directSexInsemination) {
-		return rollForPregnancy(partnerSubspecies, partnerHalfDemonSubspecies, cumQuantity, directSexInsemination, FertilisationType.NORMAL);
 	}
 	
-	/**
-	 * A variation for the pregnancy check when the owner of the cum is null.
-	 * @param partnerSubspecies The subspecies of the cum owner (if they were to exist).
-	 * @param partnerHalfDemonSubspecies The half-demon subspecies of the cum owner (if they were to exist).
-	 * @param cumQuantity How much cum is in this character's orifice (usually the vagina).
-	 * @param directSexInsemination true if this method is calculated from someone directly cumming inside this character, as opposed to ingesting cum from a container.
-	 * @param fertilisationType The type of fertilisation which is occurring (either NORMAL from cum or TRIBBING from Amazon's Secret effect).
-	 */
-	public String rollForPregnancy(AbstractSubspecies partnerSubspecies, AbstractSubspecies partnerHalfDemonSubspecies, float cumQuantity, boolean directSexInsemination, FertilisationType fertilisationType) {
-		if(partnerSubspecies.getRace()==Race.ELEMENTAL) {
-			return PregnancyDescriptor.NO_CHANCE.getDescriptor(this, null, directSexInsemination)
-					+"<p style='text-align:center;'>[style.italicsMinorBad(Elementals cannot impregnate anyone!)]<br/>[style.italicsDisabled(I will add support for impregnating/being impregnated by elementals later on!)]</p>";
-		}
-		
-		if(isVisiblyPregnant()) {
-			return PregnancyDescriptor.ALREADY_PREGNANT.getDescriptor(this, null, directSexInsemination);
-		}
-		if(this.getIncubationLitter(SexAreaOrifice.VAGINA)!=null) {
-			return PregnancyDescriptor.ALREADY_PREGNANT_EGGS.getDescriptor(this, null, directSexInsemination);
-		}
-		
-		float pregnancyChance = 0.1f;
-		int baseVirility = 25;
-		boolean selfFertile = (getAttributeValue(Attribute.FERTILITY) > 0 || !hasPerkAnywhereInTree(Perk.BARREN)) && !this.hasStatusEffect(StatusEffect.MENOPAUSE);
-		
-		if(selfFertile && isAbleToBeImpregnated()) {
-			pregnancyChance += (baseVirility/100f)/2f;
-			pregnancyChance += (getAttributeValue(Attribute.FERTILITY)/100f)/2f;
-			pregnancyChance = Math.max(0, Math.min(pregnancyChance, 1));
-		} else {
-			pregnancyChance = 0;
-		}
-		if(guaranteePregnancyOnNextRoll) {
-			pregnancyChance = 1;
-			guaranteePregnancyOnNextRoll = false;
-		}
-		
-		String partnerId = Subspecies.getIdFromSubspecies(partnerSubspecies)+Main.game.getSecondsPassed();
-		PregnancyPossibility pregPoss = new PregnancyPossibility(this.getId(), partnerId, pregnancyChance);
-		
-		this.addPotentialPartnerAsMother(pregPoss);
-		
-		String pregnancyDescription = PregnancyDescriptor.getPregnancyDescriptorBasedOnProbability(pregnancyChance).getDescriptor(this, null, directSexInsemination);
-		
-		// Now roll for pregnancy:
-		if (!isPregnant()) {
-			if (!hasStatusEffect(StatusEffect.PREGNANT_0)) {
-				addStatusEffect(StatusEffect.PREGNANT_0, (60 * 60) * (4 + Util.random.nextInt(5)));
-			}
-			if (Math.random() <= pregnancyChance) {
-				AbstractRace litterSizeBasedOn = null;
-				
-				if (this.getBodyMaterial() == BodyMaterial.SLIME) {
-					litterSizeBasedOn = Race.SLIME;
-				} else {
-					AbstractVaginaType vaginaType = getVaginaType();
-					if (vaginaType.getRace()==Race.HUMAN) {
-						litterSizeBasedOn = partnerSubspecies.getRace();
-					} else {
-						litterSizeBasedOn = Optional.ofNullable(vaginaType.getRace()).orElseGet(this::getRace);
-					}
-				}
-				
-				int minimumNumberOfChildren = litterSizeBasedOn.getNumberOfOffspringLow();
-				int maximumNumberOfChildren = litterSizeBasedOn.getNumberOfOffspringHigh();
-				
-				if (hasTraitActivated(Perk.FETISH_BROODMOTHER)) {
-					maximumNumberOfChildren *= 2;
-				}
-				
-				int numberOfChildren = minimumNumberOfChildren + Util.random.nextInt((maximumNumberOfChildren-minimumNumberOfChildren)+1);
-				
-				List<OffspringSeed> offspring = new ArrayList<>(numberOfChildren);
-				for (int i = 0; i < numberOfChildren; i++) { // Add children here:
-					OffspringSeed os = new OffspringSeed(this, null, partnerSubspecies, partnerHalfDemonSubspecies);
-					offspring.add(os);
-					try {
-						Main.game.addOffspringSeed(os, false);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-				
-				pregnantLitter = new Litter(Main.game.getDateNow(), Main.game.getDateNow(), this, null, fertilisationType, offspring);
-				pregnantLitter.setFatherRace(partnerSubspecies);
-				this.resetAllPregnancyReactions();
-			}
-		}
-		
-		return pregnancyDescription;
-	}
-
 	public boolean isPregnant() {
 		return pregnantLitter != null;
 	}
@@ -21608,6 +21703,10 @@ public abstract class GameCharacter implements XMLSaving {
 		return false;
 	}
 	
+	public boolean isAnyFluidStoredInOrifices() {
+		return fluidsStoredMap.values().stream().anyMatch(l->!l.isEmpty());
+	}
+	
 	public List<FluidStored> getAllFluidsStored() {
 		List<FluidStored> list = new ArrayList<>();
 		for(List<FluidStored> stored : fluidsStoredMap.values()) {
@@ -21656,7 +21755,7 @@ public abstract class GameCharacter implements XMLSaving {
 			float drainAmount = Math.min(drain, f.getMillilitres());
 			
 			if(f.isCum()) {
-				fluidsDrained.add(new FluidStored(f.getCharactersFluidID(), f.getCumSubspecies(), f.getCumHalfDemonSubspecies(), (FluidCum)f.getFluid(), Math.min(f.getMillilitres(), drainAmount)));
+				fluidsDrained.add(new FluidStored(f.getCharactersFluidID(), f.getBody(), (FluidCum)f.getFluid(), Math.min(f.getMillilitres(), drainAmount)));
 			} else if(f.isGirlCum()) {
 				fluidsDrained.add(new FluidStored(f.getCharactersFluidID(), (FluidGirlCum)f.getFluid(), Math.min(f.getMillilitres(), drainAmount)));
 			} else if(f.isMilk()) {
@@ -22477,7 +22576,7 @@ public abstract class GameCharacter implements XMLSaving {
 	}
 
 	public String removedItemFromInventoryText(AbstractItemType item) {
-		return "<p style='text-align:center;'>" + "<span style='color:" + PresetColour.GENERIC_BAD.toWebHexString() + ";'>You have lost the " + item.getName(false) + ".</span>" + "</p>";
+		return "<p style='text-align:center;'>" + "<span style='color:" + PresetColour.GENERIC_BAD.toWebHexString() + ";'>You have lost '" + item.getName(false) + "'.</span>" + "</p>";
 	}
 
 	public String inventoryFullText() {
@@ -22488,9 +22587,23 @@ public abstract class GameCharacter implements XMLSaving {
 	 * First unequips all clothing into void, so that clothing effects are preserved.
 	 */
 	public void resetInventory(boolean includeWeapons){
+		resetInventory(includeWeapons, false);
+	}
+	
+	/**
+	 * First unequips all clothing into void, so that clothing effects are preserved.
+	 */
+	public void resetInventory(boolean includeWeapons, boolean preserveEssences){
+		int essences = 0;
+		if(preserveEssences) {
+			essences = this.getEssenceCount();
+		}
 		unequipAllClothingIntoVoid(true, includeWeapons);
 		
 		this.inventory = new CharacterInventory(0);
+		if(preserveEssences) {
+			this.setEssenceCount(essences);
+		}
 	}
 	
 	public void sortInventory() {
@@ -23124,7 +23237,11 @@ public abstract class GameCharacter implements XMLSaving {
 	public Map<AbstractWeapon, Integer> getAllWeaponsInInventory() {
 		return inventory.getAllWeaponsInInventory();
 	}
-
+	
+	public String addWeapon(AbstractWeapon weapon) {
+		return addWeapon(weapon, 1, false, false);
+	}
+	
 	public String addWeapon(AbstractWeapon weapon, boolean removingFromFloor) {
 		return addWeapon(weapon, 1, removingFromFloor, false);
 	}
@@ -23889,6 +24006,25 @@ public abstract class GameCharacter implements XMLSaving {
 	public List<AbstractClothing> getClothingCurrentlyEquipped() {
 		return inventory.getClothingCurrentlyEquipped();
 	}
+
+	/**
+	 * @return A list of areas which are prevented from losing creampies due to absorption over time. This is a List as multiple entries of the same SexAreaOrifice may be present due to the presence of multiple enchantments providing this effect.
+	 */
+	public List<SexAreaOrifice> getCreampieRetentionAreas() {
+		return creampieRetentionAreas;
+	}
+	
+	public boolean hasCreampieRetentionArea(SexAreaOrifice area) {
+		return creampieRetentionAreas.contains(area);
+	}
+
+	public boolean addCreampieRetentionArea(SexAreaOrifice area) {
+		return creampieRetentionAreas.add(area);
+	}
+
+	public boolean removeCreampieRetentionArea(SexAreaOrifice area) {
+		return creampieRetentionAreas.remove(area);
+	}
 	
 	/**
 	 * @param characterViewing The character who is trying to view this character's inventory slots.
@@ -23997,6 +24133,7 @@ public abstract class GameCharacter implements XMLSaving {
 		if(characterClothingEquipper!=null && newClothing.isSealed() && newClothing.getItemTags().contains(ItemTag.PROVIDES_KEY)) {
 			characterClothingEquipper.addToUnlockKeyMap(this.getId(), slot);
 		}
+		
 
 		if(this.getClothingCurrentlyEquipped().contains(newClothing)) { // If this has been removed in getCondomEquipEffects(), don't go through it.
 			if(Main.game.isInSex() && Main.sex.getAllParticipants().contains(this)) { //TODO what even is this?
@@ -24081,6 +24218,38 @@ public abstract class GameCharacter implements XMLSaving {
 						break;
 				}
 			}
+
+			// Creampie retention:
+			if(Main.game.isStarted() && ie.getPrimaryModifier()==TFModifier.CLOTHING_CREAMPIE_RETENTION) {
+				switch(ie.getSecondaryModifier()) {
+					case TF_FACE:
+						addCreampieRetentionArea(SexAreaOrifice.MOUTH);
+						break;
+					case TF_ASS:
+						addCreampieRetentionArea(SexAreaOrifice.ANUS);
+						break;
+					case TF_VAGINA:
+						addCreampieRetentionArea(SexAreaOrifice.VAGINA);
+						break;
+					case TF_VAGINA_URETHRA:
+						addCreampieRetentionArea(SexAreaOrifice.URETHRA_VAGINA);
+						break;
+					case TF_PENIS_URETHRA:
+						addCreampieRetentionArea(SexAreaOrifice.URETHRA_PENIS);
+						break;
+					case TF_BREASTS:
+						addCreampieRetentionArea(SexAreaOrifice.BREAST);
+						break;
+					case TF_BREASTS_CROTCH:
+						addCreampieRetentionArea(SexAreaOrifice.BREAST_CROTCH);
+						break;
+					case TF_SPINNERET:
+						addCreampieRetentionArea(SexAreaOrifice.SPINNERET);
+						break;
+					default:
+						break;
+				}
+			}
 		}
 		updateInventoryListeners();
 	}
@@ -24100,6 +24269,10 @@ public abstract class GameCharacter implements XMLSaving {
 			} else {
 				System.err.println("Warning: Sealed clothing '"+clothing.getName()+"' did not have associated unlock key removed from player key mappings.");
 			}
+		}
+		
+		if(Main.game.isInSex()) {
+			Main.sex.clearAmountCummedOnSlot(this, slot);
 		}
 		
 		if(Main.game.isInSex() && Main.sex.getAllParticipants().contains(this)) {
@@ -24139,6 +24312,37 @@ public abstract class GameCharacter implements XMLSaving {
 					case MAJOR_DRAIN:
 						clothingFetishDesireModifiersMap.putIfAbsent(associatedFetish, 0);
 						clothingFetishDesireModifiersMap.put(associatedFetish, clothingFetishDesireModifiersMap.get(associatedFetish) + 999);
+						break;
+				}
+			}
+			// Creampie retention:
+			if(Main.game.isStarted() && ie.getPrimaryModifier()==TFModifier.CLOTHING_CREAMPIE_RETENTION) {
+				switch(ie.getSecondaryModifier()) {
+					case TF_FACE:
+						removeCreampieRetentionArea(SexAreaOrifice.MOUTH);
+						break;
+					case TF_ASS:
+						removeCreampieRetentionArea(SexAreaOrifice.ANUS);
+						break;
+					case TF_VAGINA:
+						removeCreampieRetentionArea(SexAreaOrifice.VAGINA);
+						break;
+					case TF_VAGINA_URETHRA:
+						removeCreampieRetentionArea(SexAreaOrifice.URETHRA_VAGINA);
+						break;
+					case TF_PENIS_URETHRA:
+						removeCreampieRetentionArea(SexAreaOrifice.URETHRA_PENIS);
+						break;
+					case TF_BREASTS:
+						removeCreampieRetentionArea(SexAreaOrifice.BREAST);
+						break;
+					case TF_BREASTS_CROTCH:
+						removeCreampieRetentionArea(SexAreaOrifice.BREAST_CROTCH);
+						break;
+					case TF_SPINNERET:
+						removeCreampieRetentionArea(SexAreaOrifice.SPINNERET);
+						break;
+					default:
 						break;
 				}
 			}
@@ -26447,6 +26651,10 @@ public abstract class GameCharacter implements XMLSaving {
 		return new HashMap<>(tattoos);
 	}
 	
+	public boolean hasAnyTattoos() {
+		return !tattoos.isEmpty();
+	}
+	
 	public void addTattoo(InventorySlot invSlot, Tattoo tattoo) {
 		removeTattoo(invSlot);
 		tattoos.put(invSlot, tattoo);
@@ -26522,6 +26730,37 @@ public abstract class GameCharacter implements XMLSaving {
 						break;
 				}
 			}
+			// Creampie retention:
+			if(Main.game.isStarted() && ie.getPrimaryModifier()==TFModifier.CLOTHING_CREAMPIE_RETENTION) {
+				switch(ie.getSecondaryModifier()) {
+					case TF_FACE:
+						addCreampieRetentionArea(SexAreaOrifice.MOUTH);
+						break;
+					case TF_ASS:
+						addCreampieRetentionArea(SexAreaOrifice.ANUS);
+						break;
+					case TF_VAGINA:
+						addCreampieRetentionArea(SexAreaOrifice.VAGINA);
+						break;
+					case TF_VAGINA_URETHRA:
+						addCreampieRetentionArea(SexAreaOrifice.URETHRA_VAGINA);
+						break;
+					case TF_PENIS_URETHRA:
+						addCreampieRetentionArea(SexAreaOrifice.URETHRA_PENIS);
+						break;
+					case TF_BREASTS:
+						addCreampieRetentionArea(SexAreaOrifice.BREAST);
+						break;
+					case TF_BREASTS_CROTCH:
+						addCreampieRetentionArea(SexAreaOrifice.BREAST_CROTCH);
+						break;
+					case TF_SPINNERET:
+						addCreampieRetentionArea(SexAreaOrifice.SPINNERET);
+						break;
+					default:
+						break;
+				}
+			}
 		}
 	}
 	
@@ -26555,6 +26794,37 @@ public abstract class GameCharacter implements XMLSaving {
 					case MAJOR_DRAIN:
 						clothingFetishDesireModifiersMap.putIfAbsent(associatedFetish, 0);
 						clothingFetishDesireModifiersMap.put(associatedFetish, clothingFetishDesireModifiersMap.get(associatedFetish) + 999);
+						break;
+				}
+			}
+			// Creampie retention:
+			if(Main.game.isStarted() && ie.getPrimaryModifier()==TFModifier.CLOTHING_CREAMPIE_RETENTION) {
+				switch(ie.getSecondaryModifier()) {
+					case TF_FACE:
+						removeCreampieRetentionArea(SexAreaOrifice.MOUTH);
+						break;
+					case TF_ASS:
+						removeCreampieRetentionArea(SexAreaOrifice.ANUS);
+						break;
+					case TF_VAGINA:
+						removeCreampieRetentionArea(SexAreaOrifice.VAGINA);
+						break;
+					case TF_VAGINA_URETHRA:
+						removeCreampieRetentionArea(SexAreaOrifice.URETHRA_VAGINA);
+						break;
+					case TF_PENIS_URETHRA:
+						removeCreampieRetentionArea(SexAreaOrifice.URETHRA_PENIS);
+						break;
+					case TF_BREASTS:
+						removeCreampieRetentionArea(SexAreaOrifice.BREAST);
+						break;
+					case TF_BREASTS_CROTCH:
+						removeCreampieRetentionArea(SexAreaOrifice.BREAST_CROTCH);
+						break;
+					case TF_SPINNERET:
+						removeCreampieRetentionArea(SexAreaOrifice.SPINNERET);
+						break;
+					default:
 						break;
 				}
 			}
@@ -27753,6 +28023,7 @@ public abstract class GameCharacter implements XMLSaving {
 			}
 			// Spinneret:
 			boolean hadSpinneret = this.hasSpinneret();
+			AbstractTailType originalTail = this.getTailType();
 			if(!hadSpinneret) {
 				this.setTailType(TailType.getTailTypeFromId("charisma_spider_tail"));
 			}
@@ -27761,7 +28032,7 @@ public abstract class GameCharacter implements XMLSaving {
 			this.setSpinneretPlasticity(OrificePlasticity.ZERO_RUBBERY.getValue());
 			this.setSpinneretWetness(Wetness.THREE_WET.getValue());
 			if(!hadSpinneret) {
-				this.setTailType(TailType.NONE);
+				this.setTailType(originalTail);
 			}
 			
 			// *** Other:*** //
@@ -28573,7 +28844,7 @@ public abstract class GameCharacter implements XMLSaving {
 
 	// Misc:
 	public boolean hasBreastsCrotch() {
-		return  body.getBreastCrotch().getType()!=BreastType.NONE;
+		return body.getBreastCrotch().getType()!=BreastType.NONE;
 	}
 	public boolean isBreastsCrotchVisibleThroughClothing() {
 		return body.getBreastCrotch().isVisibleThroughClothing(this);
@@ -29625,7 +29896,7 @@ public abstract class GameCharacter implements XMLSaving {
 	 * @return true, if the character has generic horns
 	 */
 	public boolean hasGenericHorns() {
-		return body.getHorn().getType().isGeneric();
+		return body.hasGenericHorns();
 	}
 	public boolean isHornsAbleToBeUsedAsHandlesInSex() {
 		return this.hasHorns() && HornLength.getLengthFromInt(this.getHornLengthValue()).isSuitableAsHandles();
@@ -31413,7 +31684,7 @@ public abstract class GameCharacter implements XMLSaving {
 	 * @return true, if the NPC has generic wings
 	 */
 	public boolean hasGenericWings() {
-		return getWingType().isGeneric();
+		return body.hasGenericWings();
 	}
 	// Type:
 	public AbstractWingType getWingType() {

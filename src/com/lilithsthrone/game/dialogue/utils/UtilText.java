@@ -536,7 +536,8 @@ public class UtilText {
 			}
 
 			if(includePersonalityEffects) {
-				if(target.getLipSize().isImpedesSpeech() || target.hasPersonalityTrait(PersonalityTrait.LISP)) {
+				if((Main.game.isLipLispEnabled() && target.getLipSize().isImpedesSpeech())
+						|| target.hasPersonalityTrait(PersonalityTrait.LISP)) {
 					modifiedSentence = Util.applyLisp(modifiedSentence);
 				}
 	
@@ -769,6 +770,13 @@ public class UtilText {
 	}
 	
 	public static String formatAsMoney(String money, String tag) {
+		if(!money.contains("[npc.")) { // DO not parse it out if this is a generic NPC's money
+			try {
+				int moneyInt = Integer.parseInt(UtilText.parse(money));
+				return formatAsMoney(moneyInt, tag, PresetColour.TEXT);
+			} catch(Exception ex) {
+			}
+		}
 		return formatAsMoney(money, tag, PresetColour.TEXT);
 	}
 	
@@ -2504,6 +2512,29 @@ public class UtilText {
 		
 		commandsList.add(new ParserCommand(
 				Util.newArrayListOfValues(
+						"bitch+",
+						"slut+",
+						"insult+",
+						"bitchD",
+						"slutD",
+						"insultD"),
+				true,
+				true,
+				"",
+				"Returns a random mean word to describe this person, based on their femininity, with a mean descriptor before it.") {
+			@Override
+			public String parse(List<GameCharacter> specialNPCs, String command, String arguments, String target, GameCharacter character) {
+				String naughtyDescriptor = Util.randomItemFromValues("worthless", "dumb", "dirty", "filthy");
+				if(character.isFeminine()) {
+					return naughtyDescriptor+" "+UtilText.returnStringAtRandom("bitch", "slut", "cunt", "whore", "skank");
+				} else {
+					return naughtyDescriptor+" "+UtilText.returnStringAtRandom("asshole", "bastard", "fuckface", "fucker");
+				}
+			}
+		});
+
+		commandsList.add(new ParserCommand(
+				Util.newArrayListOfValues(
 						"bitches",
 						"sluts",
 						"insultPlural"),
@@ -2517,6 +2548,29 @@ public class UtilText {
 					return UtilText.returnStringAtRandom("bitches", "sluts", "cunts", "whores", "skanks");
 				} else {
 					return UtilText.returnStringAtRandom("assholes", "bastards", "fuckfaces", "fuckers");
+				}
+			}
+		});
+
+		commandsList.add(new ParserCommand(
+				Util.newArrayListOfValues(
+						"bitches+",
+						"sluts+",
+						"insultPlural+",
+						"bitchesD",
+						"slutsD",
+						"insultPluralD"),
+				true,
+				true,
+				"",
+				"Returns a random mean pluralised word to describe this person, based on their femininity, with a mean descriptor before it.") {
+			@Override
+			public String parse(List<GameCharacter> specialNPCs, String command, String arguments, String target, GameCharacter character) {
+				String naughtyDescriptor = Util.randomItemFromValues("worthless", "dumb", "dirty", "filthy");
+				if(character.isFeminine()) {
+					return naughtyDescriptor+" "+UtilText.returnStringAtRandom("bitches", "sluts", "cunts", "whores", "skanks");
+				} else {
+					return naughtyDescriptor+" "+UtilText.returnStringAtRandom("assholes", "bastards", "fuckfaces", "fuckers");
 				}
 			}
 		});
@@ -6088,7 +6142,7 @@ public class UtilText {
 				BodyPartType.ASS){
 			@Override
 			public String parse(List<GameCharacter> specialNPCs, String command, String arguments, String target, GameCharacter character) {
-				return getSkinName(character.getTorsoType(), character);
+				return getSkinName(character.getAssType(), character);
 			}
 		});
 		
@@ -6103,7 +6157,7 @@ public class UtilText {
 				BodyPartType.ASS){
 			@Override
 			public String parse(List<GameCharacter> specialNPCs, String command, String arguments, String target, GameCharacter character) {
-				return getSkinNameWithDescriptor(character.getTorsoType(), character.getCovering(character.getTorsoType().getBodyCoveringType(character)), character);
+				return getSkinNameWithDescriptor(character.getAssType(), character.getCovering(character.getAssType().getBodyCoveringType(character)), character);
 			}
 		});
 		
@@ -9971,6 +10025,9 @@ public class UtilText {
 		}
 		for(EyeShape eyeShape : EyeShape.values()) {
 			engine.put("EYE_SHAPE_"+eyeShape.toString(), eyeShape);
+		}
+		for(OrificeDepth orificeDepth : OrificeDepth.values()) {
+			engine.put("ORIFICE_DEPTH_"+orificeDepth.toString(), orificeDepth);
 		}
 		// Types:
 		for(AbstractFluidType fluidType : FluidType.getAllFluidTypes()) {

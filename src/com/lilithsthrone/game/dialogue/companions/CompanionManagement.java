@@ -34,6 +34,7 @@ import com.lilithsthrone.game.dialogue.utils.BodyChanging;
 import com.lilithsthrone.game.dialogue.utils.CharacterModificationUtils;
 import com.lilithsthrone.game.dialogue.utils.CharactersPresentDialogue;
 import com.lilithsthrone.game.dialogue.utils.CombatMovesSetup;
+import com.lilithsthrone.game.dialogue.utils.CosmeticsDialogue;
 import com.lilithsthrone.game.dialogue.utils.InventoryInteraction;
 import com.lilithsthrone.game.dialogue.utils.SpellManagement;
 import com.lilithsthrone.game.dialogue.utils.UtilText;
@@ -916,12 +917,12 @@ public class CompanionManagement {
 					"<div class='container-full-width' style='text-align:center;'>");
 			
 			UtilText.nodeContentSB.append(
-							"<div class='container-full-width inner' style='text-align:center;'>"
+							"<div class='container-full-width inner' style='text-align:center;padding-left:2px;padding-right:2px;'>"
 							+ "<div style='width:100%;margin-top:8px;'><b>Available Jobs</b></div>");
 			for(SlaveJob job : SlaveJob.values()) {
 				if(!job.isHidden(character) && (character.isSlave() || job.hasFlag(SlaveJobFlag.GUEST_CAN_WORK))) {
 					UtilText.nodeContentSB.append(
-							"<div class='normal-button' id='"+job+"_ASSIGN' style='width:16%; margin:2px;color:"
+							"<div class='normal-button' id='"+job+"_ASSIGN' style='width:calc(16.6% - 2px); margin:1px;color:"
 									+job.getColour().toWebHexString()+";"+(Main.game.getDialogueFlags().getSlaveryManagerJobSelected()==job?"border-color:"+job.getColour().toWebHexString()+";":"")+"'>"
 									+Util.capitaliseSentence(job.getName(character))
 									+"</div>");
@@ -1734,6 +1735,14 @@ public class CompanionManagement {
 						}
 					};
 				}
+			
+			} else if(index==2) {
+				return new Response("Save/Load", "Save/Load tattoo presets.", CosmeticsDialogue.TATTOO_SAVE_LOAD) {
+					@Override
+					public void effects() {
+						CosmeticsDialogue.initTattooSaveLoadDialogue(SLAVE_MANAGEMENT_TATTOOS_ADD);
+					}
+				};
 			
 			} else if(index==0) {
 				return new Response("Back", "Decide not to get this tattoo and return to the main selection screen.", SLAVE_MANAGEMENT_TATTOOS);

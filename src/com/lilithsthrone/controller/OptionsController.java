@@ -942,7 +942,9 @@ public class OptionsController {
 				new Util.Value<>("HAIR_ASS", PropertyValue.assHairContent),
 				new Util.Value<>("FEMININE_BEARD", PropertyValue.feminineBeardsContent),
 				new Util.Value<>("FURRY_HAIR", PropertyValue.furryHairContent),
-				new Util.Value<>("SCALY_HAIR", PropertyValue.scalyHairContent)
+				new Util.Value<>("SCALY_HAIR", PropertyValue.scalyHairContent),
+				new Util.Value<>("LIP_LISP", PropertyValue.lipLispContent)
+				
 		));
 	}
 }

@@ -3034,6 +3034,10 @@ public enum SexAreaOrifice implements SexAreaInterface {
 	public abstract float getCapacity(GameCharacter owner, boolean currentlyStretchedValue);
 	
 	public float getCharactersCumLossPerSecond(GameCharacter target) {
+		if(target.hasCreampieRetentionArea(this)) {
+			return 0;
+		}
+		
 		float cumLost = this.getCumAbsorptionPerSecond();
 		float fluidInArea = target.getTotalFluidInArea(this);
 		// The rate obviously decreases as the fluid drains out, but assuming if the drain was applied all at once, it would take about 5.5 hours to all drain out (not factoring in absorption or natural loss):

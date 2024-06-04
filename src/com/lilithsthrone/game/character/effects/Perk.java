@@ -2559,7 +2559,9 @@ public class Perk {
 			Util.newHashMapOfValues(
 					new Value<>(Attribute.DAMAGE_LUST, 5),
 					new Value<>(Attribute.RESISTANCE_LUST, -2)),
-			Util.newArrayListOfValues("Doubles <span style='color:" + PresetColour.GENERIC_ARCANE.toWebHexString()+ ";'>arcane essence gain</span> from each orgasm")) {
+			Util.newArrayListOfValues(
+					"[style.colourExcellent(x2)] [style.colourArcane(essence gain)] from orgasming",
+					"Gain [style.colourSex(pent-up)] and [style.colourSex(chastity)] status effects [style.colourTerrible(2x faster)]")) {
 
 		@Override
 		public String getDescription(GameCharacter owner) {
@@ -3210,7 +3212,7 @@ public class Perk {
 			null) {
 		@Override
 		public String getDescription(GameCharacter owner) {
-			return UtilText.parse(owner, "[npc.NameHasFull] received formal training in martial arts, allowing [npc.herHim] to deal just as much damage in unarmed combat as [npc.her] strongest foe.");
+			return UtilText.parse(owner, "[npc.NameHasFull] received formal training in martial arts, making [npc.herHim] an extremely dangerous individual even while unarmed.");
 		}
 		@Override
 		public boolean isHiddenPerk() {

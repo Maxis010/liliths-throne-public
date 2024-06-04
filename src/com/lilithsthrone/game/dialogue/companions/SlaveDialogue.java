@@ -3114,7 +3114,7 @@ public class SlaveDialogue {
 					+ "<p>"
 						+ "You answer in the affirmative, before commanding [npc.name] to parade around in front of you; an order which [npc.she] again dutifully carries out."
 						+ " After that, you get [npc.herHim] to "+legsSpreading+partInspection()
-						+ " Finally, you command your doll to show you the port in the back of her neck, and check it to make sure that it's in perfect condition."
+						+ " Finally, you command your doll to show you the port in the back of [npc.her] neck, and check it to make sure that it's in perfect condition."
 					+ "</p>"
 					+ "<p>"
 						+ "Satisfied with [npc.her] appearance, you tell [npc.name] "+(isSlaveNaked()?"to step back up before you":"to get dressed again")+", and without a word of complaint, [npc.she] once more does exactly as you say."

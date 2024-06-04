@@ -6,14 +6,19 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.lilithsthrone.game.PropertyValue;
+import com.lilithsthrone.game.character.FluidStored;
+import com.lilithsthrone.game.character.GameCharacter;
 import com.lilithsthrone.game.character.body.coverings.BodyCoveringType;
 import com.lilithsthrone.game.character.body.valueEnums.AssSize;
 import com.lilithsthrone.game.character.body.valueEnums.BodyMaterial;
+import com.lilithsthrone.game.character.body.valueEnums.BreastShape;
 import com.lilithsthrone.game.character.body.valueEnums.CupSize;
+import com.lilithsthrone.game.character.body.valueEnums.FluidModifier;
 import com.lilithsthrone.game.character.body.valueEnums.HairLength;
 import com.lilithsthrone.game.character.body.valueEnums.HairStyle;
 import com.lilithsthrone.game.character.body.valueEnums.HipSize;
 import com.lilithsthrone.game.character.effects.AbstractStatusEffect;
+import com.lilithsthrone.game.character.fetishes.Fetish;
 import com.lilithsthrone.game.character.gender.Gender;
 import com.lilithsthrone.game.character.markings.Tattoo;
 import com.lilithsthrone.game.character.markings.TattooWriting;
@@ -36,10 +41,12 @@ import com.lilithsthrone.game.inventory.SetBonus;
 import com.lilithsthrone.game.inventory.clothing.AbstractClothing;
 import com.lilithsthrone.game.inventory.clothing.AbstractClothingType;
 import com.lilithsthrone.game.inventory.clothing.ClothingType;
+import com.lilithsthrone.game.inventory.item.AbstractFilledCondom;
 import com.lilithsthrone.game.inventory.item.ItemType;
 import com.lilithsthrone.game.sex.SexAreaOrifice;
 import com.lilithsthrone.game.sex.SexAreaPenetration;
 import com.lilithsthrone.game.sex.SexType;
+import com.lilithsthrone.game.sex.sexActions.SexActionUtility;
 import com.lilithsthrone.main.Main;
 import com.lilithsthrone.utils.Units;
 import com.lilithsthrone.utils.Util;
@@ -156,24 +163,464 @@ public class MiscDialogue {
 		@Override
 		public Response getResponse(int responseTab, int index) {
 			if(index==1) {
-				return new ResponseEffectsOnly("Finished", "Return to your inventory screen.") {
-					@Override
-					public void effects() {
-						if(BodyChanging.getTarget().isPlayer()) {
+				if(Main.game.isInSex()) {
+					return new Response(
+							"Finished",
+							"Finish using the makeup set...",
+							Main.sex.SEX_DIALOGUE){
+						@Override
+						public void effects(){
 							Main.mainController.openInventory();
-						} else {
-							Main.mainController.openInventory((NPC) BodyChanging.getTarget(), InventoryInteraction.FULL_MANAGEMENT);
+							Main.sex.setUsingItemText(UtilText.parse(BodyChanging.getTarget(),
+								BodyChanging.getTarget().isPlayer()
+									?"You use the arcane makeup set on yourself..."
+									:"You use the arcane makeup set on [npc.name]..."));
+							Main.sex.endSexTurn(SexActionUtility.PLAYER_USE_ITEM);
+							Main.sex.setSexStarted(true);
 						}
-					}
-				};
+					};
+					
+				} else {
+					return new ResponseEffectsOnly("Finished", "Return to your inventory screen.") {
+						@Override
+						public void effects() {
+							if(BodyChanging.getTarget().isPlayer()) {
+								Main.mainController.openInventory();
+							} else {
+								Main.mainController.openInventory((NPC) BodyChanging.getTarget(), InventoryInteraction.FULL_MANAGEMENT);
+							}
+						}
+					};
+				}
 			}
 			return null;
 		}
 		@Override
 		public DialogueNodeType getDialogueNodeType() {
+			if(Main.game.isInSex()) {
+				return DialogueNodeType.NORMAL;
+			}
 			return DialogueNodeType.PHONE;
 		}
+		@Override
+		public boolean isInventoryForcedDisabledInSex() {
+			return true;
+		}
 	};
+	
+	// Condom use:
+	
+	// init for hook to condom and user/target:
+	private static GameCharacter condomOwner;
+	private static GameCharacter condomUser;
+	private static GameCharacter condomTarget;
+	private static AbstractFilledCondom usedCondom;
+	private static String condomUseDescription;
+	
+	public static DialogueNode getUsedCondomSelectionDialogue(GameCharacter condomOwner, GameCharacter condomUser, GameCharacter condomTarget, AbstractFilledCondom usedCondom, String condomUseDescription) {
+		boolean debug = false;
+		
+		MiscDialogue.condomOwner = condomOwner;
+		MiscDialogue.condomUser = condomUser;
+		MiscDialogue.condomTarget = condomTarget;
+		MiscDialogue.usedCondom = usedCondom;
+		MiscDialogue.condomUseDescription = condomUseDescription;
+		
+		if(debug) {
+			System.out.println("UsedCondomInit:");
+			System.out.println(UtilText.parse(condomOwner, "condomOwner: [npc.name]"));
+			System.out.println(UtilText.parse(condomUser, "condomUser: [npc.name]"));
+			System.out.println(UtilText.parse(condomTarget, "condomTarget: [npc.name]"));
+		}
+		
+		return USED_CONDOM_SELECTION;
+	}
+	
+	private static final DialogueNode USED_CONDOM_SELECTION = new DialogueNode("Used Condom", "", true) {
+		@Override
+		public String getHeaderContent() {
+			StringBuilder sb = new StringBuilder();
+			
+			FluidStored fs = usedCondom.getCum();
+			
+			sb.append("<p>");
+				sb.append(condomUseDescription);
+				sb.append(" The condom contains:");
+			sb.append("</p>");
+			
+			sb.append("<p style='text-align:center;'>");
+			sb.append("<b>[units.fluid("+fs.getMillilitres()+")]</b> of");
+			sb.append("<br/>");
+				try {
+					sb.append(UtilText.parse(fs.getFluidCharacter(), "<span style='color:"+fs.getFluidCharacter().getFemininity().getColour().toWebHexString()+";'>[npc.NamePos]</span>"));
+					sb.append(" ");
+					sb.append(" [style.colourCum("+fs.getFluid().getName(condomOwner)+")]");
+				} catch(Exception ex) {
+					String raceName = fs.getBody().getRace().getName(false);
+					sb.append("<span style='color:"+fs.getBody().getRace().getColour().toWebHexString()+";'>");
+					sb.append(UtilText.generateSingularDeterminer(raceName)+" "+ Util.capitaliseSentence(raceName)+"'s");
+					sb.append("</span> ");
+					sb.append(" [style.colourCum("+fs.getFluid().getName(null)+")]");
+				}
+				sb.append("<br/>");
+				sb.append("It has the flavour of <span style='color:"+fs.getFluid().getFlavour().getColour().toWebHexString()+";'>"+fs.getFluid().getFlavour().getName()+"</span>");
+				if(!fs.getFluid().getFluidModifiers().isEmpty()) {
+					sb.append("<br/>");
+					StringBuilder modifiersSB = new StringBuilder();
+					modifiersSB.append("It is ");
+					List<String> modList = new ArrayList<>();
+					for(FluidModifier mod : fs.getFluid().getFluidModifiers()) {
+						modList.add("<span style='color:"+mod.getColour().toWebHexString()+";'>"+mod.getName()+"</span>");
+					}
+					modifiersSB.append(Util.stringsToStringList(modList, false));
+					sb.append(modifiersSB.toString());
+					sb.append(".");
+				}
+			sb.append("</p>");
+
+			sb.append("<p>");
+				if(Main.game.getPlayer().hasFetish(Fetish.FETISH_CUM_ADDICT)) {
+					sb.append("As you love cum so much, you feel yourself getting madly turned on at the prospect of using the contents of this condom...");
+				} else {
+					sb.append("The cum is cold and unappealing, making you question your decision to open the condom...");
+				}
+			sb.append("</p>");
+			
+			return sb.toString();
+		}
+		@Override
+		public String getContent() {
+			return "";
+		}
+		@Override
+		public Response getResponse(int responseTab, int index) {
+			if(index==0) {
+				if(Main.game.isInSex()) {
+					return new Response(
+							"Back",
+							"Decide against using the condom's contents...",
+							Main.sex.SEX_DIALOGUE){
+						@Override
+						public void effects(){
+							Main.mainController.openInventory();
+							condomOwner.addItem(usedCondom);
+						}
+					};
+					
+				} else {
+					return new ResponseEffectsOnly("Back", "Decide against using the condom's contents...") {
+						@Override
+						public void effects() {
+							if(condomUser.isPlayer()) {
+								Main.mainController.openInventory();
+							} else {
+								Main.mainController.openInventory((NPC) condomUser, InventoryInteraction.FULL_MANAGEMENT);
+							}
+							condomOwner.addItem(usedCondom);
+						}
+					};
+				}
+			}
+			
+			List<Response> responses = new ArrayList<>();
+			
+			if(!condomTarget.isSexAreaExposed(SexAreaOrifice.MOUTH)) {
+				responses.add(new Response("Swallow",
+						UtilText.parse(condomTarget, "[npc.NamePos] mouth is blocked..."),
+						null));
+			} else {
+				responses.add(getUsedCondomResponse("Swallow",
+							"Swallow the condom's contents...",
+							"Get [npc.name] to swallow the condom's contents",
+							(SexAreaOrifice.MOUTH)));
+			}
+			
+			if(!condomTarget.hasVagina()) {
+				responses.add(new Response("Pussy",
+						UtilText.parse(condomTarget, "[npc.Name] [npc.do]n't have a vagina..."),
+						null));
+			} else if(!condomTarget.isSexAreaExposed(SexAreaOrifice.VAGINA)) {
+				responses.add(new Response("Pussy",
+						UtilText.parse(condomTarget, "[npc.NamePos] pussy is blocked..."),
+						null));
+			} else {
+				responses.add(getUsedCondomResponse("Pussy",
+							"Stuff the condom's contents into your pussy...",
+							"Stuff the condom's contents into [npc.namePos] pussy...",
+							(SexAreaOrifice.VAGINA)));
+			}
+
+			if(Main.game.isAnalContentEnabled()) {
+				if(!condomTarget.isSexAreaExposed(SexAreaOrifice.ANUS)) {
+					responses.add(new Response("Asshole",
+							UtilText.parse(condomTarget, "[npc.NamePos] asshole is blocked..."),
+							null));
+				} else {
+					responses.add(getUsedCondomResponse("Asshole",
+								"Stuff the condom's contents into your asshole...",
+								"Stuff the condom's contents into [npc.namePos] asshole...",
+								(SexAreaOrifice.ANUS)));
+				}
+			}
+			
+			if(Main.game.isNipplePenEnabled()) {
+				if(!condomTarget.isBreastFuckableNipplePenetration()) {
+					responses.add(new Response("Nipples",
+							UtilText.parse(condomTarget, "[npc.Name] [npc.do]n't have fuckable nipples into which the condom's contents can be stuffed..."),
+							null));
+				} else if(!condomTarget.isSexAreaExposed(SexAreaOrifice.NIPPLE)) {
+					responses.add(new Response("Nipples",
+							UtilText.parse(condomTarget, "[npc.NamePos] nipples are blocked..."),
+							null));
+				} else {
+					responses.add(getUsedCondomResponse("Nipples",
+							"Stuff the condom's contents into your fuckable nipples...",
+							"Stuff the condom's contents into [npc.namePos] fuckable nipples...",
+							(SexAreaOrifice.NIPPLE)));
+				}
+				
+				if(Main.game.isUdderContentEnabled()) {
+					if(!condomTarget.isBreastCrotchFuckableNipplePenetration()) {
+						responses.add(new Response(condomTarget.getBreastCrotchShape()==BreastShape.UDDERS?"Udders":"Crotch-boobs",
+								UtilText.parse(condomTarget, "[npc.Name] [npc.do]n't have fuckable [npc.nipplesCrotch] into which the condom's contents can be stuffed..."),
+								null));
+					} else if(!condomTarget.isSexAreaExposed(SexAreaOrifice.NIPPLE_CROTCH)) {
+						responses.add(new Response(condomTarget.getBreastCrotchShape()==BreastShape.UDDERS?"Udders":"Crotch-boobs",
+								UtilText.parse(condomTarget, "[npc.NamePos] [npc.nipplesCrotch] are blocked..."),
+								null));
+					} else {
+						responses.add(getUsedCondomResponse(condomTarget.getBreastCrotchShape()==BreastShape.UDDERS?"Udders":"Crotch-boobs",
+								"Stuff the condom's contents into your [npc.nipplesCrotch+]...",
+								"Stuff the condom's contents into [npc.namePos] [npc.nipplesCrotch+]...",
+								(SexAreaOrifice.NIPPLE_CROTCH)));
+					}
+				}
+			}
+			
+			if(Main.game.isUrethraEnabled()) {
+				if(!condomTarget.hasPenisIgnoreDildo() || !condomTarget.isUrethraFuckable()) {
+					responses.add(new Response("Penile urethra",
+							condomTarget.hasPenisIgnoreDildo()
+								?UtilText.parse(condomTarget, "[npc.Name] [npc.do]n't have a fuckable urethra into which the condom's contents can be stuffed...")
+								:UtilText.parse(condomTarget, "[npc.Name] [npc.do]n't have a penis..."),
+							null));
+				} else if(!condomTarget.isSexAreaExposed(SexAreaOrifice.URETHRA_PENIS)) {
+					responses.add(new Response("Penile urethra",
+							UtilText.parse(condomTarget, "[npc.NamePos] urethra is blocked..."),
+							null));
+				} else {
+					responses.add(getUsedCondomResponse("Penile urethra",
+							"Stuff the condom's contents into your [npc.urethraPenis]...",
+							"Stuff the condom's contents into [npc.namePos] [npc.urethraPenis+]...",
+							(SexAreaOrifice.URETHRA_PENIS)));
+				}
+				
+				if(!condomTarget.hasVagina() || !condomTarget.isVaginaUrethraFuckable()) {
+					responses.add(new Response("Vaginal urethra",
+							condomTarget.hasVagina()
+								?UtilText.parse(condomTarget, "[npc.Name] [npc.do]n't have a fuckable urethra into which the condom's contents can be stuffed...")
+								:UtilText.parse(condomTarget, "[npc.Name] [npc.do]n't have a vagina..."),
+							null));
+				} else if(!condomTarget.isSexAreaExposed(SexAreaOrifice.URETHRA_VAGINA)) {
+					responses.add(new Response("Vaginal urethra",
+							UtilText.parse(condomTarget, "[npc.NamePos] urethra is blocked..."),
+							null));
+				} else {
+					responses.add(getUsedCondomResponse("Vaginal urethra",
+							"Stuff the condom's contents into your [npc.urethraVagina]...",
+							"Stuff the condom's contents into [npc.namePos] [npc.urethraVagina+]...",
+							(SexAreaOrifice.URETHRA_VAGINA)));
+				}
+			}
+
+			if(!condomTarget.hasSpinneret()) {
+				responses.add(new Response("Spinneret",
+						UtilText.parse(condomTarget, "[npc.Name] [npc.do]n't have a spinneret into which the condom's contents can be stuffed..."),
+						null));
+			} else if(!condomTarget.isSexAreaExposed(SexAreaOrifice.SPINNERET)) {
+				responses.add(new Response("Spinneret",
+						UtilText.parse(condomTarget, "[npc.NamePos] spinneret is blocked..."),
+						null));
+			} else {
+				responses.add(getUsedCondomResponse("Spinneret",
+							"Stuff the condom's contents into your spinneret...",
+							"Stuff the condom's contents into [npc.namePos] spinneret...",
+							(SexAreaOrifice.SPINNERET)));
+			}
+			
+			for(int i=0; i<responses.size(); i++) {
+				if(index-1==i) {
+					return responses.get(i);
+				}
+			}
+			
+			return null;
+		}
+		@Override
+		public DialogueNodeType getDialogueNodeType() {
+			if(Main.game.isInSex()) {
+				return DialogueNodeType.NORMAL;
+			}
+			return DialogueNodeType.PHONE;
+		}
+		@Override
+		public boolean isInventoryForcedDisabledInSex() {
+			return true;
+		}
+	};
+	
+	private static Response getUsedCondomResponse(String title, String descriptionSelf, String description, SexAreaOrifice orifice) {
+		if(Main.game.isInSex()) {
+			return new Response(
+					title,
+					UtilText.parse(condomTarget, condomUser==condomTarget?descriptionSelf:description),
+					Main.sex.SEX_DIALOGUE){
+				@Override
+				public void effects(){
+					String condomEffectString = getAndApplyCondomUseDescription(orifice);
+					condomTarget.calculateStatusEffects(0);
+					Main.mainController.openInventory();
+					Main.sex.setUsingItemText(
+							condomEffectString
+							+ Main.sex.calculateWetAreas(false));
+					Main.sex.endSexTurn(SexActionUtility.PLAYER_USE_ITEM);
+					Main.sex.setSexStarted(true);
+					
+				}
+			};
+			
+		} else {
+			return new ResponseEffectsOnly(title, 
+					UtilText.parse(condomTarget, condomUser==condomTarget?descriptionSelf:description)) {
+				@Override
+				public void effects() {
+					String condomEffectString = getAndApplyCondomUseDescription(orifice);
+					condomTarget.calculateStatusEffects(0);
+					Main.game.getTextEndStringBuilder().append(condomEffectString);
+					if(condomTarget.isPlayer()) {
+						Main.mainController.openInventory();
+					} else {
+						Main.mainController.openInventory((NPC) condomTarget, InventoryInteraction.FULL_MANAGEMENT);
+					}
+				}
+			};
+		}
+	}
+	
+	private static String getAndApplyCondomUseDescription(SexAreaOrifice orifice) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("<p>");
+		String targetNameSelfShe = condomTarget==condomUser?"[npc.she]":"[npc2.name]";
+		String userNamePosSelfHer = condomTarget==condomUser?"[npc.her]":"[npc.namePos]";
+		String cumName = "cum";
+		try {
+			cumName = usedCondom.getCum().getFluid().getName(usedCondom.getCum().getFluidCharacter());
+		} catch(Exception ex) {
+		}
+		switch(orifice) {
+			case ARMPITS:
+			case ASS:
+			case BREAST:
+			case BREAST_CROTCH:
+			case THIGHS:
+				return "";// These orifices are never used
+			// Internal orifices:
+			case ANUS:
+				if(condomTarget.hasFetish(Fetish.FETISH_CUM_ADDICT)) {
+					sb.append(UtilText.parse(condomTarget, condomUser,
+							"[npc.Name] can't help but let out a delighted [npc.moan] as "+targetNameSelfShe+" eagerly [npc2.verb(push)] the slimy fluid into [npc.her] [npc.asshole+]."
+							+ " Desperately stuffing "+userNamePosSelfHer+" [npc.ass] full of the condom's contents, "+targetNameSelfShe+" only [npc2.verb(discard)] the condom once [npc2.sheIs] sure that it's completely empty."));
+				} else {
+					sb.append(UtilText.parse(condomTarget, condomUser,
+							"[npc.Name] [npc.verb(shudder)] as "+targetNameSelfShe+" [npc2.verb(push)] the slimy fluid into [npc.her] [npc.asshole+],"
+									+ " trying [npc.her] best not to think about the cold "+cumName+" that's now in [npc.her] [npc.ass] as "+targetNameSelfShe+" [npc2.verb(throw)] the now-empty condom to the floor..."));
+				}
+				break;
+			case MOUTH:
+				if(condomTarget.hasFetish(Fetish.FETISH_CUM_ADDICT)) {
+					sb.append(UtilText.parse(condomTarget, condomUser,
+							"[npc.Name] can't help but let out a delighted [npc.moan] as [npc.she] greedily [npc.verb(gulp)] down the slimy fluid."
+							+ " Darting [npc.her] [npc.tongue] out, [npc.she] desperately [npc.verb(lick)] up every last drop of cum; only discarding the condom once [npc.sheIs] sure that it's completely empty."));
+				} else {
+					sb.append(UtilText.parse(condomTarget, condomUser,
+							"[npc.Name] [npc.verb(scrunch)] [npc.her] [npc.eyes] shut as [npc.she] [npc.verb(gulp)] down the slimy fluid,"
+									+ " trying [npc.her] best not to think about what [npc.sheHas] just done as "+targetNameSelfShe+" [npc2.verb(throw)] the now-empty condom to the floor..."));
+				}
+				break;
+			case NIPPLE:
+				if(condomTarget.hasFetish(Fetish.FETISH_CUM_ADDICT)) {
+					sb.append(UtilText.parse(condomTarget, condomUser,
+							"[npc.Name] can't help but let out a delighted [npc.moan] as "+targetNameSelfShe+" eagerly [npc2.verb(push)] the slimy fluid into [npc.her] [npc.nipple+]."
+							+ " Desperately stuffing "+userNamePosSelfHer+" [npc.breasts] full of the condom's contents, "+targetNameSelfShe+" only [npc2.verb(discard)] the condom once [npc2.sheIs] sure that it's completely empty."));
+				} else {
+					sb.append(UtilText.parse(condomTarget, condomUser,
+							"[npc.Name] [npc.verb(shudder)] as "+targetNameSelfShe+" [npc2.verb(push)] the slimy fluid into [npc.her] [npc.nipple+],"
+									+ " trying [npc.her] best not to think about the cold "+cumName+" that's now in [npc.her] [npc.breasts] as "+targetNameSelfShe+" [npc2.verb(throw)] the now-empty condom to the floor..."));
+				}
+				break;
+			case NIPPLE_CROTCH:
+				if(condomTarget.hasFetish(Fetish.FETISH_CUM_ADDICT)) {
+					sb.append(UtilText.parse(condomTarget, condomUser,
+							"[npc.Name] can't help but let out a delighted [npc.moan] as "+targetNameSelfShe+" eagerly [npc2.verb(push)] the slimy fluid into [npc.her] [npc.nippleCrotch+]."
+							+ " Desperately stuffing "+userNamePosSelfHer+" [npc.crotchBoobs] full of the condom's contents, "+targetNameSelfShe+" only [npc2.verb(discard)] the condom once [npc2.sheIs] sure that it's completely empty."));
+				} else {
+					sb.append(UtilText.parse(condomTarget, condomUser,
+							"[npc.Name] [npc.verb(shudder)] as "+targetNameSelfShe+" [npc2.verb(push)] the slimy fluid into [npc.her] [npc.nippleCrotch+],"
+									+ " trying [npc.her] best not to think about the cold "+cumName+" that's now in [npc.her] [npc.crotchBoobs] as "+targetNameSelfShe+" [npc2.verb(throw)] the now-empty condom to the floor..."));
+				}
+				break;
+			case SPINNERET:
+				if(condomTarget.hasFetish(Fetish.FETISH_CUM_ADDICT)) {
+					sb.append(UtilText.parse(condomTarget, condomUser,
+							"[npc.Name] can't help but let out a delighted [npc.moan] as "+targetNameSelfShe+" eagerly [npc2.verb(push)] the slimy fluid into [npc.her] [npc.spinneret+]."
+							+ " Desperately stuffing "+userNamePosSelfHer+" web-spinning orifice full of the condom's contents, "+targetNameSelfShe+" only [npc2.verb(discard)] the condom once [npc2.sheIs] sure that it's completely empty."));
+				} else {
+					sb.append(UtilText.parse(condomTarget, condomUser,
+							"[npc.Name] [npc.verb(shudder)] as "+targetNameSelfShe+" [npc2.verb(push)] the slimy fluid into [npc.her] [npc.spinneret+],"
+									+ " trying [npc.her] best not to think about the cold "+cumName+" that's now in [npc.her] web-spinning orifice as "+targetNameSelfShe+" [npc2.verb(throw)] the now-empty condom to the floor..."));
+				}
+				break;
+			case URETHRA_PENIS:
+				if(condomTarget.hasFetish(Fetish.FETISH_CUM_ADDICT)) {
+					sb.append(UtilText.parse(condomTarget, condomUser,
+							"[npc.Name] can't help but let out a delighted [npc.moan] as "+targetNameSelfShe+" eagerly [npc2.verb(push)] the slimy fluid into [npc.her] [npc.urethraPenis+]."
+							+ " Desperately stuffing "+userNamePosSelfHer+" [npc.cock] full of the condom's contents, "+targetNameSelfShe+" only [npc2.verb(discard)] the condom once [npc2.sheIs] sure that it's completely empty."));
+				} else {
+					sb.append(UtilText.parse(condomTarget, condomUser,
+							"[npc.Name] [npc.verb(shudder)] as "+targetNameSelfShe+" [npc2.verb(push)] the slimy fluid into [npc.her] [npc.urethraPenis+],"
+									+ " trying [npc.her] best not to think about the cold "+cumName+" that's now in [npc.her] [npc.cock] as "+targetNameSelfShe+" [npc2.verb(throw)] the now-empty condom to the floor..."));
+				}
+				break;
+			case URETHRA_VAGINA:
+				if(condomTarget.hasFetish(Fetish.FETISH_CUM_ADDICT)) {
+					sb.append(UtilText.parse(condomTarget, condomUser,
+							"[npc.Name] can't help but let out a delighted [npc.moan] as "+targetNameSelfShe+" eagerly [npc2.verb(push)] the slimy fluid into [npc.her] [npc.urethraVagina+]."
+							+ " Desperately stuffing "+userNamePosSelfHer+" [npc.pussy] full of the condom's contents, "+targetNameSelfShe+" only [npc2.verb(discard)] the condom once [npc2.sheIs] sure that it's completely empty."));
+				} else {
+					sb.append(UtilText.parse(condomTarget, condomUser,
+							"[npc.Name] [npc.verb(shudder)] as "+targetNameSelfShe+" [npc2.verb(push)] the slimy fluid into [npc.her] [npc.urethraVagina+],"
+									+ " trying [npc.her] best not to think about the cold "+cumName+" that's now in [npc.her] [npc.pussy] as "+targetNameSelfShe+" [npc2.verb(throw)] the now-empty condom to the floor..."));
+				}
+				break;
+			case VAGINA:
+				if(condomTarget.hasFetish(Fetish.FETISH_CUM_ADDICT)) {
+					sb.append(UtilText.parse(condomTarget, condomUser,
+							"[npc.Name] can't help but let out a delighted [npc.moan] as "+targetNameSelfShe+" eagerly [npc2.verb(push)] the slimy fluid into [npc.her] [npc.pussy+]."
+							+ " Desperately stuffing "+userNamePosSelfHer+" [npc.pussy] full of the condom's contents, "+targetNameSelfShe+" only [npc2.verb(discard)] the condom once [npc2.sheIs] sure that it's completely empty."));
+				} else {
+					sb.append(UtilText.parse(condomTarget, condomUser,
+							"[npc.Name] [npc.verb(shudder)] as "+targetNameSelfShe+" [npc2.verb(push)] the slimy fluid into [npc.her] [npc.pussy+],"
+									+ " trying [npc.her] best not to think about the cold "+cumName+" that's now in [npc.her] [npc.pussy] as "+targetNameSelfShe+" [npc2.verb(throw)] the now-empty condom to the floor..."));
+				}
+				break;
+		}
+		sb.append("</p>");
+		
+		sb.append(condomTarget.ingestFluid(usedCondom.getCum(), orifice));
+		
+		return sb.toString();
+	}
+	
 	
 	// Dolls:
 	
@@ -238,7 +685,7 @@ public class MiscDialogue {
 	public static boolean hair = false;
 	private static int hairCost = 25_000;
 	public static boolean deck = false;
-	private static int deckCost = 1_000_000;
+	public static int deckCost = 1_000_000;
 	
 	public static boolean fucked = false;
 	private static int fuckedCost = 1_000;
@@ -325,7 +772,11 @@ public class MiscDialogue {
 				sb.append(applyWrapper("Erase barcode", "We'll remove the barcode tattoo from your doll's forehead before delivery.", PresetColour.GENERIC_MINOR_GOOD, "DOLL_BARCODE", "Remove", barcodeRemoval, barcodeCost, true));
 				sb.append(applyWrapper("Toy set", "Your doll will come equipped with a selection of toys.", PresetColour.BASE_PINK, "DOLL_TOYS", "Add", toySet, toyCost, true));
 				sb.append(applyWrapper("Hair", "We'll give your doll a head of synthetic hair.", PresetColour.BASE_BROWN_LIGHT, "DOLL_HAIR", "Add", hair, hairCost, true));
-				sb.append(applyWrapper("D.E.C.K.", "Purchase a D.E.C.K. with your doll, allowing you to fully customise it whenever you want.", PresetColour.GENERIC_EXCELLENT, "DOLL_DECK", "Purchase", deck, deckCost, true));
+				sb.append(applyWrapper("D.E.C.K.",
+						(Main.game.getPlayer().hasItemType(ItemType.DOLL_CONSOLE)
+							?"[style.italicsDisabled(You already have a D.E.C.K., and have no need for another...)]"
+							:"Purchase a D.E.C.K. with your doll, allowing you to fully customise it whenever you want."),
+						PresetColour.GENERIC_EXCELLENT, "DOLL_DECK", "Purchase", deck, deckCost, true, Main.game.getPlayer().hasItemType(ItemType.DOLL_CONSOLE)));
 			sb.append(endWrapper());
 
 			sb.append(startWrapper("Pre-delivery"));
@@ -391,6 +842,29 @@ public class MiscDialogue {
 			);
 	}
 	
+	private static List<AbstractSubspecies> dollCompatibleSubspecies = new ArrayList<>();
+	private static List<AbstractSubspecies> getDollCompatibleSubspecies() {
+		// check every subspecies for compatibility with dolls...
+		if(dollCompatibleSubspecies.isEmpty()) {
+			dollCompatibleSubspecies.addAll(Subspecies.getAllSubspecies());
+			dollCompatibleSubspecies.removeIf(s->s.getRace()==Race.ELEMENTAL
+					 || s.getRace()==Race.getRaceFromId("dsg_dragon") // They aren't able to capture dragons to TF
+					 || s.getRace()==Race.DEMON // They don't TF demons in case it pisses off a lilin
+					 || s.getRace()==Race.SLIME // This would make no sense
+					 || s.getRace().isAbleToSelfTransform() // Catch to make sure special future races aren't added
+					 || getProhibitedSubspecies().contains(s));
+			NPC doll = new BasicDoll();
+			for(AbstractSubspecies s : new ArrayList<>(dollCompatibleSubspecies)) {
+				doll.setBody(doll.getGender(), s, RaceStage.GREATER, true);
+				doll.setBodyMaterial(BodyMaterial.SILICONE);
+				if(doll.getFleshSubspecies()!=s) {
+					dollCompatibleSubspecies.remove(s);
+				}
+			}
+		}
+		return dollCompatibleSubspecies;
+	}
+	
 	public static final DialogueNode DOLL_BROCHURE_RACE_SELECTION = new DialogueNode("Doll Brochure", "", true) {
 		@Override
 		public String getContent() {
@@ -398,14 +872,14 @@ public class MiscDialogue {
 		}
 		@Override
 		public Response getResponse(int responseTab, int index) {
-			List<AbstractSubspecies> availableSubspecies = new ArrayList<>();
-			availableSubspecies.addAll(Subspecies.getAllSubspecies());
-			availableSubspecies.removeIf(s->s.getRace()==Race.ELEMENTAL
-					 || s.getRace()==Race.getRaceFromId("dsg_dragon") // They aren't able to capture dragons to TF
-					 || s.getRace()==Race.DEMON // They don't TF demons in case it pisses off a lilin
-					 || s.getRace()==Race.SLIME // This would make no sense
-					 || s.getRace().isAbleToSelfTransform() // Catch to make sure special future races aren't added
-					 || getProhibitedSubspecies().contains(s));
+			List<AbstractSubspecies> availableSubspecies = getDollCompatibleSubspecies();//new ArrayList<>();
+//			availableSubspecies.addAll(Subspecies.getAllSubspecies());
+//			availableSubspecies.removeIf(s->s.getRace()==Race.ELEMENTAL
+//					 || s.getRace()==Race.getRaceFromId("dsg_dragon") // They aren't able to capture dragons to TF
+//					 || s.getRace()==Race.DEMON // They don't TF demons in case it pisses off a lilin
+//					 || s.getRace()==Race.SLIME // This would make no sense
+//					 || s.getRace().isAbleToSelfTransform() // Catch to make sure special future races aren't added
+//					 || getProhibitedSubspecies().contains(s));
 			
 			if (index!=0 && index<availableSubspecies.size()+1) {
 				AbstractSubspecies subspecies = availableSubspecies.get(index - 1);
@@ -487,6 +961,10 @@ public class MiscDialogue {
 			gender = Gender.F_P_V_B_FUTANARI;
 		}
 
+		if(dollOption!=2) {
+			dollSubspecies = Subspecies.HUMAN;
+		}
+		
 		doll.setBody(gender, dollSubspecies, RaceStage.GREATER, true);
 		doll.setBodyMaterial(BodyMaterial.SILICONE); // Birthday is set in here
 		doll.setBirthday(doll.getBirthday().minusDays(Util.random.nextInt(61))); // Creation date is 0-60 days before purchase
@@ -621,8 +1099,12 @@ public class MiscDialogue {
 	private static String endWrapper() {
 		return "</div>";
 	}
-	
+
 	private static String applyWrapper(String title, String description, Colour buttonColour, String buttonId, String buttonText, boolean buttonActive, int cost, boolean isCostAdditional) {
+		return applyWrapper(title, description, buttonColour, buttonId, buttonText, buttonActive, cost, isCostAdditional, false);
+	}
+	
+	private static String applyWrapper(String title, String description, Colour buttonColour, String buttonId, String buttonText, boolean buttonActive, int cost, boolean isCostAdditional, boolean isDisabled) {
 		StringBuilder sb = new StringBuilder();
 
 		String border = "border: 1px solid "+(buttonActive?buttonColour:PresetColour.BASE_GREY_DARK).toWebHexString()+"55;";
@@ -633,9 +1115,9 @@ public class MiscDialogue {
 		
 		sb.append("<div class='container-full-width' style='width:100%; padding:0; margin:2px 0 2px 0; text-align:center; "+border+" "+background+"'>");
 			sb.append("<div class='container-full-width' style='width:20%; padding:0; margin:0;'>");
-				sb.append("<b>");
+				sb.append(isDisabled?"[style.boldDisabled(":"[style.bold(");
 					sb.append(title);
-				sb.append("</b>");
+				sb.append(")]");
 			sb.append("</div>");
 			
 			sb.append("<div class='container-full-width' style='width:55%; padding:0; margin:0;'>");
@@ -645,7 +1127,13 @@ public class MiscDialogue {
 			sb.append("</div>");
 
 			sb.append("<div class='container-full-width' style='width:5%; padding:0; margin:0;'>");
-				if(buttonActive) {
+				if(isDisabled) {
+					sb.append(
+							"<div class='cosmetics-button disabled' "+buttonStyle+">"
+								+ buttonText
+							+ "</div>");
+					
+				} else if(buttonActive) {
 					sb.append(
 							"<div id='"+buttonId+"' class='cosmetics-button active' "+buttonStyle+">"
 								+ "<span style='color:"+buttonColour.toWebHexString()+";'>"+buttonText+"</span>"

@@ -195,7 +195,7 @@ public class RoomPlayer {
 						}
 					};
 				} else {
-					return new Response("Manage people", "You'll either need a slaver license, or permission from Lilaya to house your friends, before you can access this menu!",  null);
+					return new Response("Manage people", "You need a slaver license or permission from Lilaya to house your friends or dolls in order to access this menu!",  null);
 				}
 				
 			} else if (index == 8) {
@@ -1827,8 +1827,6 @@ public class RoomPlayer {
 			
 			UtilText.addSpecialParsingString(String.valueOf(soloSex), true);
 			UtilText.addSpecialParsingString(Util.stringsToStringList(names, false), false);
-			
-			System.out.println("Sleeping? "+Main.game.getPlayer().isAsleep());//TODO why false?
 			
 			Main.game.appendToTextStartStringBuilder(UtilText.parseFromXMLFile("places/dominion/lilayasHome/playersRoom", "POST_WAKE_UP_SEX", hornySlaves));
 			

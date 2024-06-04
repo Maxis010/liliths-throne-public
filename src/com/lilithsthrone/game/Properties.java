@@ -760,6 +760,9 @@ public class Properties {
 					if(Main.isVersionOlderThan(versionNumber, "0.4.7.7")) {
 						values.add(PropertyValue.muskContent);
 					}
+					if(Main.isVersionOlderThan(versionNumber, "0.4.9.6")) {
+						values.add(PropertyValue.lipLispContent);
+					}
 					
 					
 				} else {
