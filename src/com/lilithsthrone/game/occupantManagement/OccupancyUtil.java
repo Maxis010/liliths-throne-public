@@ -193,8 +193,9 @@ public class OccupancyUtil implements XMLSaving {
 	}
 	
 	public void handleSlaveRemoval(GameCharacter character) {
-		// First end the job to apply any effects
+		// First end the job to apply any effects, then reset all job hour slots to IDLE
 		character.getSlaveJob(Main.game.getHourOfDay()).applyJobEndEffects(character);
+		character.setSlaveJob24Hours(SlaveJob.IDLE);
 		
 		charactersAtJob.values().forEach(list->list.remove(character.getId()));
 		charactersResting.remove(character);
@@ -324,15 +325,16 @@ public class OccupancyUtil implements XMLSaving {
 		
 		// First need to set correct jobs and handle miscellaneous updates:
 		List<NPC> charactersToSendToWork = new ArrayList<>();
-		for(String id : this.getAllCharacters()) {
+		for(String id : getAllCharacters()) {
 			try {
 				NPC character = (NPC) Main.game.getNPCById(id);
-
-				SlaveJob currentJob = character.getSlaveJob(hour);
 				
-				if(Main.game.getPlayer().hasCompanion(character)) {
+				if(Main.game.getPlayer().hasCompanion(character)
+						|| (!character.isSlave() && character.hasJob())) {
 					continue;
 				}
+
+				SlaveJob currentJob = character.getSlaveJob(hour);
 				
 				if(character.isVisiblyPregnant() && !character.hasStatusEffect(StatusEffect.PREGNANT_3) && character.getSlavePermissionSettings().get(SlavePermission.PREGNANCY).contains(SlavePermissionSetting.PREGNANCY_MOTHERS_MILK)) {
 					ItemEffectType.MOTHERS_MILK.applyEffect(null, null, null, 0, character, character, null);
@@ -1036,9 +1038,9 @@ public class OccupancyUtil implements XMLSaving {
 								case SEX_VAGINAL:
 									effectDescriptions.append(UtilText.parse(slave,
 											UtilText.returnStringAtRandom(
-													name+" came deep inside [npc.namePos] [npc.pussy+]!",
-													name+" fucked [npc.namePos] [npc.pussy+], before filling [npc.herHim] with [npc.cum+]!",
-													name+" filled [npc.namePos] [npc.pussy+] with cum!")));
+													name+" came deep inside [npc.namePos] [npc.pussy+], ",
+													name+" fucked [npc.namePos] [npc.pussy+], before filling [npc.herHim] with [npc.cum+], ",
+													name+" filled [npc.namePos] [npc.pussy+] with cum, ")));
 	
 									slave.calculateGenericSexEffects(false, true, null, subspecies, halfDemonSubspecies, new SexType(SexParticipantType.NORMAL, SexAreaOrifice.VAGINA, SexAreaPenetration.PENIS));
 		
@@ -1047,12 +1049,12 @@ public class OccupancyUtil implements XMLSaving {
 										effects.add("<span style='color:"+PresetColour.CUM.toWebHexString()+";'>Pussy Creampie:</span> "+effectDescriptions.toString());
 										effectDescriptions.setLength(0);
 										
-									} else if(!slave.getSlavePermissionSettings().get(SlavePermission.PREGNANCY).contains(SlavePermissionSetting.PILLS_PROMISCUITY_PILLS)) {
-										effectDescriptions.append(UtilText.parse(slave, "resulting in a risk of pregnancy!"));
-										effects.add("<span style='color:"+PresetColour.GENERIC_ARCANE.toWebHexString()+";'>Pregnancy Risk:</span> "+effectDescriptions.toString());
+									} else if(!slave.isImpregnationPhysicallyPossible()) {
+										effectDescriptions.append(UtilText.parse(slave, "but as [npc.sheIs] incapable of being impregnated, the only result is a fresh creampie..."));
+										effects.add("<span style='color:"+PresetColour.CUM.toWebHexString()+";'>Pussy Creampie:</span> "+effectDescriptions.toString());
 										effectDescriptions.setLength(0);
 										
-									} else {
+									} else if(slave.getSlavePermissionSettings().get(SlavePermission.PREGNANCY).contains(SlavePermissionSetting.PILLS_PROMISCUITY_PILLS)) {
 										if(slave.isHasAnyPregnancyEffects()) {
 											effectDescriptions.append(UtilText.parse(slave,
 													"but as [npc.sheIs] on [#ITEM_innoxia_pills_sterility.getNamePlural(false)], there's no chance of [npc.herHim] getting pregnant."
@@ -1061,6 +1063,11 @@ public class OccupancyUtil implements XMLSaving {
 											effectDescriptions.append(UtilText.parse(slave, "but as [npc.sheIs] on [#ITEM_innoxia_pills_sterility.getNamePlural(false)], there's no chance of [npc.herHim] getting pregnant."));
 										}
 										effects.add("<span style='color:"+PresetColour.CUM.toWebHexString()+";'>Pussy Creampie:</span> "+effectDescriptions.toString());
+										effectDescriptions.setLength(0);
+										
+									} else {
+										effectDescriptions.append(UtilText.parse(slave, "resulting in a risk of pregnancy!"));
+										effects.add("<span style='color:"+PresetColour.GENERIC_ARCANE.toWebHexString()+";'>Pregnancy Risk:</span> "+effectDescriptions.toString());
 										effectDescriptions.setLength(0);
 									}
 									
@@ -1230,11 +1237,11 @@ public class OccupancyUtil implements XMLSaving {
 								
 							case SEX_VAGINAL:
 								if(usingRealPartner) {
-									effectDescriptions.append(UtilText.parse(partner,
+									effectDescriptions.append(
 											UtilText.returnStringAtRandom(
 													partnerName+" came deep inside "+UtilText.parse(slave, "[npc.namePos] [npc.pussy+], "),
 													partnerName+" roughly fucked "+UtilText.parse(slave, "[npc.namePos] [npc.pussy+], "),
-													partnerName+" filled "+UtilText.parse(slave, "[npc.namePos] [npc.pussy+]")+UtilText.parse(partner," with [npc.her] [npc.cum+], "))));
+													partnerName+" filled "+UtilText.parse(slave, "[npc.namePos] [npc.pussy+]")+UtilText.parse(partner," with [npc.her] [npc.cum+], ")));
 	
 									slave.calculateGenericSexEffects(false, true, partner, new SexType(SexParticipantType.NORMAL, SexAreaOrifice.VAGINA, SexAreaPenetration.PENIS));
 									
@@ -1243,12 +1250,12 @@ public class OccupancyUtil implements XMLSaving {
 										effects.add("<span style='color:"+PresetColour.CUM.toWebHexString()+";'>Pussy Creampie:</span> "+effectDescriptions.toString());
 										effectDescriptions.setLength(0);
 										
-									} else if(!slave.getSlavePermissionSettings().get(SlavePermission.PREGNANCY).contains(SlavePermissionSetting.PILLS_PROMISCUITY_PILLS)) {
-										effectDescriptions.append(UtilText.parse(slave, "resulting in a risk of pregnancy!"));
-										effects.add("<span style='color:"+PresetColour.GENERIC_ARCANE.toWebHexString()+";'>Pregnancy Risk:</span> "+effectDescriptions.toString());
+									} else if(!slave.isImpregnationPhysicallyPossible()) {
+										effectDescriptions.append(UtilText.parse(slave, "but as [npc.sheIs] incapable of being impregnated, the only result is a fresh creampie..."));
+										effects.add("<span style='color:"+PresetColour.CUM.toWebHexString()+";'>Pussy Creampie:</span> "+effectDescriptions.toString());
 										effectDescriptions.setLength(0);
 										
-									} else {
+									} else if(slave.getSlavePermissionSettings().get(SlavePermission.PREGNANCY).contains(SlavePermissionSetting.PILLS_PROMISCUITY_PILLS)) {
 										if(slave.isHasAnyPregnancyEffects()) {
 											effectDescriptions.append(UtilText.parse(slave, "but as [npc.sheIs] on [#ITEM_innoxia_pills_sterility.getNamePlural(false)], there's no chance of [npc.herHim] getting pregnant."
 														+ " ([npc.She] already has a risk of pregnancy from a previous encounter, however...)"));
@@ -1257,13 +1264,19 @@ public class OccupancyUtil implements XMLSaving {
 										}
 										effects.add("<span style='color:"+PresetColour.CUM.toWebHexString()+";'>Pussy Creampie:</span> "+effectDescriptions.toString());
 										effectDescriptions.setLength(0);
+										
+									} else {
+										effectDescriptions.append(UtilText.parse(slave, "resulting in a risk of pregnancy!"));
+										effects.add("<span style='color:"+PresetColour.GENERIC_ARCANE.toWebHexString()+";'>Pregnancy Risk:</span> "+effectDescriptions.toString());
+										effectDescriptions.setLength(0);
 									}
+									
 								} else {
 									effectDescriptions.append(UtilText.parse(slave,
 											UtilText.returnStringAtRandom(
-													partnerName+" came deep inside [npc.namePos] [npc.pussy+]!",
-													partnerName+" fucked [npc.namePos] [npc.pussy+], before filling [npc.herHim] with [npc.cum+]!",
-													partnerName+" filled [npc.namePos] [npc.pussy+] with cum!")));
+													partnerName+" came deep inside [npc.namePos] [npc.pussy+], ",
+													partnerName+" fucked [npc.namePos] [npc.pussy+], before filling [npc.herHim] with [npc.cum+], ",
+													partnerName+" filled [npc.namePos] [npc.pussy+] with cum, ")));
 
 									slave.calculateGenericSexEffects(false, true, null, partnerSubspecies, partnerHalfDemonSubspecies, new SexType(SexParticipantType.NORMAL, SexAreaOrifice.VAGINA, SexAreaPenetration.PENIS));
 		
@@ -1272,12 +1285,12 @@ public class OccupancyUtil implements XMLSaving {
 										effects.add("<span style='color:"+PresetColour.CUM.toWebHexString()+";'>Pussy Creampie:</span> "+effectDescriptions.toString());
 										effectDescriptions.setLength(0);
 										
-									} else if(!slave.getSlavePermissionSettings().get(SlavePermission.PREGNANCY).contains(SlavePermissionSetting.PILLS_PROMISCUITY_PILLS)) {
-										effectDescriptions.append(UtilText.parse(slave, "resulting in a risk of pregnancy!"));
-										effects.add("<span style='color:"+PresetColour.GENERIC_ARCANE.toWebHexString()+";'>Pregnancy Risk:</span> "+effectDescriptions.toString());
+									} else if(!slave.isImpregnationPhysicallyPossible()) {
+										effectDescriptions.append(UtilText.parse(slave, "but as [npc.sheIs] incapable of being impregnated, the only result is a fresh creampie..."));
+										effects.add("<span style='color:"+PresetColour.CUM.toWebHexString()+";'>Pussy Creampie:</span> "+effectDescriptions.toString());
 										effectDescriptions.setLength(0);
 										
-									} else {
+									} else if(slave.getSlavePermissionSettings().get(SlavePermission.PREGNANCY).contains(SlavePermissionSetting.PILLS_PROMISCUITY_PILLS)) {
 										if(slave.isHasAnyPregnancyEffects()) {
 											effectDescriptions.append(UtilText.parse(slave,
 													"but as [npc.sheIs] on [#ITEM_innoxia_pills_sterility.getNamePlural(false)], there's no chance of [npc.herHim] getting pregnant."
@@ -1286,6 +1299,11 @@ public class OccupancyUtil implements XMLSaving {
 											effectDescriptions.append(UtilText.parse(slave, "but as [npc.sheIs] on [#ITEM_innoxia_pills_sterility.getNamePlural(false)], there's no chance of [npc.herHim] getting pregnant."));
 										}
 										effects.add("<span style='color:"+PresetColour.CUM.toWebHexString()+";'>Pussy Creampie:</span> "+effectDescriptions.toString());
+										effectDescriptions.setLength(0);
+										
+									} else {
+										effectDescriptions.append(UtilText.parse(slave, "resulting in a risk of pregnancy!"));
+										effects.add("<span style='color:"+PresetColour.GENERIC_ARCANE.toWebHexString()+";'>Pregnancy Risk:</span> "+effectDescriptions.toString());
 										effectDescriptions.setLength(0);
 									}
 								}
@@ -1753,7 +1771,8 @@ public class OccupancyUtil implements XMLSaving {
 					}
 				}
 				
-				if(currentJob.hasFlag(SlaveJobFlag.INTERACTION_BONDING)) {
+				if(currentJob.hasFlag(SlaveJobFlag.INTERACTION_BONDING)
+						&& (!npc.isDoll() || !slave.isDoll())) { // Two dolls should not bond with each other
 					// Generic affection event:
 					descriptions = new ArrayList<>();
 					

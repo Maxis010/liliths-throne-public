@@ -539,7 +539,7 @@ public class PresetColour {
 	public static Colour SKIN_PURPLE_DARK = new Colour(false, BaseColour.PURPLE_DARK, "dark purple") {}.setLinkedColourLighter(SKIN_PURPLE);
 	
 	// Orifices:
-	public static Colour ORIFICE_INTERIOR = new Colour(false, BaseColour.ROSE, "fleshy-pink") {};
+	public static Colour ORIFICE_INTERIOR = new Colour(false, Util.newColour(0xfaa9ae), Util.newColour(0xfaa9ae), "flesh") {};
 
 	// Misc:
 	public static Colour TONGUE = new Colour(false, BaseColour.ROSE, "pink") {};

@@ -178,6 +178,9 @@ public class MainController implements Initializable {
 	private Tooltip tooltip;
 	private EventHandler<KeyEvent> actionKeyPressed, actionKeyReleased;
 
+	private int tooltipWidth = 0;
+	private int tooltipHeight = 0;
+	
 	// Responses:
 	public static final int RESPONSE_COUNT = 15;
 	
@@ -229,25 +232,14 @@ public class MainController implements Initializable {
 			@Override
 			public void onChange() {
 				if (Main.game.getPlayer() != null) {
-					Main.game.getActiveWorld().getCell(Main.game.getPlayer().getLocation()).setDiscovered(true);
-					Main.game.getActiveWorld().getCell(Main.game.getPlayer().getLocation()).setTravelledTo(true);
-					if (Main.game.getPlayer().getLocation().getY() < Main.game.getActiveWorld().WORLD_HEIGHT - 1) {
-						Main.game.getActiveWorld().getCell(Main.game.getPlayer().getLocation().getX(), Main.game.getPlayer().getLocation().getY() + 1).setDiscovered(true);
-					}
-					if (Main.game.getPlayer().getLocation().getY() != 0) {
-						Main.game.getActiveWorld().getCell(Main.game.getPlayer().getLocation().getX(), Main.game.getPlayer().getLocation().getY() - 1).setDiscovered(true);
-					}
-					if (Main.game.getPlayer().getLocation().getX() < Main.game.getActiveWorld().WORLD_WIDTH - 1) {
-						Main.game.getActiveWorld().getCell(Main.game.getPlayer().getLocation().getX() + 1, Main.game.getPlayer().getLocation().getY()).setDiscovered(true);
-					}
-					if (Main.game.getPlayer().getLocation().getX() != 0) {
-						Main.game.getActiveWorld().getCell(Main.game.getPlayer().getLocation().getX() - 1, Main.game.getPlayer().getLocation().getY()).setDiscovered(true);
-					}
+					Main.game.getPlayer().discoverSurroundingCells();
 					
 					// Make sure that images of present characters are cached
-					for (NPC character : Main.game.getCharactersPresent())
-						if (character.hasArtwork() && Main.getProperties().hasValue(PropertyValue.artwork))
+					for (NPC character : Main.game.getCharactersPresent()) {
+						if (character.hasArtwork() && Main.getProperties().hasValue(PropertyValue.artwork)) {
 							ImageCache.INSTANCE.requestCache(character.getCurrentArtwork().getCurrentImage());
+						}
+					}
 				}
 			}
 		});
@@ -518,8 +510,7 @@ public class MainController implements Initializable {
 						if(event.getCode()==KeyCode.END && Main.DEBUG){
 
 							
-//							System.out.println(Main.sex.getSexPace(Main.game.getPlayer()));
-//							System.out.println(Main.sex.isSexPaceForced(Main.game.getPlayer()));
+							System.out.println(Main.game.getSavedDialogueNode()==null);
 							
 							
 //							System.out.println(Main.isVersionOlderThan(Game.loadingVersion, "0.4.8.10"));
@@ -1640,6 +1631,8 @@ public class MainController implements Initializable {
 			DebugController.initSpawnItemListeners();
 		} else if (currentNode.equals(DebugDialogue.SPAWN_MENU_SET)) {
 			DebugController.initSpawnSetListeners();
+		} else if (currentNode.equals(DebugDialogue.OUTFIT_VIEWER)) {
+			DebugController.initApplyOutfitListeners();
 		} else if (currentNode.equals(ElementalDialogue.ELEMENTAL_FETISHES)
 				|| currentNode.equals(PhoneDialogue.CHARACTER_FETISHES)) {
 			MiscController.initFetishListeners();
@@ -2804,6 +2797,8 @@ public class MainController implements Initializable {
 			System.err.println("Failed to locate the tooltip sizing box!");
 			e.printStackTrace();
 		}
+		TooltipUpdateThread.cancelThreads = true;
+		Main.mainController.getTooltip().hide();
 		return height;
 	}
 	
@@ -3183,6 +3178,12 @@ public class MainController implements Initializable {
 		webviewTooltip.setMaxHeight(height);
 		tooltip.setMaxWidth(width);
 		tooltip.setMaxHeight(height);
+		tooltipWidth = width;
+		tooltipHeight = height;
+	}
+	
+	public int[] getTooltipSize() {
+		return new int[] {tooltipWidth, tooltipHeight};
 	}
 
 	public KeyboardAction getActionToBind() {

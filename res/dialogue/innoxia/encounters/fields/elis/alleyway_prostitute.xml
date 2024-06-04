@@ -245,7 +245,7 @@
 						[#var weapon = game.getItemGen().generateWeapon('dsg_eep_pbweap_pbpistol')]
 					#ENDIF
 					[#game.addSpecialParsingString(weapon.getName(true, true), false)]
-					[#game.appendToTextEndStringBuilder(pc.addWeapon(weapon, false))]
+					[#game.appendToTextEndStringBuilder(pc.addWeapon(weapon, 1, false, true))]
 					
 					[#game.appendToTextStartStringBuilder(game.parseFromFile('txt/encounters/fields/elis/alleyway_prostitute', 'REMOVAL_PAID'))]
 					[#game.banishNPC(prostitute)]

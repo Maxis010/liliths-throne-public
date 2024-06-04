@@ -1,6 +1,7 @@
 package com.lilithsthrone.game.sex.sexActions.baseActionsMisc;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -117,8 +118,7 @@ public class GenericOrgasms {
 	}
 
 	private static boolean isCharacterTotallyImmobilised(GameCharacter character) {
-		return Main.sex.isCharacterImmobilised(character)
-				&& (Main.sex.getImmobilisationType(character).getKey()==ImmobilisationType.COMMAND || Main.sex.getImmobilisationType(character).getKey()==ImmobilisationType.SLEEP);
+		return Main.sex.isCharacterImmobilised(character) && Main.sex.isCharacterInanimateFromImmobilisation(character);
 	}
 	
 	private static boolean isPerformingCharacterTotallyImmobilised() {
@@ -1368,12 +1368,24 @@ public class GenericOrgasms {
 							genericOrgasmSB.append(", and [npc2.verb(let)] out a horny whine as [npc.name] ");
 						}
 					}
-					genericOrgasmSB.append(UtilText.returnStringAtRandom(
-							"[npc.moansVerb], [npc.speechNoEffects(Get pregnant!)]",
-							"[npc.verb(tease)], [npc.speechNoEffects(You're going to get pregnant from this...)]",
-							"[npc.verb(tease)], [npc.speechNoEffects(You'll be carrying my kids soon enough...)]",
-							"[npc.verb(tease)], [npc.speechNoEffects(I'll have knocked you up from this...)]",
-							"[npc.verb(tease)], [npc.speechNoEffects(I'll have got you pregnant from this...)]"));
+					if(Main.sex.getSexPace(characterOrgasming)==SexPace.DOM_ROUGH
+							&& characterOrgasming.hasFetish(Fetish.FETISH_SADIST)
+							&& !Main.sex.isDom(characterTargeted)) {
+						genericOrgasmSB.append(UtilText.returnStringAtRandom(
+								"[npc.moansVerb], [npc.speechNoEffects(Get pregnant, you [npc2.bitch+]!)]",
+								"[npc.verb(tease)], [npc.speechNoEffects(You're going to get pregnant from this, [npc2.bitch]...)]",
+								"[npc.verb(tease)], [npc.speechNoEffects(You'll be carrying my kids soon enough, [npc2.bitch]...)]",
+								"[npc.verb(tease)], [npc.speechNoEffects(I'll have knocked you up from this, [npc2.bitch]...)]",
+								"[npc.verb(tease)], [npc.speechNoEffects(I'll have got you pregnant from this, [npc2.bitch]...)]"));
+						
+					} else {
+						genericOrgasmSB.append(UtilText.returnStringAtRandom(
+								"[npc.moansVerb], [npc.speechNoEffects(Get pregnant!)]",
+								"[npc.verb(tease)], [npc.speechNoEffects(You're going to get pregnant from this...)]",
+								"[npc.verb(tease)], [npc.speechNoEffects(You'll be carrying my kids soon enough...)]",
+								"[npc.verb(tease)], [npc.speechNoEffects(I'll have knocked you up from this...)]",
+								"[npc.verb(tease)], [npc.speechNoEffects(I'll have got you pregnant from this...)]"));
+					}
 				} else {
 					genericOrgasmSB.append(".");
 				}
@@ -3074,7 +3086,7 @@ public class GenericOrgasms {
 				genericOrgasmSB.append("<br/><br/>Although [npc.she] [npc.verb(make)] some lewd noises and [npc.verb(squirm)] about a little, [npc.name] [npc.verb(remain)] asleep as [npc.her] feminine climax starts to fade,"
 						+ " and [npc.do]n't show any sign of being close to waking up.");
 			} else {
-				genericOrgasmSB.append("<br/><br/>Obediently acting like an inaminate sex doll, [npc.name] [npc.verb(remain)] silent and unmoving as [npc.her] feminine climax starts to fade,"
+				genericOrgasmSB.append("<br/><br/>Obediently acting like an inanimate sex doll, [npc.name] [npc.verb(remain)] silent and unmoving as [npc.her] feminine climax starts to fade,"
 						+ " and [npc.do]n't show any sign of needing to recover from [npc.her] orgasm.");
 			}
 		} else {
@@ -3316,7 +3328,8 @@ public class GenericOrgasms {
 			}
 			
 			// Will not use if obeying pull out requests:
-			if((Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())!=OrgasmBehaviour.CREAMPIE
+			if(((Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())!=OrgasmBehaviour.CREAMPIE
+						&& Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())!=OrgasmBehaviour.KNOT)
 					&& !Main.sex.getCharacterPerformingAction().isPlayer()
 					&& !Main.sex.getCreampieLockedBy().containsKey(Main.sex.getCharacterPerformingAction()) // Only allow this action to be blocked if no forced creampie.
 					&& Main.sex.getRequestedPulloutWeighting(Main.sex.getCharacterPerformingAction())>0)
@@ -3338,7 +3351,8 @@ public class GenericOrgasms {
 			if(isPerformingCharacterTotallyImmobilised()) {
 				return SexActionPriority.UNIQUE_MAX;
 			}
-			if(Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())==OrgasmBehaviour.CREAMPIE) {
+			if(Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())==OrgasmBehaviour.CREAMPIE
+					|| (Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())==OrgasmBehaviour.KNOT && !GENERIC_ORGASM_KNOTTING.isBaseRequirementsMet())) {
 				return SexActionPriority.UNIQUE_MAX;
 			}
 			if(Main.sex.getCreampieLockedBy().containsKey(Main.sex.getCharacterPerformingAction())) {
@@ -3752,7 +3766,8 @@ public class GenericOrgasms {
 			}
 			
 			// Will not use if obeying pull out requests:
-			if((Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())!=OrgasmBehaviour.CREAMPIE
+			if(((Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())!=OrgasmBehaviour.CREAMPIE
+						&& Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())!=OrgasmBehaviour.KNOT)
 					&& !Main.sex.getCharacterPerformingAction().isPlayer()
 					&& !Main.sex.getCreampieLockedBy().containsKey(Main.sex.getCharacterPerformingAction()) // Only allow this action to be blocked if no forced creampie.
 					&& Main.sex.getRequestedPulloutWeighting(Main.sex.getCharacterPerformingAction())>0)
@@ -3770,7 +3785,7 @@ public class GenericOrgasms {
 		
 		@Override
 		public SexActionPriority getPriority() { // Has same priority as normal creampie:
-			if(Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())==OrgasmBehaviour.CREAMPIE) {
+			if(Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())==OrgasmBehaviour.KNOT) {
 				return SexActionPriority.UNIQUE_MAX;
 			}
 			if(Main.sex.getCreampieLockedBy().containsKey(Main.sex.getCharacterPerformingAction())) {
@@ -4036,7 +4051,8 @@ public class GenericOrgasms {
 			}
 			
 			// Will not use if obeying the player and player asked for pull out:
-			if((Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())!=OrgasmBehaviour.CREAMPIE
+			if(((Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())!=OrgasmBehaviour.CREAMPIE
+						&& Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())!=OrgasmBehaviour.KNOT)
 					&& !Main.sex.getCharacterPerformingAction().isPlayer()
 					&& Main.sex.getRequestedPulloutWeighting(Main.sex.getCharacterPerformingAction())>0)
 				|| Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())==OrgasmBehaviour.PULL_OUT
@@ -4061,7 +4077,8 @@ public class GenericOrgasms {
 					break;
 				}
 			}
-			if(Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())==OrgasmBehaviour.CREAMPIE) {
+			if(Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())==OrgasmBehaviour.CREAMPIE
+					|| (Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())==OrgasmBehaviour.KNOT && !GENERIC_ORGASM_KNOTTING.isBaseRequirementsMet())) {
 				return SexActionPriority.UNIQUE_MAX;
 			}
 			if(Main.sex.getAllOngoingSexAreas(Main.sex.getCharacterPerformingAction(), SexAreaPenetration.PENIS).get(0)==SexAreaOrifice.VAGINA
@@ -4365,7 +4382,8 @@ public class GenericOrgasms {
 			}
 			
 			// Will not use if obeying the player and player asked for pull out:
-			if((Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())!=OrgasmBehaviour.CREAMPIE
+			if(((Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())!=OrgasmBehaviour.CREAMPIE
+						&& Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())!=OrgasmBehaviour.KNOT)
 					&& !Main.sex.getCharacterPerformingAction().isPlayer()
 					&& Main.sex.getRequestedPulloutWeighting(Main.sex.getCharacterPerformingAction())>0)
 				|| Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())==OrgasmBehaviour.PULL_OUT
@@ -4383,7 +4401,7 @@ public class GenericOrgasms {
 		
 		@Override
 		public SexActionPriority getPriority() {
-			if(Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())==OrgasmBehaviour.CREAMPIE) {
+			if(Main.sex.getSexManager().getCharacterOrgasmBehaviour(Main.sex.getCharacterPerformingAction())==OrgasmBehaviour.KNOT) {
 				return SexActionPriority.UNIQUE_MAX;
 			}
 			if(Main.sex.getAllOngoingSexAreas(Main.sex.getCharacterPerformingAction(), SexAreaPenetration.PENIS).get(0)==SexAreaOrifice.VAGINA
@@ -8069,6 +8087,10 @@ public class GenericOrgasms {
 			return characters.get(0);
 		}
 		
+		private boolean isSelfFucking() {
+			return Main.sex.getCharacterTargetedForSexAction(this)==getCharacterBeingFucked();
+		}
+		
 		@Override
 		public String getActionTitle() {
 			if(!isRealPenisFuckingCharacter(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this))) {
@@ -8093,29 +8115,39 @@ public class GenericOrgasms {
 
 		@Override
 		public String getActionDescription() {
-			if(!isRealPenisFuckingCharacter(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this))) {
-				return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
-						"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to keep fucking [npc.name] with [npc2.her] dildo as [npc2.she] climaxes.");
-
-			} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.MOUTH).contains(getCharacterBeingFucked())) {
-				return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
-						"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to fill [npc.namePos] stomach with [npc2.her] cum.");
-
-			} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
-				return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
-						"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to cum all over [npc.namePos] [npc.breasts+].");
-
-			} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
-				return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
-						"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to cum all over [npc.namePos] [npc.feet+].");
-				
-			} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
-				return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
-						"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to cum all over [npc.namePos] [npc.armpit+].");
+			if(isSelfFucking()) {
+				if(!isRealPenisFuckingCharacter(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this))) {
+					return UtilText.parse(getCharacterBeingFucked(), "You can tell that [npc.name] is fast approaching [npc.her] orgasm. Encourage [npc.herHim] to keep fucking [npc.herself] with [npc.her] dildo as [npc.she] climaxes.");
+	
+				} else {
+					return UtilText.parse(getCharacterBeingFucked(), "You can tell that [npc.name] is fast approaching [npc.her] orgasm. Encourage [npc.herHim] to keep fucking [npc.herself] as [npc.she] climaxes.");
+				}
 				
 			} else {
-				return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
-						"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to fill [npc.name] with [npc2.her] cum.");
+				if(!isRealPenisFuckingCharacter(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this))) {
+					return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
+							"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to keep fucking [npc.name] with [npc2.her] dildo as [npc2.she] climaxes.");
+	
+				} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.MOUTH).contains(getCharacterBeingFucked())) {
+					return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
+							"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to fill [npc.namePos] stomach with [npc2.her] cum.");
+	
+				} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
+					return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
+							"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to cum all over [npc.namePos] [npc.breasts+].");
+	
+				} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
+					return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
+							"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to cum all over [npc.namePos] [npc.feet+].");
+					
+				} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
+					return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
+							"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to cum all over [npc.namePos] [npc.armpit+].");
+					
+				} else {
+					return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
+							"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to fill [npc.name] with [npc2.her] cum.");
+				}
 			}
 		}
 
@@ -8165,190 +8197,226 @@ public class GenericOrgasms {
 				targetHerHim = "[pc.herHim]"; // Otherwise it gets parsed as 'you'
 				targetHer = "[pc.her]"; // Otherwise it gets parsed as 'you'
 			}
-			
-			if(Main.sex.getCharacterPerformingAction().isSpeechMuffled()) {
-				if(!isRealPenisFuckingCharacter(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this))) {
-					if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to keep pounding [npc3.namePos] [npc3.pussy+] as [npc2.she] [npc2.verb(orgasm)].");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to keep pounding [npc3.namePos] [npc3.asshole+] as [npc2.she] [npc2.verb(orgasm)].");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to keep pounding [npc3.namePos] [npc3.nipple+] as [npc2.she] [npc2.verb(orgasm)].");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to keep fucking [npc3.namePos] [npc3.spinneret+] as [npc2.she] [npc2.verb(orgasm)].");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to keep fucking [npc3.namePos] [npc3.breasts+] as [npc2.she] [npc2.verb(orgasm)].");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to keep fucking [npc3.namePos] [npc3.feet+] as [npc2.she] [npc2.verb(orgasm)].");
-						
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to keep fucking [npc3.namePos] [npc3.armpit+] as [npc2.she] [npc2.verb(orgasm)].");
-						
-					} else {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to keep fucking [npc3.name] as [npc2.she] [npc2.verb(orgasm)].");
-					}
-	
+
+			if(isSelfFucking()) {
+				if(Main.sex.getCharacterPerformingAction().isSpeechMuffled()) {
+					sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+							+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to keep fucking [npc2.herself] as [npc2.she] [npc2.verb(orgasm)].");
+				
 				} else {
-					if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to cum inside [npc3.namePos] [npc3.pussy+].");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to cum inside [npc3.namePos] [npc3.asshole+].");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to cum inside [npc3.namePos] [npc3.nipple+].");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to cum inside [npc3.namePos] [npc3.spinneret+].");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to cum all over [npc3.namePos] [npc3.breasts+].");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to cum all over [npc3.namePos] [npc3.feet+].");
+					boolean petName = false;
+					if(!Main.sex.getCharacterPerformingAction().getPetName(Main.sex.getCharacterTargetedForSexAction(this)).equals(Main.sex.getCharacterTargetedForSexAction(this).getName(true))) {
+						petName = true;
+					}
+
+					if(!isRealPenisFuckingCharacter(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this))) {
+						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep fucking [npc2.herself] as [npc2.she] [npc2.verb(orgasm)],"
+								+" [npc.speech(Don't pull out"+(petName?", [#npc.getPetName(npc2)]":"")+"! Keep going!)]");
 						
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to cum all over [npc3.namePos] [npc3.armpit+].");
+					} else if(Main.sex.getCharacterTargetedForSexAction(this).isWearingCondom()) {
+						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep fucking [npc2.herself] as [npc2.she] [npc2.verb(orgasm)],"
+								+" [npc.speech(Don't pull out"+(petName?", [#npc.getPetName(npc2)]":"")+"! Spurt it all out into that condom!)]");
 						
 					} else {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to cum inside of [npc3.name].");
+						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep fucking [npc2.herself] as [npc2.she] [npc2.verb(orgasm)],");
+
+						if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
+							if(getCharacterBeingFucked().isVisiblyPregnant()) {
+								sb.append(" [npc.speech(Don't pull out"+(petName?", [#npc.getPetName(npc2)]":"")+"! Fill your pussy with your cum!)]");
+							} else {
+								sb.append(" [npc.speech(Don't pull out"+(petName?", [#npc.getPetName(npc2)]":"")+"! Fill your pussy with your cum and knock yourself up!)]");
+							}
+						} else {
+							sb.append(" [npc.speech(Don't pull out"+(petName?", [#npc.getPetName(npc2)]":"")+"! Keep going!)]");
+						}
 					}
 				}
 				
 			} else {
-				if(!isRealPenisFuckingCharacter(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this))) {
-					if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.pussy+] as [npc2.she] [npc2.verb(orgasm)],"
-								+" [npc.speech(Yes! That's right! Don't stop fucking "+targetHerHim+"!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.asshole+] as [npc2.she] [npc2.verb(orgasm)],"
-								+" [npc.speech(Yes! That's right! Don't stop fucking "+targetHer+" [npc3.ass]!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.nipple+] as [npc2.she] [npc2.verb(orgasm)],"
-								+" [npc.speech(Yes! That's right! Don't stop fucking "+targetHer+" [npc3.breasts]!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.spinneret+] as [npc2.she] [npc2.verb(orgasm)],"
-								+" [npc.speech(Yes! That's right! Don't stop fucking "+targetHer+" [npc3.spinneret]!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.breasts+] as [npc2.she] [npc2.verb(orgasm)],"
-								+" [npc.speech(Yes! That's right! Don't stop fucking "+targetHer+" tits!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.feet+] as [npc2.she] [npc2.verb(orgasm)],"
-								+" [npc.speech(Yes! That's right! Don't stop fucking "+targetHer+" [npc3.feet]!)]");
-						
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.armpit+] as [npc2.she] [npc2.verb(orgasm)],"
-								+" [npc.speech(Yes! That's right! Don't stop fucking "+targetHer+" pit!)]");
-						
+				if(Main.sex.getCharacterPerformingAction().isSpeechMuffled()) {
+					if(!isRealPenisFuckingCharacter(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this))) {
+						if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to keep pounding [npc3.namePos] [npc3.pussy+] as [npc2.she] [npc2.verb(orgasm)].");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to keep pounding [npc3.namePos] [npc3.asshole+] as [npc2.she] [npc2.verb(orgasm)].");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to keep pounding [npc3.namePos] [npc3.nipple+] as [npc2.she] [npc2.verb(orgasm)].");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to keep fucking [npc3.namePos] [npc3.spinneret+] as [npc2.she] [npc2.verb(orgasm)].");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to keep fucking [npc3.namePos] [npc3.breasts+] as [npc2.she] [npc2.verb(orgasm)].");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to keep fucking [npc3.namePos] [npc3.feet+] as [npc2.she] [npc2.verb(orgasm)].");
+							
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to keep fucking [npc3.namePos] [npc3.armpit+] as [npc2.she] [npc2.verb(orgasm)].");
+							
+						} else {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to keep fucking [npc3.name] as [npc2.she] [npc2.verb(orgasm)].");
+						}
+		
 					} else {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.name] as [npc2.she] [npc2.verb(orgasm)],"
-								+" [npc.speech(Yes! That's right! Don't stop fucking "+targetHerHim+"!)]");
-					}
-	
-				} else if(Main.sex.getCharacterTargetedForSexAction(this).isWearingCondom()) {
-					boolean petName = false;
-					if(!Main.sex.getCharacterPerformingAction().getPetName(Main.sex.getCharacterTargetedForSexAction(this)).equals(Main.sex.getCharacterTargetedForSexAction(this).getName(true))) {
-						petName = true;
-					}
-					
-					if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.pussy+] as [npc2.she] [npc2.verb(orgasm)],"
-								+" [npc.speech(Finish inside of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Spurt it all out into that condom!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.asshole+] as [npc2.she] [npc2.verb(orgasm)],"
-								+" [npc.speech(Finish inside of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Spurt it all out into that condom!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.nipple+] as [npc2.she] [npc2.verb(orgasm)],"
-								+" [npc.speech(Finish inside of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Spurt it all out into that condom!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.spinneret+] as [npc2.she] [npc2.verb(orgasm)],"
-								+" [npc.speech(Finish inside of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Spurt it all out into that condom!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.breasts+] as [npc2.she] [npc2.verb(orgasm)],"
-								+ " [npc.speech(That's it"+(petName?", [#npc.getPetName(npc2)]":"")+"! Spurt it all out into that condom!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.feet+] as [npc2.she] [npc2.verb(orgasm)],"
-								+ " [npc.speech(That's it"+(petName?", [#npc.getPetName(npc2)]":"")+"! Spurt it all out into that condom!)]");
-						
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.armpit+] as [npc2.she] [npc2.verb(orgasm)],"
-								+ " [npc.speech(That's it"+(petName?", [#npc.getPetName(npc2)]":"")+"! Spurt it all out into that condom!)]");
-						
-					} else {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.name] as [npc2.she] [npc2.verb(orgasm)],"
-								+ " [npc.speech(That's it"+(petName?", [#npc.getPetName(npc2)]":"")+"! Spurt it all out into that condom!)]");
+						if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to cum inside [npc3.namePos] [npc3.pussy+].");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to cum inside [npc3.namePos] [npc3.asshole+].");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to cum inside [npc3.namePos] [npc3.nipple+].");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to cum inside [npc3.namePos] [npc3.spinneret+].");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to cum all over [npc3.namePos] [npc3.breasts+].");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to cum all over [npc3.namePos] [npc3.feet+].");
+							
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to cum all over [npc3.namePos] [npc3.armpit+].");
+							
+						} else {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to cum inside of [npc3.name].");
+						}
 					}
 					
 				} else {
-					boolean petName = false;
-					if(!Main.sex.getCharacterPerformingAction().getPetName(Main.sex.getCharacterTargetedForSexAction(this)).equals(Main.sex.getCharacterTargetedForSexAction(this).getName(true))) {
-						petName = true;
-					}
-	
-					if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.pussy+] as [npc2.she] [npc2.verb(orgasm)],"
-								+(getCharacterBeingFucked().isVisiblyPregnant()
-										?" [npc.speech(Fuck! Cum in "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Fill "+targetHer+" pussy with your cum!)]"
-										:" [npc.speech(Breed "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Fill "+targetHer+" pussy with your cum and knock "+targetHerHim+" up!)]"));
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.asshole+] as [npc2.she] [npc2.verb(orgasm)],"
-								+" [npc.speech(Fuck! Cum in "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Fill "+targetHer+" ass with your cum!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.nipple+] as [npc2.she] [npc2.verb(orgasm)],"
-								+" [npc.speech(Fuck! Cum in "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Fill "+targetHer+" nipple with your cum!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.spinneret+] as [npc2.she] [npc2.verb(orgasm)],"
-								+" [npc.speech(Fuck! Cum in "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Fill "+targetHer+" spinneret with your cum!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.breasts+] as [npc2.she] [npc2.verb(orgasm)],"
-								+ " [npc.speech(Yes! Cum for "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Cover "+targetHer+" tits with your cum!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.feet+] as [npc2.she] [npc2.verb(orgasm)],"
-								+ " [npc.speech(Yes! Cum for "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Cover "+targetHer+" [npc3.feet] with your cum!)]");
+					if(!isRealPenisFuckingCharacter(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this))) {
+						if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.pussy+] as [npc2.she] [npc2.verb(orgasm)],"
+									+" [npc.speech(Yes! That's right! Don't stop fucking "+targetHerHim+"!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.asshole+] as [npc2.she] [npc2.verb(orgasm)],"
+									+" [npc.speech(Yes! That's right! Don't stop fucking "+targetHer+" [npc3.ass]!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.nipple+] as [npc2.she] [npc2.verb(orgasm)],"
+									+" [npc.speech(Yes! That's right! Don't stop fucking "+targetHer+" [npc3.breasts]!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.spinneret+] as [npc2.she] [npc2.verb(orgasm)],"
+									+" [npc.speech(Yes! That's right! Don't stop fucking "+targetHer+" [npc3.spinneret]!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.breasts+] as [npc2.she] [npc2.verb(orgasm)],"
+									+" [npc.speech(Yes! That's right! Don't stop fucking "+targetHer+" tits!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.feet+] as [npc2.she] [npc2.verb(orgasm)],"
+									+" [npc.speech(Yes! That's right! Don't stop fucking "+targetHer+" [npc3.feet]!)]");
+							
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.armpit+] as [npc2.she] [npc2.verb(orgasm)],"
+									+" [npc.speech(Yes! That's right! Don't stop fucking "+targetHer+" pit!)]");
+							
+						} else {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.name] as [npc2.she] [npc2.verb(orgasm)],"
+									+" [npc.speech(Yes! That's right! Don't stop fucking "+targetHerHim+"!)]");
+						}
+		
+					} else if(Main.sex.getCharacterTargetedForSexAction(this).isWearingCondom()) {
+						boolean petName = false;
+						if(!Main.sex.getCharacterPerformingAction().getPetName(Main.sex.getCharacterTargetedForSexAction(this)).equals(Main.sex.getCharacterTargetedForSexAction(this).getName(true))) {
+							petName = true;
+						}
 						
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.armpit+] as [npc2.she] [npc2.verb(orgasm)],"
-								+ " [npc.speech(Yes! Cum for "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Cover "+targetHer+" pit with your cum!)]");
+						if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.pussy+] as [npc2.she] [npc2.verb(orgasm)],"
+									+" [npc.speech(Finish inside of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Spurt it all out into that condom!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.asshole+] as [npc2.she] [npc2.verb(orgasm)],"
+									+" [npc.speech(Finish inside of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Spurt it all out into that condom!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.nipple+] as [npc2.she] [npc2.verb(orgasm)],"
+									+" [npc.speech(Finish inside of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Spurt it all out into that condom!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.spinneret+] as [npc2.she] [npc2.verb(orgasm)],"
+									+" [npc.speech(Finish inside of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Spurt it all out into that condom!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.breasts+] as [npc2.she] [npc2.verb(orgasm)],"
+									+ " [npc.speech(That's it"+(petName?", [#npc.getPetName(npc2)]":"")+"! Spurt it all out into that condom!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.feet+] as [npc2.she] [npc2.verb(orgasm)],"
+									+ " [npc.speech(That's it"+(petName?", [#npc.getPetName(npc2)]":"")+"! Spurt it all out into that condom!)]");
+							
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.armpit+] as [npc2.she] [npc2.verb(orgasm)],"
+									+ " [npc.speech(That's it"+(petName?", [#npc.getPetName(npc2)]":"")+"! Spurt it all out into that condom!)]");
+							
+						} else {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.name] as [npc2.she] [npc2.verb(orgasm)],"
+									+ " [npc.speech(That's it"+(petName?", [#npc.getPetName(npc2)]":"")+"! Spurt it all out into that condom!)]");
+						}
 						
 					} else {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.name] as [npc2.she] [npc2.verb(orgasm)],"
-								+ " [npc.speech(Yes! Cum for "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Don't pull out!)]");
+						boolean petName = false;
+						if(!Main.sex.getCharacterPerformingAction().getPetName(Main.sex.getCharacterTargetedForSexAction(this)).equals(Main.sex.getCharacterTargetedForSexAction(this).getName(true))) {
+							petName = true;
+						}
+		
+						if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.pussy+] as [npc2.she] [npc2.verb(orgasm)],"
+									+(getCharacterBeingFucked().isVisiblyPregnant()
+											?" [npc.speech(Fuck! Cum in "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Fill "+targetHer+" pussy with your cum!)]"
+											:" [npc.speech(Breed "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Fill "+targetHer+" pussy with your cum and knock "+targetHerHim+" up!)]"));
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.asshole+] as [npc2.she] [npc2.verb(orgasm)],"
+									+" [npc.speech(Fuck! Cum in "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Fill "+targetHer+" ass with your cum!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.nipple+] as [npc2.she] [npc2.verb(orgasm)],"
+									+" [npc.speech(Fuck! Cum in "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Fill "+targetHer+" nipple with your cum!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.spinneret+] as [npc2.she] [npc2.verb(orgasm)],"
+									+" [npc.speech(Fuck! Cum in "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Fill "+targetHer+" spinneret with your cum!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.breasts+] as [npc2.she] [npc2.verb(orgasm)],"
+									+ " [npc.speech(Yes! Cum for "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Cover "+targetHer+" tits with your cum!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.feet+] as [npc2.she] [npc2.verb(orgasm)],"
+									+ " [npc.speech(Yes! Cum for "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Cover "+targetHer+" [npc3.feet] with your cum!)]");
+							
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.armpit+] as [npc2.she] [npc2.verb(orgasm)],"
+									+ " [npc.speech(Yes! Cum for "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Cover "+targetHer+" pit with your cum!)]");
+							
+						} else {
+							sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.name] as [npc2.she] [npc2.verb(orgasm)],"
+									+ " [npc.speech(Yes! Cum for "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Don't pull out!)]");
+						}
 					}
 				}
 			}
@@ -8426,6 +8494,10 @@ public class GenericOrgasms {
 			}
 			return characters.get(0);
 		}
+
+		private boolean isSelfFucking() {
+			return Main.sex.getCharacterTargetedForSexAction(this)==getCharacterBeingFucked();
+		}
 		
 		@Override
 		public String getActionTitle() {
@@ -8434,13 +8506,18 @@ public class GenericOrgasms {
 
 		@Override
 		public String getActionDescription() {
-			if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.MOUTH).contains(getCharacterBeingFucked())) {
-				return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
-						"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to push [npc2.her] knot into [npc.namePos] mouth and fill [npc.her] stomach with [npc2.her] cum.");
-
+			if(isSelfFucking()) {
+				return UtilText.parse(getCharacterBeingFucked(), "You can tell that [npc.name] is fast approaching [npc.her] orgasm. Encourage [npc.herHim] to push [npc.her] knot inside and fill [npc.herself] with [npc.her] cum.");
+				
 			} else {
-				return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
-						"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to push [npc2.her] knot into [npc.name] and fill [npc.name] with [npc2.her] cum.");
+				if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.MOUTH).contains(getCharacterBeingFucked())) {
+					return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
+							"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to push [npc2.her] knot into [npc.namePos] mouth and fill [npc.her] stomach with [npc2.her] cum.");
+	
+				} else {
+					return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
+							"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to push [npc2.her] knot into [npc.name] and fill [npc.name] with [npc2.her] cum.");
+				}
 			}
 		}
 
@@ -8491,110 +8568,142 @@ public class GenericOrgasms {
 				targetHerHim = "[pc.herHim]"; // Otherwise it gets parsed as 'you'
 				targetHer = "[pc.her]"; // Otherwise it gets parsed as 'you'
 			}
-			
-			if(Main.sex.getCharacterPerformingAction().isSpeechMuffled()) {
-				sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
-						+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to knot [npc3.name] and cum deep inside");
-				if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
-					sb.append(" [npc3.her] [npc3.pussy+].");
 
-				} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
-					sb.append(" [npc3.her] [npc3.asshole+].");
-
-				} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
-					sb.append(" [npc3.her] [npc3.nipple+].");
-
-				} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE_CROTCH).contains(getCharacterBeingFucked())) {
-					sb.append(" [npc3.her] [npc3.nippleCrotch+].");
-
-				} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
-					sb.append(" [npc3.her] [npc3.spinneret+].");
-
-				} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.URETHRA_PENIS).contains(getCharacterBeingFucked())) {
-					sb.append(" [npc3.her] [npc3.urethraPenis+].");
-
-				} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.URETHRA_VAGINA).contains(getCharacterBeingFucked())) {
-					sb.append(" [npc3.her] [npc3.urethraVagina+].");
-
+			if(isSelfFucking()) {
+				if(Main.sex.getCharacterPerformingAction().isSpeechMuffled()) {
+					sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+							+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to knot [npc2.herself] as [npc2.she] [npc2.verb(orgasm)].");
+				
 				} else {
-					sb.append(" of [npc3.herHim].");
+					boolean petName = false;
+					if(!Main.sex.getCharacterPerformingAction().getPetName(Main.sex.getCharacterTargetedForSexAction(this)).equals(Main.sex.getCharacterTargetedForSexAction(this).getName(true))) {
+						petName = true;
+					}
+
+					if(Main.sex.getCharacterTargetedForSexAction(this).isWearingCondom()) {
+						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to knot [npc2.herself] as [npc2.she] [npc2.verb(orgasm)],"
+								+" [npc.speech(Don't pull out"+(petName?", [#npc.getPetName(npc2)]":"")+"! Get your knot in and fill up that condom!)]");
+						
+					} else {
+						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to knot [npc2.herself] as [npc2.she] [npc2.verb(orgasm)],");
+
+						if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
+							if(getCharacterBeingFucked().isVisiblyPregnant()) {
+								sb.append(" [npc.speech(Don't pull out"+(petName?", [#npc.getPetName(npc2)]":"")+"! Knot yourself and fill up your pussy!)]");
+							} else {
+								sb.append(" [npc.speech(Don't pull out"+(petName?", [#npc.getPetName(npc2)]":"")+"! Knot yourself and knock yourself up!)]");
+							}
+						} else {
+							sb.append(" [npc.speech(Don't pull out"+(petName?", [#npc.getPetName(npc2)]":"")+"! Knot yourself!)]");
+						}
+					}
 				}
 				
 			} else {
-				if(Main.sex.getCharacterTargetedForSexAction(this).isWearingCondom()) {
-					boolean petName = false;
-					if(!Main.sex.getCharacterPerformingAction().getPetName(Main.sex.getCharacterTargetedForSexAction(this)).equals(Main.sex.getCharacterTargetedForSexAction(this).getName(true))) {
-						petName = true;
-					}
-
-					sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to ram [npc2.her] knot into");
-					
+				if(Main.sex.getCharacterPerformingAction().isSpeechMuffled()) {
+					sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+							+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to knot [npc3.name] and cum deep inside");
 					if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
-						sb.append(" [npc3.namePos] [npc3.pussy+] and cum deep inside of [npc3.herHim], [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill up that condom!)]");
+						sb.append(" [npc3.her] [npc3.pussy+].");
 	
 					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
-						sb.append(" [npc3.namePos] [npc3.asshole+] and cum deep inside of [npc3.herHim], [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill up that condom!)]");
+						sb.append(" [npc3.her] [npc3.asshole+].");
 	
 					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
-						sb.append(" [npc3.namePos] [npc3.nipple+] and cum deep inside of [npc3.herHim], [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill up that condom!)]");
+						sb.append(" [npc3.her] [npc3.nipple+].");
 	
 					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE_CROTCH).contains(getCharacterBeingFucked())) {
-						sb.append(" [npc3.namePos] [npc3.nippleCrotch+] and cum deep inside of [npc3.herHim], [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill up that condom!)]");
+						sb.append(" [npc3.her] [npc3.nippleCrotch+].");
 	
 					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
-						sb.append(" [npc3.namePos] [npc3.spinneret+] and cum deep inside of [npc3.herHim], [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill up that condom!)]");
+						sb.append(" [npc3.her] [npc3.spinneret+].");
 	
 					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.URETHRA_PENIS).contains(getCharacterBeingFucked())) {
-						sb.append(" [npc3.namePos] [npc3.urethraPenis+] and cum deep inside of [npc3.herHim], [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill up that condom!)]");
+						sb.append(" [npc3.her] [npc3.urethraPenis+].");
 	
 					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.URETHRA_VAGINA).contains(getCharacterBeingFucked())) {
-						sb.append(" [npc3.namePos] [npc3.urethraVagina+] and cum deep inside of [npc3.herHim], [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill up that condom!)]");
+						sb.append(" [npc3.her] [npc3.urethraVagina+].");
 	
 					} else {
-						sb.append(" [npc3.name] and cum deep inside of [npc3.herHim], [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill up that condom!)]");
+						sb.append(" of [npc3.herHim].");
 					}
 					
 				} else {
-					boolean petName = false;
-					if(!Main.sex.getCharacterPerformingAction().getPetName(Main.sex.getCharacterTargetedForSexAction(this)).equals(Main.sex.getCharacterTargetedForSexAction(this).getName(true))) {
-						petName = true;
-					}
-
-					sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to ram [npc2.her] knot into");
-					
-					if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
-						sb.append(" [npc3.namePos] [npc3.pussy+] and cum deep inside of [npc3.herHim],"
-									+(getCharacterBeingFucked().isVisiblyPregnant()
-										?" [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and stuff "+targetHer+" pussy with your cum!)]"
-										:" [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Stuff "+targetHer+" pussy with your cum and breed "+targetHerHim+"!)]"));
+					if(Main.sex.getCharacterTargetedForSexAction(this).isWearingCondom()) {
+						boolean petName = false;
+						if(!Main.sex.getCharacterPerformingAction().getPetName(Main.sex.getCharacterTargetedForSexAction(this)).equals(Main.sex.getCharacterTargetedForSexAction(this).getName(true))) {
+							petName = true;
+						}
 	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
-						sb.append(" [npc3.namePos] [npc3.asshole+] and cum deep inside of [npc3.herHim],"
-									+ " [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and stuff "+targetHer+" ass with your cum!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
-						sb.append(" [npc3.namePos] [npc3.nipple+] and cum deep inside of [npc3.herHim],"
-									+ " [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and stuff "+targetHer+" nipple with your cum!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE_CROTCH).contains(getCharacterBeingFucked())) {
-						sb.append(" [npc3.namePos] [npc3.nippleCrotch+] and cum deep inside of [npc3.herHim],"
-									+ " [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and stuff "+targetHer+" nipple with your cum!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
-						sb.append(" [npc3.namePos] [npc3.spinneret+] and cum deep inside of [npc3.herHim],"
-									+ " [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and stuff "+targetHer+" spinneret with your cum!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.URETHRA_PENIS).contains(getCharacterBeingFucked())) {
-						sb.append(" [npc3.namePos] [npc3.urethraPenis+] and cum deep inside of [npc3.herHim],"
-									+ " [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill "+targetHer+" balls with your cum!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.URETHRA_VAGINA).contains(getCharacterBeingFucked())) {
-						sb.append(" [npc3.namePos] [npc3.urethraVagina+] and cum deep inside of [npc3.herHim],"
-									+ " [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill "+targetHer+" bladder with your cum!)]");
-	
+						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to ram [npc2.her] knot into");
+						
+						if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
+							sb.append(" [npc3.namePos] [npc3.pussy+] and cum deep inside of [npc3.herHim], [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill up that condom!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
+							sb.append(" [npc3.namePos] [npc3.asshole+] and cum deep inside of [npc3.herHim], [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill up that condom!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
+							sb.append(" [npc3.namePos] [npc3.nipple+] and cum deep inside of [npc3.herHim], [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill up that condom!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE_CROTCH).contains(getCharacterBeingFucked())) {
+							sb.append(" [npc3.namePos] [npc3.nippleCrotch+] and cum deep inside of [npc3.herHim], [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill up that condom!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
+							sb.append(" [npc3.namePos] [npc3.spinneret+] and cum deep inside of [npc3.herHim], [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill up that condom!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.URETHRA_PENIS).contains(getCharacterBeingFucked())) {
+							sb.append(" [npc3.namePos] [npc3.urethraPenis+] and cum deep inside of [npc3.herHim], [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill up that condom!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.URETHRA_VAGINA).contains(getCharacterBeingFucked())) {
+							sb.append(" [npc3.namePos] [npc3.urethraVagina+] and cum deep inside of [npc3.herHim], [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill up that condom!)]");
+		
+						} else {
+							sb.append(" [npc3.name] and cum deep inside of [npc3.herHim], [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill up that condom!)]");
+						}
+						
 					} else {
-						sb.append(" [npc3.name] and cum deep inside of [npc3.herHim],"
-									+ " [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and stuff "+targetHerHim+" with your cum!)]");
+						boolean petName = false;
+						if(!Main.sex.getCharacterPerformingAction().getPetName(Main.sex.getCharacterTargetedForSexAction(this)).equals(Main.sex.getCharacterTargetedForSexAction(this).getName(true))) {
+							petName = true;
+						}
+	
+						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to ram [npc2.her] knot into");
+						
+						if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
+							sb.append(" [npc3.namePos] [npc3.pussy+] and cum deep inside of [npc3.herHim],"
+										+(getCharacterBeingFucked().isVisiblyPregnant()
+											?" [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and stuff "+targetHer+" pussy with your cum!)]"
+											:" [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Stuff "+targetHer+" pussy with your cum and breed "+targetHerHim+"!)]"));
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
+							sb.append(" [npc3.namePos] [npc3.asshole+] and cum deep inside of [npc3.herHim],"
+										+ " [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and stuff "+targetHer+" ass with your cum!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
+							sb.append(" [npc3.namePos] [npc3.nipple+] and cum deep inside of [npc3.herHim],"
+										+ " [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and stuff "+targetHer+" nipple with your cum!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE_CROTCH).contains(getCharacterBeingFucked())) {
+							sb.append(" [npc3.namePos] [npc3.nippleCrotch+] and cum deep inside of [npc3.herHim],"
+										+ " [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and stuff "+targetHer+" nipple with your cum!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
+							sb.append(" [npc3.namePos] [npc3.spinneret+] and cum deep inside of [npc3.herHim],"
+										+ " [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and stuff "+targetHer+" spinneret with your cum!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.URETHRA_PENIS).contains(getCharacterBeingFucked())) {
+							sb.append(" [npc3.namePos] [npc3.urethraPenis+] and cum deep inside of [npc3.herHim],"
+										+ " [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill "+targetHer+" balls with your cum!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.URETHRA_VAGINA).contains(getCharacterBeingFucked())) {
+							sb.append(" [npc3.namePos] [npc3.urethraVagina+] and cum deep inside of [npc3.herHim],"
+										+ " [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and fill "+targetHer+" bladder with your cum!)]");
+		
+						} else {
+							sb.append(" [npc3.name] and cum deep inside of [npc3.herHim],"
+										+ " [npc.speech(Knot "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Finish inside of "+targetHerHim+" and stuff "+targetHerHim+" with your cum!)]");
+						}
 					}
 				}
 			}
@@ -8671,6 +8780,10 @@ public class GenericOrgasms {
 			}
 			return characters.get(0);
 		}
+
+		private boolean isSelfFucking() {
+			return Main.sex.getCharacterTargetedForSexAction(this)==getCharacterBeingFucked();
+		}
 		
 		@Override
 		public String getActionTitle() {
@@ -8679,12 +8792,17 @@ public class GenericOrgasms {
 
 		@Override
 		public String getActionDescription() {
-			if(!isRealPenisFuckingCharacter(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this))) {
+			if(isSelfFucking()) {
+				return UtilText.parse(getCharacterBeingFucked(), "You can tell that [npc.name] is fast approaching [npc.her] orgasm. Encourage [npc.herHim] to pull out of [npc.herself] as [npc.she] [npc.verb(orgasm)].");
+				
+			} else {
+				if(!isRealPenisFuckingCharacter(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this))) {
+					return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
+							"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to pull [npc2.her] dildo out of [npc.name] as [npc2.she] [npc2.verb(orgasm)].");
+				}
 				return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
-						"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to pull [npc2.her] dildo out of [npc.name] as [npc2.she] [npc2.verb(orgasm)].");
+						"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to pull out of [npc.name] as [npc2.she] [npc2.verb(orgasm)].");
 			}
-			return UtilText.parse(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this),
-					"You can tell that [npc2.name] is fast approaching [npc2.her] orgasm. Encourage [npc2.herHim] to pull out of [npc.name] as [npc2.she] [npc2.verb(orgasm)].");
 		}
 
 		@Override
@@ -8748,191 +8866,230 @@ public class GenericOrgasms {
 				targetHer = "[pc.her]"; // Otherwise it gets parsed as 'you'
 				targetSheHas = "[pc.SheHas]"; // Otherwise it gets parsed as 'you'
 			}
-			
-			
-			if(Main.sex.getCharacterPerformingAction().isSpeechMuffled()) {
-				if(!isRealPenisFuckingCharacter(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this))) {
-					if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.pussy+] through [npc2.her] orgasm, [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.asshole+] through [npc2.her] orgasm, [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.nipple+] through [npc2.her] orgasm, [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.spinneret+] through [npc2.her] orgasm, [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.breasts+] through [npc2.her] orgasm, [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.feet+] through [npc2.her] orgasm, [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull away.");
-						
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.armpit+] through [npc2.her] orgasm, [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull away.");
-						
-					} else {
-						sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
-					}
-	
+
+			if(isSelfFucking()) {
+				if(Main.sex.getCharacterPerformingAction().isSpeechMuffled()) {
+					sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.name]"
+							+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to keep fucking [npc2.herself] as [npc2.she] [npc2.verb(orgasm)].");
+				
 				} else {
-					if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to cum inside [npc3.namePos] [npc3.pussy+], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to cum inside [npc3.namePos] [npc3.asshole+], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to cum inside [npc3.namePos] [npc3.nipple+], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to cum inside [npc3.namePos] [npc3.spinneret+], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to cum all over [npc3.namePos] [npc3.breasts+], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to cum all over [npc3.namePos] [npc3.feet+], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
-						
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to cum all over [npc3.namePos] [npc3.armpit+], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull away.");
+					boolean petName = false;
+					if(!Main.sex.getCharacterPerformingAction().getPetName(Main.sex.getCharacterTargetedForSexAction(this)).equals(Main.sex.getCharacterTargetedForSexAction(this).getName(true))) {
+						petName = true;
+					}
+
+					if(!isRealPenisFuckingCharacter(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this)) || Main.sex.getCharacterTargetedForSexAction(this).isWearingCondom()) {
+						sb.append("Not wanting [npc2.name] to continue fucking [npc2.herself] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+								+" [npc.speech(Pull out"+(petName?", [#npc.getPetName(npc2)]":"")+"!)]");
 						
 					} else {
-						sb.append("Not wanting [npc2.name] to cum inside [npc3.name], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
-								+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
+						sb.append("Not wanting [npc2.name] to continue fucking [npc2.herself] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,");
+
+						if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
+							if(getCharacterBeingFucked().isVisiblyPregnant()) {
+								sb.append(" [npc.speech(Pull out"+(petName?", [#npc.getPetName(npc2)]":"")+"! Don't cum in your pussy!)]");
+							} else {
+								sb.append(" [npc.speech(Pull out"+(petName?", [#npc.getPetName(npc2)]":"")+"! Don't knock yourself up!)]");
+							}
+						} else {
+							sb.append(" [npc.speech(Pull out"+(petName?", [#npc.getPetName(npc2)]":"")+"!)]");
+						}
 					}
 				}
 				
 			} else {
-				if(!isRealPenisFuckingCharacter(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this))) {
-					if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
-								+" [npc.speech("+targetSheHas+" had enough! Pull out of "+targetHer+" pussy when you're going to cum!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
-								+" [npc.speech("+targetSheHas+" had enough! Pull out of "+targetHer+" ass when you're going to cum!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
-								+" [npc.speech("+targetSheHas+" had enough! Pull out of "+targetHer+" nipple when you're going to cum!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
-								+" [npc.speech("+targetSheHas+" had enough! Pull out of "+targetHer+" spinneret when you're going to cum!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
-								+" [npc.speech("+targetSheHas+" had enough! Get away from "+targetHer+" tits when you're going to cum!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
-								+" [npc.speech("+targetSheHas+" had enough! Get away from "+targetHer+" feet when you're going to cum!)]");
-						
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
-								+" [npc.speech("+targetSheHas+" had enough! Get away from "+targetHer+" pit when you're going to cum!)]");
-						
+				if(Main.sex.getCharacterPerformingAction().isSpeechMuffled()) {
+					if(!isRealPenisFuckingCharacter(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this))) {
+						if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.pussy+] through [npc2.her] orgasm, [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.asshole+] through [npc2.her] orgasm, [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.nipple+] through [npc2.her] orgasm, [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.spinneret+] through [npc2.her] orgasm, [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.breasts+] through [npc2.her] orgasm, [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.feet+] through [npc2.her] orgasm, [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull away.");
+							
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.armpit+] through [npc2.her] orgasm, [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull away.");
+							
+						} else {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
+						}
+		
 					} else {
-						sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
-								+" [npc.speech("+targetSheHas+" had enough! Pull away from "+targetHerHim+" when you're going to cum!)]");
-					}
-	
-				} else if(Main.sex.getCharacterTargetedForSexAction(this).isWearingCondom()) {
-					boolean petName = false;
-					if(!Main.sex.getCharacterPerformingAction().getPetName(Main.sex.getCharacterTargetedForSexAction(this)).equals(Main.sex.getCharacterTargetedForSexAction(this).getName(true))) {
-						petName = true;
-					}
-					
-					if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
-								+" [npc.speech(Pull out of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! I want to see your condom inflating!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.asshole+] as [npc2.she] [npc2.verb(orgasm)],"
-								+" [npc.speech(Pull out of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! I want to see your condom inflating!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.nipple+] as [npc2.she] [npc2.verb(orgasm)],"
-								+" [npc.speech(Pull out of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! I want to see your condom inflating!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.spinneret+] as [npc2.she] [npc2.verb(orgasm)],"
-								+" [npc.speech(Pull out of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! I want to see your condom inflating!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.breasts+] as [npc2.she] [npc2.verb(orgasm)],"
-								+ " [npc.speech(Pull back"+(petName?", [#npc.getPetName(npc2)]":"")+"! I want to see your condom inflating!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.feet+] as [npc2.she] [npc2.verb(orgasm)],"
-								+ " [npc.speech(Pull back"+(petName?", [#npc.getPetName(npc2)]":"")+"! I want to see your condom inflating!)]");
-						
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.namePos] [npc3.armpit+] as [npc2.she] [npc2.verb(orgasm)],"
-								+ " [npc.speech(Pull back"+(petName?", [#npc.getPetName(npc2)]":"")+"! I want to see your condom inflating!)]");
-						
-					} else {
-						sb.append("Knowing exactly what it is [npc.she] [npc.verb(want)], [npc.name] [npc.verb(cry)] out for [npc2.name] to keep pounding [npc3.name] as [npc2.she] [npc2.verb(orgasm)],"
-								+ " [npc.speech(Pull back"+(petName?", [#npc.getPetName(npc2)]":"")+"! I want to see your condom inflating!)]");
+						if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to cum inside [npc3.namePos] [npc3.pussy+], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to cum inside [npc3.namePos] [npc3.asshole+], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to cum inside [npc3.namePos] [npc3.nipple+], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to cum inside [npc3.namePos] [npc3.spinneret+], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to cum all over [npc3.namePos] [npc3.breasts+], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to cum all over [npc3.namePos] [npc3.feet+], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
+							
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to cum all over [npc3.namePos] [npc3.armpit+], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull away.");
+							
+						} else {
+							sb.append("Not wanting [npc2.name] to cum inside [npc3.name], [npc.name] [npc.verb(make)] a series of muffled cries as [npc.she] [npc.verb(try)] to convey to [npc2.herHim]"
+									+ " that [npc.she] [npc.verb(want)] [npc2.herHim] to pull out.");
+						}
 					}
 					
 				} else {
-					boolean petName = false;
-					if(!Main.sex.getCharacterPerformingAction().getPetName(Main.sex.getCharacterTargetedForSexAction(this)).equals(Main.sex.getCharacterTargetedForSexAction(this).getName(true))) {
-						petName = true;
-					}
-	
-					if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to cum inside of [npc3.name], [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
-								+(getCharacterBeingFucked().isVisiblyPregnant()
-										?" [npc.speech(I don't want you cumming inside of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull out of "+targetHer+" pussy!)]"
-										:" [npc.speech(I don't want "+targetHerHim+" getting pregnant"+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull out of "+targetHer+" pussy before you cum!)]"));
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to cum inside of [npc3.name], [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
-								+" [npc.speech(I don't want you cumming inside of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull out of "+targetHer+" ass!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to cum inside of [npc3.name], [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
-								+" [npc.speech(I don't want you cumming inside of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull out of "+targetHer+" nipple!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to cum inside of [npc3.name], [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
-								+" [npc.speech(I don't want you cumming inside of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull out of "+targetHer+" spinneret!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to cum all over of [npc3.name], [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
-								+" [npc.speech(I don't want you cumming on "+targetHer+" tits"+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull away from "+targetHerHim+"!)]");
-	
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to cum all over of [npc3.name], [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
-								+" [npc.speech(I don't want you cumming on "+targetHer+" [npc3.feet]"+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull away from "+targetHerHim+"!)]");
+					if(!isRealPenisFuckingCharacter(getCharacterBeingFucked(), Main.sex.getCharacterTargetedForSexAction(this))) {
+						if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech("+targetSheHas+" had enough! Pull out of "+targetHer+" pussy when you're going to cum!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech("+targetSheHas+" had enough! Pull out of "+targetHer+" ass when you're going to cum!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech("+targetSheHas+" had enough! Pull out of "+targetHer+" nipple when you're going to cum!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech("+targetSheHas+" had enough! Pull out of "+targetHer+" spinneret when you're going to cum!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech("+targetSheHas+" had enough! Get away from "+targetHer+" tits when you're going to cum!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech("+targetSheHas+" had enough! Get away from "+targetHer+" feet when you're going to cum!)]");
+							
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech("+targetSheHas+" had enough! Get away from "+targetHer+" pit when you're going to cum!)]");
+							
+						} else {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech("+targetSheHas+" had enough! Pull away from "+targetHerHim+" when you're going to cum!)]");
+						}
+		
+					} else if(Main.sex.getCharacterTargetedForSexAction(this).isWearingCondom()) {
+						boolean petName = false;
+						if(!Main.sex.getCharacterPerformingAction().getPetName(Main.sex.getCharacterTargetedForSexAction(this)).equals(Main.sex.getCharacterTargetedForSexAction(this).getName(true))) {
+							petName = true;
+						}
 						
-					} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
-						sb.append("Not wanting [npc2.name] to cum all over of [npc3.name], [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
-								+" [npc.speech(I don't want you cumming on "+targetHer+" pit"+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull away from "+targetHerHim+"!)]");
+						if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc.pussy+] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech(Pull out of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! I want to see your condom inflating!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.asshole+] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech(Pull out of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! I want to see your condom inflating!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.MOUTH).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.face+] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech(Pull out of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! I want to see your condom inflating!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.nipple+] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech(Pull out of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! I want to see your condom inflating!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.spinneret+] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech(Pull out of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! I want to see your condom inflating!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.breasts+] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+ " [npc.speech(Pull back"+(petName?", [#npc.getPetName(npc2)]":"")+"! I want to see your condom inflating!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.feet+] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+ " [npc.speech(Pull back"+(petName?", [#npc.getPetName(npc2)]":"")+"! I want to see your condom inflating!)]");
+							
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.namePos] [npc3.armpit+] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+ " [npc.speech(Pull back"+(petName?", [#npc.getPetName(npc2)]":"")+"! I want to see your condom inflating!)]");
+							
+						} else {
+							sb.append("Not wanting [npc2.name] to continue fucking [npc3.name] through [npc2.her] orgasm, [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+ " [npc.speech(Pull back"+(petName?", [#npc.getPetName(npc2)]":"")+"! I want to see your condom inflating!)]");
+						}
 						
 					} else {
-						sb.append("Not wanting [npc2.name] to cum all over of [npc3.name], [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
-								+" [npc.speech(I don't want you cumming on "+targetHer+""+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull away from "+targetHerHim+"!)]");
+						boolean petName = false;
+						if(!Main.sex.getCharacterPerformingAction().getPetName(Main.sex.getCharacterTargetedForSexAction(this)).equals(Main.sex.getCharacterTargetedForSexAction(this).getName(true))) {
+							petName = true;
+						}
+		
+						if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to cum inside of [npc3.name], [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+(getCharacterBeingFucked().isVisiblyPregnant()
+											?" [npc.speech(I don't want you cumming inside of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull out of "+targetHer+" pussy!)]"
+											:" [npc.speech(I don't want "+targetHerHim+" getting pregnant"+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull out of "+targetHer+" pussy before you cum!)]"));
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ANUS).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to cum inside of [npc3.name], [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech(I don't want you cumming inside of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull out of "+targetHer+" ass!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.MOUTH).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to cum inside of [npc3.name], [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech(I don't want you cumming inside of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull out of "+targetHer+" throat!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.NIPPLE).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to cum inside of [npc3.name], [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech(I don't want you cumming inside of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull out of "+targetHer+" nipple!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.SPINNERET).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to cum inside of [npc3.name], [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech(I don't want you cumming inside of "+targetHerHim+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull out of "+targetHer+" spinneret!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.BREAST).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to cum all over [npc3.name], [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech(I don't want you cumming on "+targetHer+" tits"+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull away from "+targetHerHim+"!)]");
+		
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaPenetration.FOOT).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to cum all over [npc3.name], [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech(I don't want you cumming on "+targetHer+" [npc3.feet]"+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull away from "+targetHerHim+"!)]");
+							
+						} else if(Main.sex.getOngoingCharactersUsingAreas(Main.sex.getCharacterTargetedForSexAction(this), SexAreaPenetration.PENIS, SexAreaOrifice.ARMPITS).contains(getCharacterBeingFucked())) {
+							sb.append("Not wanting [npc2.name] to cum all over [npc3.name], [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech(I don't want you cumming on "+targetHer+" pit"+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull away from "+targetHerHim+"!)]");
+							
+						} else {
+							sb.append("Not wanting [npc2.name] to cum all over [npc3.name], [npc.name] [npc.verb(cry)] out for [npc2.herHim] to stop,"
+									+" [npc.speech(I don't want you cumming on "+targetHer+""+(petName?", [#npc.getPetName(npc2)]":"")+"! Pull away from "+targetHerHim+"!)]");
+						}
 					}
 				}
 			}
@@ -9053,7 +9210,7 @@ public class GenericOrgasms {
 			return SexActionPriority.UNIQUE_MAX;
 		}
 		@Override
-		public boolean isAvailableDuringImmobilisation(ImmobilisationType type) {
+		public boolean isAvailableDuringImmobilisation(Collection<ImmobilisationType> types) {
 			return true;
 		}
 		@Override

@@ -735,29 +735,37 @@ public class CreationController {
 		String id = "HEIGHT_INCREASE";
 		if (MainController.document.getElementById(id) != null) {
 			((EventTarget) MainController.document.getElementById(id)).addEventListener("click", e->{
-				BodyChanging.getTarget().incrementHeight(1, BodyChanging.isDebugMenu());
-				Main.game.setContent(new Response("", "", Main.game.getCurrentDialogueNode()));
+				if(BodyChanging.getTarget().getHeightValue()<BodyChanging.getTarget().getMaximumHeight()) {
+					BodyChanging.getTarget().incrementHeight(1, BodyChanging.isDebugMenu());
+					Main.game.setContent(new Response("", "", Main.game.getCurrentDialogueNode()));
+				}
 			}, false);
 		}
 		id = "HEIGHT_INCREASE_LARGE";
 		if (MainController.document.getElementById(id) != null) {
 			((EventTarget) MainController.document.getElementById(id)).addEventListener("click", e->{
-				BodyChanging.getTarget().incrementHeight(5, BodyChanging.isDebugMenu());
-				Main.game.setContent(new Response("", "", Main.game.getCurrentDialogueNode()));
+				if(BodyChanging.getTarget().getHeightValue()<BodyChanging.getTarget().getMaximumHeight()) {
+					BodyChanging.getTarget().incrementHeight(5, BodyChanging.isDebugMenu());
+					Main.game.setContent(new Response("", "", Main.game.getCurrentDialogueNode()));
+				}
 			}, false);
 		}
 		id = "HEIGHT_DECREASE";
 		if (MainController.document.getElementById(id) != null) {
 			((EventTarget) MainController.document.getElementById(id)).addEventListener("click", e->{
-				BodyChanging.getTarget().incrementHeight(-1, BodyChanging.isDebugMenu());
-				Main.game.setContent(new Response("", "", Main.game.getCurrentDialogueNode()));
+				if(BodyChanging.getTarget().getHeightValue()>BodyChanging.getTarget().getMinimumHeight()) {
+					BodyChanging.getTarget().incrementHeight(-1, BodyChanging.isDebugMenu());
+					Main.game.setContent(new Response("", "", Main.game.getCurrentDialogueNode()));
+				}
 			}, false);
 		}
 		id = "HEIGHT_DECREASE_LARGE";
 		if (MainController.document.getElementById(id) != null) {
 			((EventTarget) MainController.document.getElementById(id)).addEventListener("click", e->{
-				BodyChanging.getTarget().incrementHeight(-5, BodyChanging.isDebugMenu());
-				Main.game.setContent(new Response("", "", Main.game.getCurrentDialogueNode()));
+				if(BodyChanging.getTarget().getHeightValue()>BodyChanging.getTarget().getMinimumHeight()) {
+					BodyChanging.getTarget().incrementHeight(-5, BodyChanging.isDebugMenu());
+					Main.game.setContent(new Response("", "", Main.game.getCurrentDialogueNode()));
+				}
 			}, false);
 		}
 	}

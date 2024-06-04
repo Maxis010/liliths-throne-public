@@ -2512,6 +2512,29 @@ public class UtilText {
 		
 		commandsList.add(new ParserCommand(
 				Util.newArrayListOfValues(
+						"bitch+",
+						"slut+",
+						"insult+",
+						"bitchD",
+						"slutD",
+						"insultD"),
+				true,
+				true,
+				"",
+				"Returns a random mean word to describe this person, based on their femininity, with a mean descriptor before it.") {
+			@Override
+			public String parse(List<GameCharacter> specialNPCs, String command, String arguments, String target, GameCharacter character) {
+				String naughtyDescriptor = Util.randomItemFromValues("worthless", "dumb", "dirty", "filthy");
+				if(character.isFeminine()) {
+					return naughtyDescriptor+" "+UtilText.returnStringAtRandom("bitch", "slut", "cunt", "whore", "skank");
+				} else {
+					return naughtyDescriptor+" "+UtilText.returnStringAtRandom("asshole", "bastard", "fuckface", "fucker");
+				}
+			}
+		});
+
+		commandsList.add(new ParserCommand(
+				Util.newArrayListOfValues(
 						"bitches",
 						"sluts",
 						"insultPlural"),
@@ -2525,6 +2548,29 @@ public class UtilText {
 					return UtilText.returnStringAtRandom("bitches", "sluts", "cunts", "whores", "skanks");
 				} else {
 					return UtilText.returnStringAtRandom("assholes", "bastards", "fuckfaces", "fuckers");
+				}
+			}
+		});
+
+		commandsList.add(new ParserCommand(
+				Util.newArrayListOfValues(
+						"bitches+",
+						"sluts+",
+						"insultPlural+",
+						"bitchesD",
+						"slutsD",
+						"insultPluralD"),
+				true,
+				true,
+				"",
+				"Returns a random mean pluralised word to describe this person, based on their femininity, with a mean descriptor before it.") {
+			@Override
+			public String parse(List<GameCharacter> specialNPCs, String command, String arguments, String target, GameCharacter character) {
+				String naughtyDescriptor = Util.randomItemFromValues("worthless", "dumb", "dirty", "filthy");
+				if(character.isFeminine()) {
+					return naughtyDescriptor+" "+UtilText.returnStringAtRandom("bitches", "sluts", "cunts", "whores", "skanks");
+				} else {
+					return naughtyDescriptor+" "+UtilText.returnStringAtRandom("assholes", "bastards", "fuckfaces", "fuckers");
 				}
 			}
 		});
@@ -9979,6 +10025,9 @@ public class UtilText {
 		}
 		for(EyeShape eyeShape : EyeShape.values()) {
 			engine.put("EYE_SHAPE_"+eyeShape.toString(), eyeShape);
+		}
+		for(OrificeDepth orificeDepth : OrificeDepth.values()) {
+			engine.put("ORIFICE_DEPTH_"+orificeDepth.toString(), orificeDepth);
 		}
 		// Types:
 		for(AbstractFluidType fluidType : FluidType.getAllFluidTypes()) {
