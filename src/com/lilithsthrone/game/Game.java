@@ -58,7 +58,11 @@ import com.lilithsthrone.game.character.attributes.AffectionLevel;
 import com.lilithsthrone.game.character.attributes.Attribute;
 import com.lilithsthrone.game.character.attributes.ObedienceLevel;
 import com.lilithsthrone.game.character.body.CoverableArea;
+import com.lilithsthrone.game.character.body.FluidCum;
+import com.lilithsthrone.game.character.body.FluidGirlCum;
+import com.lilithsthrone.game.character.body.FluidMilk;
 import com.lilithsthrone.game.character.body.coverings.Covering;
+import com.lilithsthrone.game.character.body.types.FluidType;
 import com.lilithsthrone.game.character.body.valueEnums.GenitalArrangement;
 import com.lilithsthrone.game.character.effects.Perk;
 import com.lilithsthrone.game.character.effects.PerkManager;
@@ -82,6 +86,7 @@ import com.lilithsthrone.game.character.npc.dominion.DominionClubNPC;
 import com.lilithsthrone.game.character.npc.dominion.Elle;
 import com.lilithsthrone.game.character.npc.dominion.EnforcerPatrol;
 import com.lilithsthrone.game.character.npc.dominion.Felicia;
+import com.lilithsthrone.game.character.npc.dominion.Fiammetta;
 import com.lilithsthrone.game.character.npc.dominion.Finch;
 import com.lilithsthrone.game.character.npc.dominion.Hannah;
 import com.lilithsthrone.game.character.npc.dominion.HarpyBimbo;
@@ -98,6 +103,7 @@ import com.lilithsthrone.game.character.npc.dominion.Kay;
 import com.lilithsthrone.game.character.npc.dominion.Kruger;
 import com.lilithsthrone.game.character.npc.dominion.Lilaya;
 import com.lilithsthrone.game.character.npc.dominion.Loppy;
+import com.lilithsthrone.game.character.npc.dominion.Lovienne;
 import com.lilithsthrone.game.character.npc.dominion.Lumi;
 import com.lilithsthrone.game.character.npc.dominion.Natalya;
 import com.lilithsthrone.game.character.npc.dominion.Nyan;
@@ -108,6 +114,7 @@ import com.lilithsthrone.game.character.npc.dominion.Ralph;
 import com.lilithsthrone.game.character.npc.dominion.ReindeerOverseer;
 import com.lilithsthrone.game.character.npc.dominion.RentalMommy;
 import com.lilithsthrone.game.character.npc.dominion.Rose;
+import com.lilithsthrone.game.character.npc.dominion.Saellatrix;
 import com.lilithsthrone.game.character.npc.dominion.Scarlett;
 import com.lilithsthrone.game.character.npc.dominion.Sean;
 import com.lilithsthrone.game.character.npc.dominion.SupplierLeader;
@@ -119,6 +126,7 @@ import com.lilithsthrone.game.character.npc.dominion.Wes;
 import com.lilithsthrone.game.character.npc.dominion.Zaranix;
 import com.lilithsthrone.game.character.npc.dominion.ZaranixMaidKatherine;
 import com.lilithsthrone.game.character.npc.dominion.ZaranixMaidKelly;
+import com.lilithsthrone.game.character.npc.fields.Angelixx;
 import com.lilithsthrone.game.character.npc.fields.Arion;
 import com.lilithsthrone.game.character.npc.fields.Astrapi;
 import com.lilithsthrone.game.character.npc.fields.Aurokaris;
@@ -134,23 +142,29 @@ import com.lilithsthrone.game.character.npc.fields.Fae;
 import com.lilithsthrone.game.character.npc.fields.Farah;
 import com.lilithsthrone.game.character.npc.fields.FieldsBandit;
 import com.lilithsthrone.game.character.npc.fields.Flash;
+import com.lilithsthrone.game.character.npc.fields.Ghost;
+import com.lilithsthrone.game.character.npc.fields.Golix;
 import com.lilithsthrone.game.character.npc.fields.Hale;
+import com.lilithsthrone.game.character.npc.fields.Hammer;
 import com.lilithsthrone.game.character.npc.fields.HeadlessHorseman;
 import com.lilithsthrone.game.character.npc.fields.Heather;
 import com.lilithsthrone.game.character.npc.fields.Imsu;
 import com.lilithsthrone.game.character.npc.fields.Jess;
 import com.lilithsthrone.game.character.npc.fields.Kazik;
 import com.lilithsthrone.game.character.npc.fields.Kheiron;
+import com.lilithsthrone.game.character.npc.fields.Lunette;
 import com.lilithsthrone.game.character.npc.fields.LunetteMelee;
 import com.lilithsthrone.game.character.npc.fields.LunetteRanged;
 import com.lilithsthrone.game.character.npc.fields.Lunexis;
 import com.lilithsthrone.game.character.npc.fields.Minotallys;
 import com.lilithsthrone.game.character.npc.fields.Monica;
 import com.lilithsthrone.game.character.npc.fields.Moreno;
+import com.lilithsthrone.game.character.npc.fields.Nir;
 import com.lilithsthrone.game.character.npc.fields.Nizhoni;
 import com.lilithsthrone.game.character.npc.fields.Oglix;
 import com.lilithsthrone.game.character.npc.fields.Penelope;
 import com.lilithsthrone.game.character.npc.fields.Silvia;
+import com.lilithsthrone.game.character.npc.fields.Sleip;
 import com.lilithsthrone.game.character.npc.fields.Sterope;
 import com.lilithsthrone.game.character.npc.fields.Ursa;
 import com.lilithsthrone.game.character.npc.fields.Vronti;
@@ -198,6 +212,7 @@ import com.lilithsthrone.game.character.persona.SexualOrientation;
 import com.lilithsthrone.game.character.pregnancy.Litter;
 import com.lilithsthrone.game.character.quests.Quest;
 import com.lilithsthrone.game.character.quests.QuestLine;
+import com.lilithsthrone.game.character.race.AbstractSubspecies;
 import com.lilithsthrone.game.character.race.Race;
 import com.lilithsthrone.game.character.race.RaceStage;
 import com.lilithsthrone.game.character.race.RacialBody;
@@ -252,6 +267,7 @@ import com.lilithsthrone.game.inventory.Rarity;
 import com.lilithsthrone.game.inventory.clothing.AbstractClothing;
 import com.lilithsthrone.game.inventory.clothing.AbstractClothingType;
 import com.lilithsthrone.game.inventory.clothing.ClothingType;
+import com.lilithsthrone.game.inventory.enchanting.AbstractItemEffectType;
 import com.lilithsthrone.game.inventory.item.AbstractItem;
 import com.lilithsthrone.game.inventory.item.AbstractItemType;
 import com.lilithsthrone.game.inventory.item.ItemType;
@@ -260,6 +276,8 @@ import com.lilithsthrone.game.inventory.weapon.AbstractWeaponType;
 import com.lilithsthrone.game.inventory.weapon.WeaponType;
 import com.lilithsthrone.game.occupantManagement.MilkingRoom;
 import com.lilithsthrone.game.occupantManagement.OccupancyUtil;
+import com.lilithsthrone.game.occupantManagement.slave.SlaveJob;
+import com.lilithsthrone.game.occupantManagement.slave.SlaveJobFlag;
 import com.lilithsthrone.game.occupantManagement.slave.SlavePermission;
 import com.lilithsthrone.game.occupantManagement.slave.SlavePermissionSetting;
 import com.lilithsthrone.game.occupantManagement.slaveEvent.SlaveEvent;
@@ -292,6 +310,7 @@ import com.lilithsthrone.world.World;
 import com.lilithsthrone.world.WorldRegion;
 import com.lilithsthrone.world.WorldType;
 import com.lilithsthrone.world.places.AbstractPlaceType;
+import com.lilithsthrone.world.places.GenericPlace;
 import com.lilithsthrone.world.places.PlaceType;
 import com.lilithsthrone.world.places.PlaceUpgrade;
 
@@ -1111,6 +1130,8 @@ public class Game implements XMLSaving {
 							&& (!worldType.equals("EMPTY") || !Main.isVersionOlderThan(loadingVersion, "0.4.5.7"))
 							&& (!worldType.equals("SLAVER_ALLEY") || !Main.isVersionOlderThan(loadingVersion, "0.4.5.7"))
 							&& (!worldType.equals("innoxia_fields_elis_market") || !Main.isVersionOlderThan(loadingVersion, "0.4.8.7"))
+							&& (!worldType.equals("innoxia_dominion_sex_shop") || !Main.isVersionOlderThan(loadingVersion, "0.4.9.12"))
+							&& (!worldType.equals("innoxia_dominion_sex_shop_factory") || !Main.isVersionOlderThan(loadingVersion, "0.4.9.13"))
 							&& !worldType.equals("SUPPLIER_DEN") // Removed
 							&& !worldType.equals("JUNGLE") // Removed
 //                          && !worldType.equals("REBEL_BASE")
@@ -1191,6 +1212,9 @@ public class Game implements XMLSaving {
 				}
 				if(Main.isVersionOlderThan(loadingVersion, "0.4.7.11")) {
 					Main.game.getWorlds().put(WorldType.getWorldTypeFromId("innoxia_fields_elis_tavern_taur"), gen.worldGeneration(WorldType.getWorldTypeFromId("innoxia_fields_elis_tavern_taur")));
+				}
+				if(Main.isVersionOlderThan(loadingVersion, "0.4.9.1")) {
+					Main.game.getWorlds().put(WorldType.getWorldTypeFromId("innoxia_dominion_sex_shop"), gen.worldGeneration(WorldType.getWorldTypeFromId("innoxia_dominion_sex_shop")));
 				}
 				for(AbstractWorldType wt : WorldType.getAllWorldTypes()) {
 					if(Main.game.worlds.get(wt)==null) {
@@ -1341,6 +1365,12 @@ public class Game implements XMLSaving {
 											}
 										}
 
+										// Assign parser target:
+										if(npc.getParserTarget()!=null) {
+											ParserTarget.addAdditionalParserTarget(npc.getParserTarget(), npc);
+										}
+										
+										
 									} else {
 										System.err.println("LOADNPC returned null: "+id);
 										System.err.println("CLASS: " + className);
@@ -2013,6 +2043,78 @@ public class Game implements XMLSaving {
 					}
 				}
 				
+				if(Main.isVersionOlderThan(Game.loadingVersion, "0.4.8.10")) {
+					List<NPC> charactersInStable = Main.game.getCharactersPresent(WorldType.getWorldTypeFromId("innoxia_fields_elis_tavern_taur"), PlaceType.getPlaceTypeFromId("innoxia_fields_elis_tavern_taur_stable"));
+					boolean steropePresent = charactersInStable.contains(Main.game.getNpc(Sterope.class));
+					int charactersToBanish = charactersInStable.size() - (steropePresent?2:0);
+					for(GameCharacter c : charactersInStable) {
+						if(charactersToBanish<=0) {
+							break;
+						}
+						if(c instanceof GenericSexualPartner) {
+							Main.game.banishNPC((NPC) c);
+							charactersToBanish--;
+						}
+					}
+				}
+				if(Main.isVersionOlderThan(Game.loadingVersion, "0.4.9")) {
+					// Generate Lovienne's Luxuries:
+					if(Main.game.getWorlds().get(WorldType.DOMINION).getCell(PlaceType.DOMINION_DEMON_HOME_SEX_SHOP)==null) {
+						Vector2i towerLoc = new Vector2i(Main.game.getWorlds().get(WorldType.DOMINION).getCell(PlaceType.DOMINION_LILITHS_TOWER).getLocation());
+						towerLoc.setX(towerLoc.getX()+2);
+						Main.game.getWorlds().get(WorldType.DOMINION).getCell(towerLoc).setPlace(new GenericPlace(PlaceType.DOMINION_DEMON_HOME_SEX_SHOP), false);
+					}
+				}
+				if(Main.isVersionOlderThan(Game.loadingVersion, "0.4.9.2")) {
+					// Set all elementals to look the same age as their summoners:
+					for(NPC npc : Main.game.getAllNPCs()) {
+						if(npc instanceof Elemental) {
+							npc.setAgeAppearanceAbsolute(((Elemental)npc).getSummoner().getAppearsAsAgeValue());
+						}
+					}
+				}
+				
+				// Reset doll fluids to their correct types:
+				if(Main.isVersionOlderThan(Game.loadingVersion, "0.4.9.8")) {
+					for(NPC npc : Main.game.getAllNPCs()) {
+						if(npc.isDoll()) {
+							npc.getBody().getBreast().setMilk(new FluidMilk(FluidType.MILK_DOLL, false));
+							npc.getBody().getBreastCrotch().setMilk(new FluidMilk(FluidType.MILK_DOLL, true));
+							npc.getBody().getPenis().getTesticle().setCum(new FluidCum(FluidType.CUM_DOLL));
+							npc.getBody().getVagina().setGirlcum(new FluidGirlCum(FluidType.GIRL_CUM_DOLL));
+						}
+					}
+				}
+				
+				if(Main.isVersionOlderThan(Game.loadingVersion, "0.4.9.9")) { // Remove excess consoles
+					int count = Main.game.getPlayer().getItemCount(ItemType.DOLL_CONSOLE);
+					for(int i=0; i<count-1; i++) {
+						Main.game.getPlayer().removeItemByType(ItemType.DOLL_CONSOLE);
+						Main.game.getPlayer().incrementMoney(MiscDialogue.deckCost);
+					}
+				}
+				
+
+				if(Main.isVersionOlderThan(Game.loadingVersion, "0.4.9.10")) { 
+					for(NPC npc : Main.game.getAllNPCs()) {
+						if(!npc.isSlave()) {
+							for(int i=0; i<24; i++) {
+								if(!npc.getSlaveJob(i).hasFlag(SlaveJobFlag.GUEST_CAN_WORK)) {
+									npc.setSlaveJob(i, SlaveJob.IDLE);
+								}
+							}
+						}
+					}
+				}
+				
+				if(Main.isVersionOlderThan(loadingVersion, "0.4.9.11")) {
+					if(Main.game.getPlayer().isQuestProgressGreaterThan(QuestLine.MAIN, Quest.MAIN_2_C_SIRENS_FALL)) {
+						ImpFortressDialogue.clearFortress(WorldType.IMP_FORTRESS_ALPHA);
+						ImpFortressDialogue.clearFortress(WorldType.IMP_FORTRESS_FEMALES);
+						ImpFortressDialogue.clearFortress(WorldType.IMP_FORTRESS_MALES);
+					}
+				}
+				
 				if(debug) {
 					System.out.println("New NPCs finished");
 					System.out.println("All finished");
@@ -2031,6 +2133,9 @@ public class Game implements XMLSaving {
 				e.printStackTrace();
 			}
 		}
+		
+
+		Main.game.getPlayer().updateLocationListeners();
 		
 		Main.game.setRenderMap(true);
 		Main.game.setRenderAttributesSection(true);
@@ -2331,7 +2436,7 @@ public class Game implements XMLSaving {
 			if(addedNpcs.contains(Daddy.class)) {
 				getNpc(Rose.class).setAffection(getNpc(Daddy.class), -50);
 			}
-
+			
             // Sawlty Towers (Arthur/Felicia's apartment building):
             if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Felicia.class))) {
                 addNPC(new Felicia(), false);
@@ -2340,6 +2445,14 @@ public class Game implements XMLSaving {
             if(addedNpcs.contains(Felicia.class)) {
             	getNpc(Felicia.class).setAffection(getNpc(Arthur.class), AffectionLevel.POSITIVE_THREE_CARING.getMedianValue());
             }
+            
+            // Lovienne's Luxuries:
+			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Saellatrix.class))) { addNPC(new Saellatrix(), false); addedNpcs.add(Saellatrix.class); }
+			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Fiammetta.class))) { addNPC(new Fiammetta(), false); addedNpcs.add(Fiammetta.class); }
+			if(addedNpcs.contains(Fiammetta.class)) {
+				getNpc(Fiammetta.class).setAffection(getNpc(Saellatrix.class), -100);
+				getNpc(Saellatrix.class).setAffection(getNpc(Fiammetta.class), -50);
+			}
 
 			// Zaranix's home:
 			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Zaranix.class))) { addNPC(new Zaranix(), false); addedNpcs.add(Zaranix.class); }
@@ -2379,7 +2492,9 @@ public class Game implements XMLSaving {
 			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(SlimeGuardFire.class))) { addNPC(new SlimeGuardFire(), false); addedNpcs.add(SlimeGuardFire.class); }
 			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(SlimeRoyalGuard.class))) { addNPC(new SlimeRoyalGuard(), false); addedNpcs.add(SlimeRoyalGuard.class); }
 			
+			
 			// Submission:
+			
 			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Claire.class))) { addNPC(new Claire(), false); addedNpcs.add(Claire.class); }
 			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(FortressAlphaLeader.class))) { addNPC(new FortressAlphaLeader(), false); addedNpcs.add(FortressAlphaLeader.class); }
 			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(FortressFemalesLeader.class))) { addNPC(new FortressFemalesLeader(), false); addedNpcs.add(FortressFemalesLeader.class); }
@@ -2505,15 +2620,51 @@ public class Game implements XMLSaving {
 
 			// The Crossed Blades:
 			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Oglix.class))) { addNPC(new Oglix(), false); addedNpcs.add(Oglix.class); }
-			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Wynter.class))) { addNPC(new Wynter(), false); addedNpcs.add(Wynter.class); }
+			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Golix.class))) { addNPC(new Golix(), false); addedNpcs.add(Golix.class); }
 			if(addedNpcs.contains(Oglix.class)) {
 				Main.game.getNpc(Oglix.class).setAffection(Main.game.getNpc(Kheiron.class), AffectionLevel.POSITIVE_TWO_LIKE.getMedianValue());
 				Main.game.getNpc(Kheiron.class).setAffection(Main.game.getNpc(Oglix.class), AffectionLevel.NEGATIVE_THREE_STRONG_DISLIKE.getMedianValue());
 			}
+			if(addedNpcs.contains(Golix.class)) {
+				((Oglix)Main.game.getNpc(Oglix.class)).createElemental(); // inits the summoner ID
+				Main.game.getNpc(Kheiron.class).setAffection(Main.game.getNpc(Golix.class), AffectionLevel.POSITIVE_FIVE_WORSHIP.getMedianValue());
+				Main.game.getNpc(Golix.class).setAffection(Main.game.getNpc(Kheiron.class), AffectionLevel.POSITIVE_FOUR_LOVE.getMedianValue());
+			}
+			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Wynter.class))) { addNPC(new Wynter(), false); addedNpcs.add(Wynter.class); }
 
 			// Enforcer station:
 			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Sterope.class))) { addNPC(new Sterope(), false); addedNpcs.add(Sterope.class); }
+			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Hammer.class))) { addNPC(new Hammer(), false); addedNpcs.add(Hammer.class); }
+			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Ghost.class))) { addNPC(new Ghost(), false); addedNpcs.add(Ghost.class); }
+			if(addedNpcs.contains(Hammer.class)) {
+				Main.game.getNpc(Hammer.class).setAffection(Main.game.getNpc(Ghost.class), AffectionLevel.POSITIVE_THREE_CARING.getMedianValue());
+				Main.game.getNpc(Ghost.class).setAffection(Main.game.getNpc(Hammer.class), AffectionLevel.POSITIVE_THREE_CARING.getMedianValue());
+			}
 			
+			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Angelixx.class))) { addNPC(new Angelixx(), false); addedNpcs.add(Angelixx.class); }
+			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Sleip.class))) { addNPC(new Sleip(), false); addedNpcs.add(Sleip.class); }
+			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Nir.class))) { addNPC(new Nir(), false); addedNpcs.add(Nir.class); }
+			if(addedNpcs.contains(Angelixx.class) || addedNpcs.contains(Saellatrix.class)) {
+				Main.game.getNpc(Angelixx.class).setAffection(Main.game.getNpc(Sleip.class), AffectionLevel.POSITIVE_TWO_LIKE.getMedianValue());
+				Main.game.getNpc(Angelixx.class).setAffection(Main.game.getNpc(Nir.class), AffectionLevel.POSITIVE_TWO_LIKE.getMedianValue());
+
+				Main.game.getNpc(Saellatrix.class).setAffection(Main.game.getNpc(Angelixx.class), AffectionLevel.NEGATIVE_THREE_STRONG_DISLIKE.getMedianValue());
+				Main.game.getNpc(Angelixx.class).setAffection(Main.game.getNpc(Saellatrix.class), AffectionLevel.NEGATIVE_TWO_DISLIKE.getMedianValue());
+			}
+			if(addedNpcs.contains(Saellatrix.class) || Main.isVersionOlderThan(Game.loadingVersion, "0.4.9.12")) {
+				Main.game.getNpc(Saellatrix.class).setAffection(Main.game.getNpc(Lilaya.class), AffectionLevel.POSITIVE_TWO_LIKE.getMedianValue());
+				Main.game.getNpc(Lilaya.class).setAffection(Main.game.getNpc(Saellatrix.class), AffectionLevel.POSITIVE_THREE_CARING.getMedianValue());
+			}
+			if(addedNpcs.contains(Sleip.class)) {
+				getNpc(Sleip.class).setMother(getNpc(Angelixx.class));
+				Main.game.getNpc(Sleip.class).setAffection(Main.game.getNpc(Angelixx.class), AffectionLevel.POSITIVE_FIVE_WORSHIP.getMedianValue());
+				Main.game.getNpc(Sleip.class).setAffection(Main.game.getNpc(Nir.class), AffectionLevel.POSITIVE_THREE_CARING.getMedianValue());
+			}
+			if(addedNpcs.contains(Nir.class)) {
+				getNpc(Nir.class).setMother(getNpc(Angelixx.class));
+				Main.game.getNpc(Nir.class).setAffection(Main.game.getNpc(Angelixx.class), AffectionLevel.POSITIVE_FIVE_WORSHIP.getMedianValue());
+				Main.game.getNpc(Nir.class).setAffection(Main.game.getNpc(Sleip.class), AffectionLevel.POSITIVE_THREE_CARING.getMedianValue());
+			}
 			
 			// Evelyx's Dairy:
 			
@@ -2534,6 +2685,19 @@ public class Game implements XMLSaving {
 			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Ursa.class))) { addNPC(new Ursa(), false); addedNpcs.add(Ursa.class); }
 			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Aurokaris.class))) { addNPC(new Aurokaris(), false); addedNpcs.add(Aurokaris.class); }
 			
+			// Elder lilin:
+			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Lunette.class))) { addNPC(new Lunette(), false); addedNpcs.add(Lunette.class); }
+			if(addedNpcs.contains(Lunette.class)) {
+				getNpc(Lunexis.class).setMother(getNpc(Lunette.class));
+				getNpc(Lunexis.class).setAffection(getNpc(Lunette.class), 100);
+			}
+			if(!Main.game.NPCMap.containsKey(Main.game.getUniqueNPCId(Lovienne.class))) { addNPC(new Lovienne(), false); addedNpcs.add(Lovienne.class); }
+			if(addedNpcs.contains(Lovienne.class)) {
+				getNpc(Angelixx.class).setMother(getNpc(Lovienne.class));
+				getNpc(Angelixx.class).setAffection(getNpc(Lovienne.class), 100);
+				getNpc(Saellatrix.class).setMother(getNpc(Lovienne.class));
+				getNpc(Saellatrix.class).setAffection(getNpc(Lovienne.class), 100);
+			}
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -2593,7 +2757,9 @@ public class Game implements XMLSaving {
 			System.out.println("debug end turn start");
 		}
 		// Reset imp tunnels after 5 days if DS is defeated:
-		if(Main.game.getPlayer().hasQuest(QuestLine.MAIN) && Main.game.getPlayer().isQuestProgressGreaterThan(QuestLine.MAIN, Quest.MAIN_2_B_SIRENS_CALL)) {
+		if(Main.game.getPlayer().hasQuest(QuestLine.MAIN)
+				&& Main.game.getPlayer().isQuestProgressGreaterThan(QuestLine.MAIN, Quest.MAIN_2_C_SIRENS_FALL)
+				&& Main.game.getNpc(FortressAlphaLeader.class).getWorldLocation()!=WorldType.IMP_FORTRESS_ALPHA) {
 			boolean alphaReset = this.getDialogueFlags().hasFlag(DialogueFlagValue.impFortressAlphaDefeated)
 					&& ((this.getMinutesPassed() - this.getDialogueFlags().getSavedLong(ImpFortressDialogue.FORTRESS_ALPHA_CLEAR_TIMER_ID)) > 60*24*5);
 			
@@ -2827,21 +2993,23 @@ public class Game implements XMLSaving {
 					npc.setBodyToGenderIdentity(false);
 				}
 				
-				// Prostitutes stay on slut pills to avoid pregnancies, and, if the NPC is male, to avoid knocking up their clients
-				if((!npc.isPregnant()
-						&& !npc.isSlave()
-						&& npc.getHistory()==Occupation.NPC_PROSTITUTE
-						&& !npc.hasStatusEffect(StatusEffect.PROMISCUITY_PILL)
-						&& !npc.getLocation().equals(Main.game.getPlayer().getLocation()))
-					|| (npc.isSlave() && npc.getSlavePermissionSettings().get(SlavePermission.PILLS).contains(SlavePermissionSetting.PILLS_PROMISCUITY_PILLS))) {
-					npc.useItem(Main.game.getItemGen().generateItem("innoxia_pills_sterility"), npc, false);
-				}
-				
-				if(npc.isSlave() && npc.getSlavePermissionSettings().get(SlavePermission.PILLS).contains(SlavePermissionSetting.PILLS_VIXENS_VIRILITY)) {
-					npc.useItem(Main.game.getItemGen().generateItem("innoxia_pills_fertility"), npc, false);
-				}
-				if(npc.isSlave() && npc.getSlavePermissionSettings().get(SlavePermission.PILLS).contains(SlavePermissionSetting.PILLS_BROODMOTHER)) {
-					npc.useItem(Main.game.getItemGen().generateItem("innoxia_pills_broodmother"), npc, false);
+				if(!npc.isDoll()) { // Dolls do not need to take pills of any sort
+					// Prostitutes stay on slut pills to avoid pregnancies, and, if the NPC is male, to avoid knocking up their clients
+					if((!npc.isPregnant()
+							&& !npc.isSlave()
+							&& npc.getHistory()==Occupation.NPC_PROSTITUTE
+							&& !npc.hasStatusEffect(StatusEffect.PROMISCUITY_PILL)
+							&& !npc.getLocation().equals(Main.game.getPlayer().getLocation()))
+						|| (npc.isSlave() && npc.getSlavePermissionSettings().get(SlavePermission.PILLS).contains(SlavePermissionSetting.PILLS_PROMISCUITY_PILLS))) {
+						npc.useItem(Main.game.getItemGen().generateItem("innoxia_pills_sterility"), npc, false);
+					}
+					
+					if(npc.isSlave() && npc.getSlavePermissionSettings().get(SlavePermission.PILLS).contains(SlavePermissionSetting.PILLS_VIXENS_VIRILITY)) {
+						npc.useItem(Main.game.getItemGen().generateItem("innoxia_pills_fertility"), npc, false);
+					}
+					if(npc.isSlave() && npc.getSlavePermissionSettings().get(SlavePermission.PILLS).contains(SlavePermissionSetting.PILLS_BROODMOTHER)) {
+						npc.useItem(Main.game.getItemGen().generateItem("innoxia_pills_broodmother"), npc, false);
+					}
 				}
 			}
 			
@@ -2874,10 +3042,6 @@ public class Game implements XMLSaving {
 						
 					} else {
 						npc.endPregnancy(true);
-					}
-					
-					if(npc instanceof Kate) {
-						Main.game.getDialogueFlags().values.remove(DialogueFlagValue.reactedToKatePregnancy);
 					}
 				}
 			}
@@ -3521,7 +3685,7 @@ public class Game implements XMLSaving {
 		
 		int currentPosition = 0;
 		if(getCurrentDialogueNode()!=null) {
-			if(!Main.game.isInSex() || Main.sex.getTurn()>1) { // First turn of sex should always reset to top
+			if(!Main.game.isInSex() || Main.sex.getTurn()>1 || Main.game.currentDialogueNode!=Main.sex.SEX_DIALOGUE) { // First turn of sex should always reset to top
 				currentPosition =  (int) Main.mainController.getWebEngine().executeScript("document.getElementById('content-block').scrollTop");
 			}
 		}
@@ -5574,6 +5738,10 @@ public class Game implements XMLSaving {
 	public boolean isScalyHairEnabled() {
 		return Main.getProperties().hasValue(PropertyValue.scalyHairContent);
 	}
+
+	public boolean isLipLispEnabled() {
+		return Main.getProperties().hasValue(PropertyValue.lipLispContent);
+	}
 	
 	public boolean isPubicHairEnabled() {
 		return Main.getProperties().hasValue(PropertyValue.pubicHairContent);
@@ -5671,7 +5839,11 @@ public class Game implements XMLSaving {
 	public boolean isPlotDiscovered() {
 		return Main.game.getPlayer().isQuestProgressGreaterThan(QuestLine.MAIN, Quest.MAIN_2_D_MEETING_A_LILIN);
 	}
-	
+
+	public boolean isLunetteDefeated() {
+//		return Main.game.getPlayer().isQuestProgressGreaterThan(QuestLine.MAIN, Quest.MAIN_2_D_MEETING_A_LILIN);
+		return false; // TODO once main quest progress is past Lunette, return true
+	}
 	
 	public boolean isRenderMap() {
 		return renderMap;
@@ -6113,6 +6285,14 @@ public class Game implements XMLSaving {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Use to unlock advanced subspecies lore for the player.
+	 * @return The full lore entry.
+	 */
+	public String getBookEffect(AbstractSubspecies mainSubspecies, boolean withDescription) {
+		return AbstractItemEffectType.getBookEffect(Main.game.getPlayer(), mainSubspecies, null, withDescription);
 	}
 	
 	// UtilText method access:
