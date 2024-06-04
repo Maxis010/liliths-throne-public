@@ -1106,7 +1106,7 @@ public class Util {
 		for(int i=0; i<finalSplitSentence.size(); i++) {
 			String s = finalSplitSentence.get(i);
 			if(s.matches(".*[a-zA-Z,]+.*")
-					&& !s.contains("#") && !s.contains("[") && !s.contains("(")
+					&& !s.contains("#") && !s.contains("[") && !s.contains("(") && !s.contains("~") 
 					&& !isEndOfSentence(s.charAt(s.length()-1))
 					&& (i==finalSplitSentence.size()-1 || !isEndOfSentence(finalSplitSentence.get(i+1).charAt(0)))) {
 				if(s.contains(",")) {

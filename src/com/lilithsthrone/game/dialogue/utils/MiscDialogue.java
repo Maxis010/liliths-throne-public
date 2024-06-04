@@ -496,13 +496,11 @@ public class MiscDialogue {
 				public void effects() {
 					String condomEffectString = getAndApplyCondomUseDescription(orifice);
 					condomTarget.calculateStatusEffects(0);
-					Main.game.getTextEndStringBuilder().append(
-							condomEffectString
-							+ Main.sex.calculateWetAreas(false));
-					if(BodyChanging.getTarget().isPlayer()) {
+					Main.game.getTextEndStringBuilder().append(condomEffectString);
+					if(condomTarget.isPlayer()) {
 						Main.mainController.openInventory();
 					} else {
-						Main.mainController.openInventory((NPC) BodyChanging.getTarget(), InventoryInteraction.FULL_MANAGEMENT);
+						Main.mainController.openInventory((NPC) condomTarget, InventoryInteraction.FULL_MANAGEMENT);
 					}
 				}
 			};
@@ -844,6 +842,29 @@ public class MiscDialogue {
 			);
 	}
 	
+	private static List<AbstractSubspecies> dollCompatibleSubspecies = new ArrayList<>();
+	private static List<AbstractSubspecies> getDollCompatibleSubspecies() {
+		// check every subspecies for compatibility with dolls...
+		if(dollCompatibleSubspecies.isEmpty()) {
+			dollCompatibleSubspecies.addAll(Subspecies.getAllSubspecies());
+			dollCompatibleSubspecies.removeIf(s->s.getRace()==Race.ELEMENTAL
+					 || s.getRace()==Race.getRaceFromId("dsg_dragon") // They aren't able to capture dragons to TF
+					 || s.getRace()==Race.DEMON // They don't TF demons in case it pisses off a lilin
+					 || s.getRace()==Race.SLIME // This would make no sense
+					 || s.getRace().isAbleToSelfTransform() // Catch to make sure special future races aren't added
+					 || getProhibitedSubspecies().contains(s));
+			NPC doll = new BasicDoll();
+			for(AbstractSubspecies s : new ArrayList<>(dollCompatibleSubspecies)) {
+				doll.setBody(doll.getGender(), s, RaceStage.GREATER, true);
+				doll.setBodyMaterial(BodyMaterial.SILICONE);
+				if(doll.getFleshSubspecies()!=s) {
+					dollCompatibleSubspecies.remove(s);
+				}
+			}
+		}
+		return dollCompatibleSubspecies;
+	}
+	
 	public static final DialogueNode DOLL_BROCHURE_RACE_SELECTION = new DialogueNode("Doll Brochure", "", true) {
 		@Override
 		public String getContent() {
@@ -851,14 +872,14 @@ public class MiscDialogue {
 		}
 		@Override
 		public Response getResponse(int responseTab, int index) {
-			List<AbstractSubspecies> availableSubspecies = new ArrayList<>();
-			availableSubspecies.addAll(Subspecies.getAllSubspecies());
-			availableSubspecies.removeIf(s->s.getRace()==Race.ELEMENTAL
-					 || s.getRace()==Race.getRaceFromId("dsg_dragon") // They aren't able to capture dragons to TF
-					 || s.getRace()==Race.DEMON // They don't TF demons in case it pisses off a lilin
-					 || s.getRace()==Race.SLIME // This would make no sense
-					 || s.getRace().isAbleToSelfTransform() // Catch to make sure special future races aren't added
-					 || getProhibitedSubspecies().contains(s));
+			List<AbstractSubspecies> availableSubspecies = getDollCompatibleSubspecies();//new ArrayList<>();
+//			availableSubspecies.addAll(Subspecies.getAllSubspecies());
+//			availableSubspecies.removeIf(s->s.getRace()==Race.ELEMENTAL
+//					 || s.getRace()==Race.getRaceFromId("dsg_dragon") // They aren't able to capture dragons to TF
+//					 || s.getRace()==Race.DEMON // They don't TF demons in case it pisses off a lilin
+//					 || s.getRace()==Race.SLIME // This would make no sense
+//					 || s.getRace().isAbleToSelfTransform() // Catch to make sure special future races aren't added
+//					 || getProhibitedSubspecies().contains(s));
 			
 			if (index!=0 && index<availableSubspecies.size()+1) {
 				AbstractSubspecies subspecies = availableSubspecies.get(index - 1);
@@ -940,6 +961,10 @@ public class MiscDialogue {
 			gender = Gender.F_P_V_B_FUTANARI;
 		}
 
+		if(dollOption!=2) {
+			dollSubspecies = Subspecies.HUMAN;
+		}
+		
 		doll.setBody(gender, dollSubspecies, RaceStage.GREATER, true);
 		doll.setBodyMaterial(BodyMaterial.SILICONE); // Birthday is set in here
 		doll.setBirthday(doll.getBirthday().minusDays(Util.random.nextInt(61))); // Creation date is 0-60 days before purchase

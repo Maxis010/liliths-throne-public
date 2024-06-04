@@ -35,6 +35,7 @@ import com.lilithsthrone.game.dialogue.DialogueNode;
 import com.lilithsthrone.game.dialogue.DialogueNodeType;
 import com.lilithsthrone.game.dialogue.eventLog.EventLogEntry;
 import com.lilithsthrone.game.dialogue.utils.CharactersPresentDialogue;
+import com.lilithsthrone.game.dialogue.utils.DebugDialogue;
 import com.lilithsthrone.game.dialogue.utils.InventoryDialogue;
 import com.lilithsthrone.game.dialogue.utils.InventoryInteraction;
 import com.lilithsthrone.game.dialogue.utils.MapTravelType;
@@ -1509,6 +1510,7 @@ public enum RenderingEngine {
 				|| (getCharacterToRender()!=null
 					&& (Main.game.getCurrentDialogueNode().getDialogueNodeType() == DialogueNodeType.CHARACTERS_PRESENT
 						|| Main.game.getCurrentDialogueNode() == PhoneDialogue.CONTACTS_CHARACTER
+						|| Main.game.getCurrentDialogueNode() == DebugDialogue.OUTFIT_VIEWER
 						|| Main.game.getDialogueFlags().getManagementCompanion()!=null
 						|| (Main.game.getCurrentDialogueNode().getDialogueNodeType()==DialogueNodeType.INVENTORY && InventoryDialogue.getInventoryNPC()!=null)));
 	}

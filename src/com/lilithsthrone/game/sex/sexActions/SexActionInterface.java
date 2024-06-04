@@ -1,6 +1,7 @@
 package com.lilithsthrone.game.sex.sexActions;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -84,11 +85,13 @@ public interface SexActionInterface {
 	/**
 	 * If the performing character is immobilised, then this action is only available if it's a SexActionType of: SPEECH, SPEECH_WITH_ALTERNATIVE, PREPARE_FOR_PARTNER_ORGASM, or ORGASM.
 	 * <br/>ONGOING SexActionTypes are also available, but only so long as the performing areas doesn't include a virginity-taking penetration type.
+	 * <br/><b>COMMAND</b> and <b>SLEEP</b> ImmobilisationTypes prevent SexActionType.ONGOING
+	 * <br/>If any type returns true for isSilence(), then SexActionType.SPEECH and SexActionType.SPEECH_WITH_ALTERNATIVE are banned
 	 * @return
 	 */
-	public default boolean isAvailableDuringImmobilisation(ImmobilisationType type) {
+	public default boolean isAvailableDuringImmobilisation(Collection<ImmobilisationType> types) {
 		if(this.getActionType()==SexActionType.ONGOING) {
-			if(type==ImmobilisationType.COMMAND || type==ImmobilisationType.SLEEP) {
+			if(types.contains(ImmobilisationType.SLEEP) || types.contains(ImmobilisationType.COMMAND)) {
 				return false;
 			}
 			for(SexAreaInterface sa : this.getPerformingCharacterAreas()) {
@@ -98,8 +101,9 @@ public interface SexActionInterface {
 			}
 			return true;
 		}
-		return (this.getActionType()==SexActionType.SPEECH && !type.isSilence())
-				|| (this.getActionType()==SexActionType.SPEECH_WITH_ALTERNATIVE && !type.isSilence())
+		boolean anySilences = types.stream().anyMatch(type->type.isSilence());
+		return (this.getActionType()==SexActionType.SPEECH && !anySilences)
+				|| (this.getActionType()==SexActionType.SPEECH_WITH_ALTERNATIVE && !anySilences)
 				|| this.getActionType()==SexActionType.PREPARE_FOR_PARTNER_ORGASM
 				|| this.getActionType()==SexActionType.ORGASM;
 	}
@@ -112,7 +116,7 @@ public interface SexActionInterface {
 		return target!=null
 				&& Main.game.isInSex()
 				&& Main.sex.isCharacterImmobilised(target)
-				&& (Main.sex.getImmobilisationType(target).getKey()==ImmobilisationType.COMMAND || Main.sex.getImmobilisationType(target).getKey()==ImmobilisationType.SLEEP);
+				&& Main.sex.isCharacterInanimateFromImmobilisation(target);
 	}
 	
 	/**
@@ -545,8 +549,10 @@ public interface SexActionInterface {
 			}
 		}
 		
-		if(Main.sex.isCharacterImmobilised(performingCharacter) && !isAvailableDuringImmobilisation(Main.sex.getImmobilisationType(performingCharacter).getKey())) {
-			return false;
+		if(Main.sex.isCharacterImmobilised(performingCharacter)) {
+			if(!isAvailableDuringImmobilisation(Main.sex.getImmobilisationTypes(performingCharacter).keySet())) {
+				return false;
+			}
 		}
 		
 		boolean analAllowed = Main.game.isAnalContentEnabled() || (!this.getPerformingCharacterOrifices().contains(SexAreaOrifice.ANUS) && !this.getTargetedCharacterOrifices().contains(SexAreaOrifice.ANUS));

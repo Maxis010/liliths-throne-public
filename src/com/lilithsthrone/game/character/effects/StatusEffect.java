@@ -24,6 +24,7 @@ import com.lilithsthrone.game.character.attributes.CorruptionLevel;
 import com.lilithsthrone.game.character.attributes.IntelligenceLevel;
 import com.lilithsthrone.game.character.attributes.LustLevel;
 import com.lilithsthrone.game.character.attributes.PhysiqueLevel;
+import com.lilithsthrone.game.character.body.Body;
 import com.lilithsthrone.game.character.body.CoverableArea;
 import com.lilithsthrone.game.character.body.Penis;
 import com.lilithsthrone.game.character.body.abstractTypes.AbstractFluidType;
@@ -2752,7 +2753,7 @@ public class StatusEffect {
 		}
 		@Override
 		public boolean isConditionsMet(GameCharacter target) {
-			return (target.isPlayer() && target.hasStatusEffect(SLEEPING_HEAVY))
+			return (target.isPlayer() && target.hasStatusEffect(SLEEPING))
 					|| (Main.game.isStarted()
 						&& target.isSleepingAtHour()
 						&& target.isAtHome()
@@ -4200,26 +4201,74 @@ public class StatusEffect {
 				}
 				
 				// Remove cum inflation:
+				StringBuilder sbFluidDrain = new StringBuilder();
 				float fluidAmount = target.getTotalFluidInArea(SexAreaOrifice.VAGINA);
-				float fluidAmountUrethra = target.getTotalFluidInArea(SexAreaOrifice.URETHRA_VAGINA);
-				target.drainTotalFluidsStored(SexAreaOrifice.VAGINA, -fluidAmount);
-				target.drainTotalFluidsStored(SexAreaOrifice.URETHRA_VAGINA, -fluidAmountUrethra);
-				
-				sb.append("<p>");
-				if(fluidAmount>0) {
+				boolean retention = target.hasCreampieRetentionArea(SexAreaOrifice.VAGINA);
+				if(retention) {
+					fluidAmount = (int)(fluidAmount-Body.MAXIMUM_CREAMPIE_WHILE_PREGNANT);
+					if(fluidAmount>0) {
+						target.drainTotalFluidsStored(SexAreaOrifice.VAGINA, fluidAmount);
+						if(target.getBodyMaterial()==BodyMaterial.SLIME) {
+							sbFluidDrain.append("[style.italicsSex(The swelling of your pregnant bump forces your body to convert [style.fluid("+fluidAmount+")] of the cum in your pussy into more slime.)]");
+						} else {
+							sbFluidDrain.append("[style.italicsSex(The swelling of your pregnant bump forces your body to expel [style.fluid("+fluidAmount+")] of the cum in your pussy.)]");
+						}
+					}
+				} else if(fluidAmount>0) {
+					target.drainTotalFluidsStored(SexAreaOrifice.VAGINA, -fluidAmount);
 					if(target.getBodyMaterial()==BodyMaterial.SLIME) {
-						sb.append("[style.italicsSex(The swelling of your pregnant bump forces your body to convert all of the cum in your pussy"+(fluidAmountUrethra>0?" and its urethra":"")+" into more slime.)]");
+						sbFluidDrain.append("[style.italicsSex(The swelling of your pregnant bump forces your body to convert all of the cum in your pussy into more slime.)]");
 					} else {
-						sb.append("[style.italicsSex(The swelling of your pregnant bump forces your body to expel all of the cum in your pussy"+(fluidAmountUrethra>0?" and its urethra":"")+".)]");
+						sbFluidDrain.append("[style.italicsSex(The swelling of your pregnant bump forces your body to expel all of the cum in your pussy.)]");
+					}
+				}
+				
+				float fluidAmountUrethra = target.getTotalFluidInArea(SexAreaOrifice.URETHRA_VAGINA);
+				boolean retentionUrethra = target.hasCreampieRetentionArea(SexAreaOrifice.VAGINA);
+				if(retentionUrethra) {
+					fluidAmountUrethra = (int)(fluidAmountUrethra-Body.MAXIMUM_CREAMPIE_WHILE_PREGNANT);
+					if(fluidAmountUrethra>0) {
+						target.drainTotalFluidsStored(SexAreaOrifice.URETHRA_VAGINA, fluidAmountUrethra);
+					}
+					if(sbFluidDrain.length()>0) {
+						sbFluidDrain.append("<br/>");
+						if(target.getBodyMaterial()==BodyMaterial.SLIME) {
+							sbFluidDrain.append("[style.italicsSex(Your body also converts [style.fluid("+fluidAmount+")] of the cum in your pussy's urethra into more slime.)]");
+						} else {
+							sbFluidDrain.append("[style.italicsSex(Your body also expels [style.fluid("+fluidAmount+")] of the cum in your pussy's urethra.)]");
+						}
+					} else {
+						if(target.getBodyMaterial()==BodyMaterial.SLIME) {
+							sbFluidDrain.append("[style.italicsSex(The swelling of your pregnant bump forces your body to convert [style.fluid("+fluidAmount+")] of the cum in your pussy's urethra into more slime.)]");
+						} else {
+							sbFluidDrain.append("[style.italicsSex(The swelling of your pregnant bump forces your body to expel [style.fluid("+fluidAmount+")] of the cum in your pussy's urethra.)]");
+						}
 					}
 					
 				} else if(fluidAmountUrethra>0) {
-					if(target.getBodyMaterial()==BodyMaterial.SLIME) {
-						sb.append("[style.italicsSex(The swelling of your pregnant bump forces your body to convert all of the cum in your pussy's urethra into more slime.)]");
+					target.drainTotalFluidsStored(SexAreaOrifice.URETHRA_VAGINA, -fluidAmountUrethra);
+					if(sbFluidDrain.length()>0) {
+						sbFluidDrain.append("<br/>");
+						if(target.getBodyMaterial()==BodyMaterial.SLIME) {
+							sbFluidDrain.append("[style.italicsSex(Your body also converts all of the cum in your pussy's urethra into more slime.)]");
+						} else {
+							sbFluidDrain.append("[style.italicsSex(Your body also expels all of the cum in your pussy's urethra.)]");
+						}
 					} else {
-						sb.append("[style.italicsSex(The swelling of your pregnant bump forces your body to expel all of the cum in your pussy's urethra.)]");
+						if(target.getBodyMaterial()==BodyMaterial.SLIME) {
+							sbFluidDrain.append("[style.italicsSex(The swelling of your pregnant bump forces your body to convert all of the cum in your pussy into more slime.)]");
+						} else {
+							sbFluidDrain.append("[style.italicsSex(The swelling of your pregnant bump forces your body to expel all of the cum in your pussy.)]");
+						}
 					}
 				}
+				if(sbFluidDrain.length()>0) {
+					sb.append("<p style='text-align:center;'>");
+						sb.append(sbFluidDrain.toString());
+					sb.append("</p>");
+				}
+				sb.append("<p style='text-align:center;'>");
+					sb.append("[style.italicsMinorBad(Your pussy"+(Main.game.isUrethraEnabled()?" and its urethra":"")+" can only hold [style.fluid("+Body.MAXIMUM_CREAMPIE_WHILE_PREGNANT+")] of fluids during pregnancy!)]");
 				sb.append("</p>");
 				
 			} else {
@@ -6010,7 +6059,7 @@ public class StatusEffect {
 		@Override
 		public String getDescription(GameCharacter target) {
 			boolean retention = target.hasCreampieRetentionArea(SexAreaOrifice.VAGINA);
-			String pregnancyText = (target.isVisiblyPregnant()?"<br/>[style.italicsSex(Due to pregnancy, maximum storage is "+Units.fluid(250)+".)]":"");
+			String pregnancyText = (target.isVisiblyPregnant()?"<br/>[style.italicsSex(Due to pregnancy, maximum storage is "+Units.fluid(Body.MAXIMUM_CREAMPIE_WHILE_PREGNANT)+".)]":"");
 			
 			if(target.isOrificePlugged(SexAreaOrifice.VAGINA)) {
 				if(target.isPlayer()) {
@@ -6138,7 +6187,7 @@ public class StatusEffect {
 		@Override
 		public String getDescription(GameCharacter target) {
 			boolean retention = target.hasCreampieRetentionArea(SexAreaOrifice.URETHRA_VAGINA);
-			String pregnancyText = (target.isVisiblyPregnant()?"<br/>[style.italicsSex(Due to pregnancy, maximum storage is "+Units.fluid(250)+".)]":"");
+			String pregnancyText = (target.isVisiblyPregnant()?"<br/>[style.italicsSex(Due to pregnancy, maximum storage is "+Units.fluid(Body.MAXIMUM_CREAMPIE_WHILE_PREGNANT)+".)]":"");
 			
 			if(target.isOrificePlugged(SexAreaOrifice.URETHRA_VAGINA)) {
 				if(target.isPlayer()) {
@@ -9281,8 +9330,7 @@ public class StatusEffect {
 			if(!Main.game.isInSex()) {
 				return false;
 			}
-			Value<ImmobilisationType, GameCharacter> type = Main.sex.getImmobilisationType(target);
-			return type!=null && type.getKey()==ImmobilisationType.ROPE;
+			return Main.sex.getImmobilisationTypes(target).containsKey(ImmobilisationType.ROPE);
 		}
 		@Override
 		public boolean isRemoveAtEndOfSex() {
@@ -9310,8 +9358,7 @@ public class StatusEffect {
 			if(!Main.game.isInSex()) {
 				return false;
 			}
-			Value<ImmobilisationType, GameCharacter> type = Main.sex.getImmobilisationType(target);
-			return type!=null && type.getKey()==ImmobilisationType.CHAINS;
+			return Main.sex.getImmobilisationTypes(target).containsKey(ImmobilisationType.CHAINS);
 		}
 		@Override
 		public boolean isRemoveAtEndOfSex() {
@@ -9414,8 +9461,7 @@ public class StatusEffect {
 			if(!Main.game.isInSex()) {
 				return false;
 			}
-			Value<ImmobilisationType, GameCharacter> type = Main.sex.getImmobilisationType(target);
-			return type!=null && type.getKey()==ImmobilisationType.COCOON;
+			return Main.sex.getImmobilisationTypes(target).containsKey(ImmobilisationType.COCOON);
 		}
 		@Override
 		public boolean isRemoveAtEndOfSex() {
@@ -9443,8 +9489,7 @@ public class StatusEffect {
 			if(!Main.game.isInSex()) {
 				return false;
 			}
-			Value<ImmobilisationType, GameCharacter> type = Main.sex.getImmobilisationType(target);
-			return type!=null && type.getKey()==ImmobilisationType.WITCH_SEAL;
+			return Main.sex.getImmobilisationTypes(target).containsKey(ImmobilisationType.WITCH_SEAL);
 		}
 		@Override
 		public boolean isRemoveAtEndOfSex() {
@@ -9542,8 +9587,11 @@ public class StatusEffect {
 			Util.newArrayListOfValues("[style.colourTerrible(Cannot move!)]")) {
 		@Override
 		public String getDescription(GameCharacter target) {
-			Value<ImmobilisationType, GameCharacter> type = Main.sex.getImmobilisationType(target);
-			return UtilText.parse(target, type.getValue(), "[npc2.NameIsFull] using four of [npc2.her] [npc2.tentacles] to hold [npc.name] down and firmly prevent [npc.herHim] from moving!");
+			GameCharacter applier = Main.sex.getImmobilisationTypes(target).get(ImmobilisationType.TENTACLE_RESTRICTION);
+			if(applier==null) {
+				return "";
+			}
+			return UtilText.parse(target, applier, "[npc2.NameIsFull] using four of [npc2.her] [npc2.tentacles] to hold [npc.name] down and firmly prevent [npc.herHim] from moving!");
 		}
 		@Override
 		public boolean isSexEffect() {
@@ -9554,8 +9602,7 @@ public class StatusEffect {
 			if(!Main.game.isInSex()) {
 				return false;
 			}
-			Value<ImmobilisationType, GameCharacter> type = Main.sex.getImmobilisationType(target);
-			return type!=null && type.getKey()==ImmobilisationType.TENTACLE_RESTRICTION;
+			return Main.sex.getImmobilisationTypes(target).containsKey(ImmobilisationType.TENTACLE_RESTRICTION);
 		}
 		@Override
 		public boolean isRemoveAtEndOfSex() {
@@ -9653,8 +9700,11 @@ public class StatusEffect {
 			Util.newArrayListOfValues("[style.colourTerrible(Cannot move!)]")) {
 		@Override
 		public String getDescription(GameCharacter target) {
-			Value<ImmobilisationType, GameCharacter> type = Main.sex.getImmobilisationType(target);
-			return UtilText.parse(target, type.getValue(), "[npc2.NameIsFull] using [npc2.her] long, strong tail to constrict [npc.name] and firmly prevent [npc.herHim] from moving!");
+			GameCharacter applier = Main.sex.getImmobilisationTypes(target).get(ImmobilisationType.TAIL_CONSTRICTION);
+			if(applier==null) {
+				return "";
+			}
+			return UtilText.parse(target, applier, "[npc2.NameIsFull] using [npc2.her] long, strong tail to constrict [npc.name] and firmly prevent [npc.herHim] from moving!");
 		}
 		@Override
 		public boolean isSexEffect() {
@@ -9665,8 +9715,7 @@ public class StatusEffect {
 			if(!Main.game.isInSex()) {
 				return false;
 			}
-			Value<ImmobilisationType, GameCharacter> type = Main.sex.getImmobilisationType(target);
-			return type!=null && type.getKey()==ImmobilisationType.TAIL_CONSTRICTION;
+			return Main.sex.getImmobilisationTypes(target).containsKey(ImmobilisationType.TAIL_CONSTRICTION);
 		}
 		@Override
 		public boolean isRemoveAtEndOfSex() {
@@ -9685,8 +9734,11 @@ public class StatusEffect {
 			Util.newArrayListOfValues("[style.colourTerrible(Cannot move!)]")) {
 		@Override
 		public String getDescription(GameCharacter target) {
-			Value<ImmobilisationType, GameCharacter> type = Main.sex.getImmobilisationType(target);
-			return UtilText.parse(target, type.getValue(), "[npc2.NameHasFull] commanded [npc.name] to remain completely motionless, and as such [npc.sheIsFull] totally immobile!");
+			GameCharacter applier = Main.sex.getImmobilisationTypes(target).get(ImmobilisationType.COMMAND);
+			if(applier==null) {
+				return "";
+			}
+			return UtilText.parse(target, applier, "[npc2.NameHasFull] commanded [npc.name] to remain completely motionless, and as such [npc.sheIsFull] totally immobile!");
 		}
 		@Override
 		public boolean isSexEffect() {
@@ -9697,8 +9749,7 @@ public class StatusEffect {
 			if(!Main.game.isInSex()) {
 				return false;
 			}
-			Value<ImmobilisationType, GameCharacter> type = Main.sex.getImmobilisationType(target);
-			return type!=null && type.getKey()==ImmobilisationType.COMMAND;
+			return Main.sex.getImmobilisationTypes(target).containsKey(ImmobilisationType.COMMAND);
 		}
 		@Override
 		public boolean isRemoveAtEndOfSex() {
@@ -9728,8 +9779,7 @@ public class StatusEffect {
 			if(!Main.game.isInSex()) {
 				return false;
 			}
-			Value<ImmobilisationType, GameCharacter> type = Main.sex.getImmobilisationType(target);
-			return type!=null && type.getKey()==ImmobilisationType.SLEEP;
+			return Main.sex.getImmobilisationTypes(target).containsKey(ImmobilisationType.SLEEP);
 		}
 		@Override
 		public boolean isRemoveAtEndOfSex() {
@@ -13598,6 +13648,7 @@ public class StatusEffect {
 		public boolean isConditionsMet(GameCharacter target) {
 			return Main.game.isInSex()
 					&& Main.sex.getAllParticipants(true).contains(target)
+					&& target.hasPenisIgnoreDildo()
 					&& target.isUrethraFuckable()
 					&& Main.getProperties().hasValue(PropertyValue.urethralContent);
 		}
@@ -13746,6 +13797,7 @@ public class StatusEffect {
 		public boolean isConditionsMet(GameCharacter target) {
 			return Main.game.isInSex()
 					&& Main.sex.getAllParticipants(true).contains(target)
+					&& target.hasVagina()
 					&& target.isVaginaUrethraFuckable()
 					&& Main.getProperties().hasValue(PropertyValue.urethralContent);
 		}

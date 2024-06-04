@@ -443,6 +443,35 @@
 						[#game.appendToTextStartStringBuilder(game.parseFromFile('txt/places/dominion/sex_shop/generic', 'COUNTER_FACTORY'))]
 					]]></effects>
 				</response>
+				<!-- 10: Doll quest -->
+				<response>
+					<availabilityConditional><![CDATA[[#saellatrix.isPlayerKnowsName() && pc.getQuest(QUEST_LINE_SIDE_DOLL_FACTORY)==QUEST_DOLL_FACTORY_1]]]></availabilityConditional>
+					<responseTabIndex><![CDATA[0]]></responseTabIndex>
+					<index><![CDATA[10]]></index>
+					<responseTitle><![CDATA[Angelixx's diary]]></responseTitle>
+					<responseTooltip><![CDATA[
+						#IF(!flags.hasFlag(FLAG_innoxia_sex_shop_dolls_unlocked))
+							You should try to find out more about Saellatrix's business before confronting her with Angelixx's diary. Perhaps you should ask about the dolls?
+						#ELSEIF(!flags.hasFlag(FLAG_innoxia_sex_shop_had_factory_tour))
+							You should try to do a little more investigating before confronting Saellatrix with Angelixx's diary. Perhaps you should ask to have a factory tour?
+						#ELSE
+							You doubt that Saellatrix is going to willingly give any clues about where the missing refugees are. All that's left is for you to confront her with Angelixx's diary and demand some answers.
+						#ENDIF
+					]]></responseTooltip>
+					<nextDialogue><![CDATA[
+						#IF(!flags.hasFlag(FLAG_innoxia_sex_shop_dolls_unlocked) || !flags.hasFlag(FLAG_innoxia_sex_shop_had_factory_tour))
+							null
+						#ELSE
+							innoxia_places_dominion_sex_shop_generic_counter_angelixx_diary
+						#ENDIF
+					]]></nextDialogue>
+					<effects><![CDATA[
+						[#pc.removeItemByType(ITEM_innoxia_quest_angelixx_diary, 1, true)]
+						[#game.appendToTextEndStringBuilder(pc.removedItemFromInventoryText(ITEM_innoxia_quest_angelixx_diary))]
+						[#game.appendToTextEndStringBuilder(saellatrix.incrementAffection(pc, -25))]
+						[#flags.setFlag(FLAG_innoxia_sex_shop_escorted_out, true)]
+					]]></effects>
+				</response>
 				<!-- Sex: -->
 					<!-- Initial wager: -->
 					<response>
@@ -572,6 +601,66 @@
 		<continuesDialogue>true</continuesDialogue>
 		<travelDisabled>true</travelDisabled>
 		<responses copyFromDialogueId="innoxia_places_dominion_sex_shop_generic_counter"/>
+	</scene>
+	
+	<scene id="counter_angelixx_diary">
+		<content folderPath="txt/places/dominion/sex_shop/generic">COUNTER_ANGELIXX_DIARY</content>
+		<secondsPassed minutes="true"><![CDATA[3]]></secondsPassed>
+		<continuesDialogue>false</continuesDialogue>
+		<travelDisabled>true</travelDisabled>
+		<responses>
+			<response>
+				<responseTabIndex><![CDATA[0]]></responseTabIndex>
+				<index><![CDATA[1]]></index>
+				<responseTitle><![CDATA[Escorted out]]></responseTitle>
+				<responseTooltip><![CDATA[The wolf-boy security guards escort you out of Lovienne's Luxuries...]]></responseTooltip>
+				<nextDialogue><![CDATA[innoxia_places_dominion_sex_shop_generic_counter_angelixx_diary_thrown_out]]></nextDialogue>
+				<effects><![CDATA[
+					[#pc.setLocation(WORLD_TYPE_DOMINION, PLACE_TYPE_DOMINION_DEMON_HOME_SEX_SHOP)]
+					[#fiammetta.setLocation(pc)]
+					[#flags.setFlag(FLAG_innoxia_sex_shop_escorted_out, false)]
+				]]></effects>
+			</response>
+		</responses>
+	</scene>
+	
+	<scene id="counter_angelixx_diary_thrown_out">
+		<content folderPath="txt/places/dominion/sex_shop/generic">COUNTER_ANGELIXX_DIARY_THROWN_OUT</content>
+		<secondsPassed minutes="true"><![CDATA[2]]></secondsPassed>
+		<continuesDialogue>true</continuesDialogue>
+		<travelDisabled>true</travelDisabled>
+		<responses>
+			<response>
+				<responseTabIndex><![CDATA[0]]></responseTabIndex>
+				<index><![CDATA[1]]></index>
+				<responseTitle><![CDATA[Listen]]></responseTitle>
+				<responseTooltip><![CDATA[Listen to Fiammetta's plan...]]></responseTooltip>
+				<nextDialogue><![CDATA[innoxia_places_dominion_sex_shop_generic_counter_angelixx_diary_thrown_out_end]]></nextDialogue>
+			</response>
+		</responses>
+	</scene>
+	
+	<scene id="counter_angelixx_diary_thrown_out_end">
+		<content folderPath="txt/places/dominion/sex_shop/generic">COUNTER_ANGELIXX_DIARY_THROWN_OUT_END</content>
+		<secondsPassed minutes="true"><![CDATA[5]]></secondsPassed>
+		<continuesDialogue>true</continuesDialogue>
+		<travelDisabled>true</travelDisabled>
+		<responses>
+			<response>
+				<responseTabIndex><![CDATA[0]]></responseTabIndex>
+				<index><![CDATA[1]]></index>
+				<responseTitle><![CDATA[Agree]]></responseTitle>
+				<responseTooltip><![CDATA[You don't see any alternative, so you agree to meet Fiammetta outside Lovienne's Luxuries between [units.time(1)]-[units.time(4)].]]></responseTooltip>
+				<nextDialogue defaultPlaceType="DOMINION_DEMON_HOME_SEX_SHOP"/>
+				<secondsPassed minutes="true"><![CDATA[1]]></secondsPassed>
+				<effects><![CDATA[
+					[#game.appendToTextStartStringBuilder(game.parseFromFile('txt/places/dominion/sex_shop/generic', 'COUNTER_ANGELIXX_DIARY_THROWN_OUT_END_CONTINUE'))]
+					[#game.appendToTextEndStringBuilder(pc.setQuestProgress(QUEST_LINE_SIDE_DOLL_FACTORY, QUEST_DOLL_FACTORY_2))]
+					[#game.appendToTextEndStringBuilder(fia.incrementAffection(pc, 20))]
+					[#fiammetta.returnToHome()]
+				]]></effects>
+			</response>
+		</responses>
 	</scene>
 	
 	<scene id="counter_doll_end_tour">
@@ -738,11 +827,31 @@
 	<scene id="counter_doll_tour_interruption">
 		<preParsingEffects><![CDATA[
 			[#pc.setNearestLocation(PLACE_TYPE_innoxia_dominion_sex_shop_floor)]
-			[#saellatrix.setLocation(pc)]
+			[#fiammetta.setLocation(pc)]
 		]]></preParsingEffects>
 		<content folderPath="txt/places/dominion/sex_shop/generic">COUNTER_DOLL_TOUR_INTERRUPTION</content>
 		<secondsPassed minutes="true"><![CDATA[5]]></secondsPassed>
 		<continuesDialogue>false</continuesDialogue>
+		<travelDisabled>true</travelDisabled>
+		<responses>
+			<response>
+				<responseTabIndex><![CDATA[0]]></responseTabIndex>
+				<index><![CDATA[1]]></index>
+				<responseTitle><![CDATA[What?]]></responseTitle>
+				<responseTooltip><![CDATA[What's all this about people being turned into dolls?]]></responseTooltip>
+				<nextDialogue>innoxia_places_dominion_sex_shop_generic_counter_doll_tour_interruption_next</nextDialogue>
+			</response>
+		</responses>
+	</scene>
+	
+	<scene id="counter_doll_tour_interruption_next">
+		<preParsingEffects><![CDATA[
+			[#saellatrix.setLocation(pc)]
+			[#fiammetta.returnToHome()]
+		]]></preParsingEffects>
+		<content folderPath="txt/places/dominion/sex_shop/generic">COUNTER_DOLL_TOUR_INTERRUPTION_NEXT</content>
+		<secondsPassed minutes="true"><![CDATA[5]]></secondsPassed>
+		<continuesDialogue>true</continuesDialogue>
 		<travelDisabled>true</travelDisabled>
 		<responses>
 			<response>
@@ -1359,8 +1468,20 @@
 		<content folderPath="txt/places/dominion/sex_shop/generic">STAFF_DOOR</content>
 		<secondsPassed><![CDATA[30]]></secondsPassed>
 		<continuesDialogue>false</continuesDialogue>
-		<travelDisabled>false</travelDisabled>
-		<responses/>
+		<travelDisabled>true</travelDisabled>
+		<responses>
+			<response>
+				<responseTabIndex><![CDATA[0]]></responseTabIndex>
+				<index><![CDATA[1]]></index>
+				<responseTitle><![CDATA[Back]]></responseTitle>
+				<responseTooltip><![CDATA[With nothing to be gained from going through this door, you decide to turn back and explore the rest of the building...]]></responseTooltip>
+				<nextDialogue defaultPlaceType="innoxia_dominion_sex_shop_staff_room"/>
+				<effects><![CDATA[
+					[#pc.setNearestLocation(PLACE_TYPE_innoxia_dominion_sex_shop_staff_room)]
+					[#game.appendToTextStartStringBuilder(game.parseFromFile('txt/places/dominion/sex_shop/generic', 'STAFF_DOOR_BACK'))]
+				]]></effects>
+			</response>
+		</responses>
 	</scene>
 	
     <!-- Place type id: innoxia_dominion_sex_shop_staff_room -->
@@ -1435,13 +1556,34 @@
 		<responses/>
 	</scene>
 	
+	<!-- Place type id: innoxia_dominion_sex_shop_elevator_corridor -->
+	<scene id="elevator_corridor">
+		<content folderPath="txt/places/dominion/sex_shop/generic">ELEVATOR_CORRIDOR</content>
+		<secondsPassed><![CDATA[30]]></secondsPassed>
+		<continuesDialogue>false</continuesDialogue>
+		<travelDisabled>false</travelDisabled>
+		<responses/>
+	</scene>
+	
     <!-- Place type id: innoxia_dominion_sex_shop_elevator -->
 	<scene id="elevator">
 		<content folderPath="txt/places/dominion/sex_shop/generic">ELEVATOR</content>
 		<secondsPassed><![CDATA[30]]></secondsPassed>
 		<continuesDialogue>false</continuesDialogue>
 		<travelDisabled>false</travelDisabled>
-		<responses/>
+		<responses>
+			<response>
+				<responseTabIndex><![CDATA[0]]></responseTabIndex>
+				<index><![CDATA[1]]></index>
+				<responseTitle><![CDATA[Ride elevator]]></responseTitle>
+				<responseTooltip><![CDATA[Take the elevator down to the lower level of Lovienne's Luxuries.]]></responseTooltip>
+				<nextDialogue>innoxia_places_dominion_sex_shop_factory_elevator_entrance</nextDialogue>
+				<secondsPassed minutes="true"><![CDATA[2]]></secondsPassed>
+				<effects><![CDATA[
+					[#pc.setLocation(WORLD_TYPE_innoxia_dominion_sex_shop_factory, PLACE_TYPE_innoxia_dominion_sex_shop_factory_exit)]
+				]]></effects>
+			</response>
+		</responses>
 	</scene>
 	
 </dialogueNodes>

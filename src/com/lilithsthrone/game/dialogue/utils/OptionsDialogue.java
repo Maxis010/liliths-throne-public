@@ -100,7 +100,6 @@ public class OptionsDialogue {
 								+ "If the game's resolution isn't fitting to your screen, press the keys: 'Windows' + 'Up Arrow' to maximise!"
 							+ "</p>"
 							:"")
-					+ "<br/>"
 					+ (Main.game.isStarted() || Main.getProperties().name.isEmpty()
 							?""
 							:"<h4 style='text-align:center;'>Last save:</h4>"

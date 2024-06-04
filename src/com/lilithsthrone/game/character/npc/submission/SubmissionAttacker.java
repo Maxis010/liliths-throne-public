@@ -94,6 +94,7 @@ public class SubmissionAttacker extends RandomNPC {
 				generationFlags);
 		
 		// Post-setup
+        this.setOccupation(Occupation.NPC_MUGGER);
 		this.setDescription(UtilText.parse(this,
 				"[npc.Name] is a resident of Submission, who prowls the tunnels looking for strangers to mug and assault..."));
 		if ((this.getSubspecies() == Subspecies.IMP || this.getSubspecies() == Subspecies.IMP_ALPHA)

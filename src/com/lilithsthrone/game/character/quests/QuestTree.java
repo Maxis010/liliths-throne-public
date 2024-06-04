@@ -344,13 +344,15 @@ public class QuestTree {
 		node2.addChild(node1);
 		node2 = new TreeNode<Quest>(Quest.DOLL_FACTORY_5);
 		node1.addChild(node2);
+		node1 = new TreeNode<Quest>(Quest.DOLL_FACTORY_6);
+		node2.addChild(node1);
 
-		nodeBranchA = new TreeNode<Quest>(Quest.DOLL_FACTORY_6A);
-		node2.addChild(nodeBranchA);
+		nodeBranchA = new TreeNode<Quest>(Quest.DOLL_FACTORY_7A);
+		node1.addChild(nodeBranchA);
 		nodeBranchA.addChild(new TreeNode<Quest>(Quest.SIDE_UTIL_COMPLETE));
 
-		nodeBranchA = new TreeNode<Quest>(Quest.DOLL_FACTORY_6B);
-		node2.addChild(nodeBranchA);
+		nodeBranchA = new TreeNode<Quest>(Quest.DOLL_FACTORY_7B);
+		node1.addChild(nodeBranchA);
 		nodeBranchA.addChild(new TreeNode<Quest>(Quest.SIDE_UTIL_COMPLETE));
 		
 		

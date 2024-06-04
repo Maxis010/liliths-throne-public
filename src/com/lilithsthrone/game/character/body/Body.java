@@ -129,6 +129,9 @@ import com.lilithsthrone.utils.colours.PresetColour;
  */
 public class Body implements XMLSaving {
 	
+	/** This determines the maximum amount of fluid (in mL) that can be stored in the SexAreaOrifice.VAGINA and SexAreaOrifice.URETHRA_VAGINA while pregnant. */
+	public static final int MAXIMUM_CREAMPIE_WHILE_PREGNANT = 250;
+	
 	// Required:
 	private Arm arm;
 	private Ass ass;
@@ -6374,11 +6377,17 @@ public class Body implements XMLSaving {
 		return weight;
 	}
 	
-
+	/**
+	 * @return true if this character's Height value is less than Height.ZERO_TINY. This means that a fairy-sized body will also return true for this method.
+	 */
 	public boolean isShortStature() {
-		return this.getHeightValue() < Height.getShortStatureCutOff();
+		return this.getHeight().isShortStature();
 	}
-
+	
+	public boolean isFairySized() {
+		return this.getHeight().isFairySized();
+	}
+	
 	/** Height is measured in cm. **/
 	public int getHeightValue() {
 		return height;

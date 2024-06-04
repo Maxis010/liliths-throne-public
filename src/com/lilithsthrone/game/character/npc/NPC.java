@@ -3112,14 +3112,14 @@ public abstract class NPC extends GameCharacter implements XMLSaving {
 	}
 	
 	public Value<AbstractItem, String> getSexItemToUse(GameCharacter partner) {
-		if(Main.game.isInSex()) {
+		if(Main.game.isInSex() && !Main.sex.isCharacterInanimateFromImmobilisation(this)) {
 			List<GameCharacter> charactersPenetratingThisNpc = new ArrayList<>(Main.sex.getOngoingCharactersUsingAreas(this, SexAreaOrifice.VAGINA, SexAreaPenetration.PENIS));
 			List<GameCharacter> charactersThisNpcIsPenetrating = new ArrayList<>(Main.sex.getOngoingCharactersUsingAreas(this, SexAreaPenetration.PENIS, SexAreaOrifice.VAGINA));
 			
 			if(this.equals(partner)) { // Self-using items:
 				if(!charactersPenetratingThisNpc.isEmpty() && charactersPenetratingThisNpc.stream().anyMatch((c) -> c.hasPenisIgnoreDildo())) { // Pills for when this NPC is being penetrated:
 					if(this.isAbleToAccessCoverableArea(CoverableArea.MOUTH, false)) {
-						if((this.getFetishDesire(Fetish.FETISH_PREGNANCY).isNegative() || this.getHistory()==Occupation.NPC_PROSTITUTE)
+						if((this.getFetishDesire(Fetish.FETISH_PREGNANCY).isNegative() || (this.getHistory()==Occupation.NPC_PROSTITUTE && !this.isSlave()))
 								&& !this.isPregnant()
 								&& !this.hasIncubationLitter(SexAreaOrifice.VAGINA)
 								&& !this.hasStatusEffect(StatusEffect.PROMISCUITY_PILL)
@@ -3132,7 +3132,7 @@ public abstract class NPC extends GameCharacter implements XMLSaving {
 														?" Knowing that [npc.sheIs] now far less fertile and extremely unlikely to get knocked up, [npc.name] lets out a relieved [npc.moan]..."
 														:" Knowing that [npc.sheIs] now far less fertile and extremely unlikely to get knocked up, [npc.name] [npc.moansVerb], [npc.speech(I really don't want to get pregnant...)]")));
 						}
-						if((this.getFetishDesire(Fetish.FETISH_PREGNANCY).isPositive() && this.getHistory()!=Occupation.NPC_PROSTITUTE)
+						if((this.getFetishDesire(Fetish.FETISH_PREGNANCY).isPositive() && (this.getHistory()!=Occupation.NPC_PROSTITUTE || this.isSlave()))
 								&& this.hasVagina()
 								&& partner.hasPenisIgnoreDildo()
 								&& !this.isPregnant()
@@ -3188,7 +3188,7 @@ public abstract class NPC extends GameCharacter implements XMLSaving {
 				if(charactersPenetratingThisNpc.contains(partner) && charactersPenetratingThisNpc.stream().anyMatch((c) -> c.hasPenisIgnoreDildo())) { // Pills for when this NPC is being penetrated:
 					if(partner.isAbleToAccessCoverableArea(CoverableArea.MOUTH, false)) {
 						if(!Main.sex.getItemUseDenials(this, partner).contains(ItemType.getItemTypeFromId("innoxia_pills_sterility"))) {
-							if((this.getFetishDesire(Fetish.FETISH_PREGNANCY).isNegative() || this.getHistory()==Occupation.NPC_PROSTITUTE)
+							if((this.getFetishDesire(Fetish.FETISH_PREGNANCY).isNegative() || (this.getHistory()==Occupation.NPC_PROSTITUTE && !this.isSlave()))
 									&& !partner.isPregnant()
 									&& !partner.hasIncubationLitter(SexAreaOrifice.VAGINA)
 									&& (Main.sex.getSexPace(this)!=SexPace.SUB_RESISTING || this.hasFetish(Fetish.FETISH_NON_CON_SUB))
@@ -3217,7 +3217,7 @@ public abstract class NPC extends GameCharacter implements XMLSaving {
 								}
 							}
 						}
-						if((this.getFetishDesire(Fetish.FETISH_PREGNANCY).isPositive() && this.getHistory()!=Occupation.NPC_PROSTITUTE)
+						if((this.getFetishDesire(Fetish.FETISH_PREGNANCY).isPositive() && (this.getHistory()!=Occupation.NPC_PROSTITUTE || this.isSlave()))
 								&& !partner.isPregnant()
 								&& !partner.hasIncubationLitter(SexAreaOrifice.VAGINA)
 								&& (Main.sex.getSexPace(this)!=SexPace.SUB_RESISTING || this.hasFetish(Fetish.FETISH_NON_CON_SUB))
@@ -3693,7 +3693,7 @@ public abstract class NPC extends GameCharacter implements XMLSaving {
 				
 				return sb.toString();
 					
-			} else if(item.getItemType().equals(ItemType.FETISH_UNREFINED) || item.getItemType().equals(ItemType.FETISH_REFINED)) {
+			} else if(item.getItemType().equals(ItemType.FETISH_REFINED)) {
 				sb.append(UtilText.parse(user, target,
 						"<p>"
 							+ "Taking [npc.her] "+item.getName()+" from out of [npc.her] inventory, [npc.name] [npc.verb(hold)] it out to [npc2.name]."));
@@ -3761,7 +3761,7 @@ public abstract class NPC extends GameCharacter implements XMLSaving {
 				
 				return sb.toString();
 				
-			} else if(item.getItemType().equals(ItemType.POTION) || item.getItemType().equals(ItemType.EGGPLANT_POTION) || item.getItemType().equals(ItemType.MOTHERS_MILK)) {
+			} else if(item.getItemType().equals(ItemType.POTION) || item.getItemType().equals(ItemType.EGGPLANT_POTION) || item.getItemType().equals(ItemType.MOTHERS_MILK) || item.getItemType().equals(ItemType.FETISH_UNREFINED)) {
 				if(isObedientSlave) {
 					sb.append(UtilText.parse(user, target,
 							"<p>"

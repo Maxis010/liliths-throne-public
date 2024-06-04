@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -393,13 +394,13 @@ public class Sex {
 		creampieLockedBy = null;
 		
 		charactersBannedFromRapePlay = new HashSet<>();
-		if(!Main.getProperties().hasValue(PropertyValue.rapePlayAtSexStart)) {
-			for(GameCharacter character : sexManager.getSubmissives().keySet()) { // All characters start banned from rape-play, as otherwise it's very jarring to start consensual sex and the partner is immediately resisting with no explanation
-				if(sexManager.isRapePlayBannedAtStart(character)) {
-					charactersBannedFromRapePlay.add(character);
-				}
+//		if(!Main.getProperties().hasValue(PropertyValue.rapePlayAtSexStart)) {
+		for(GameCharacter character : sexManager.getSubmissives().keySet()) { // All characters start banned from rape-play, as otherwise it's very jarring to start consensual sex and the partner is immediately resisting with no explanation
+			if(sexManager.isRapePlayBannedAtStart(character)) {
+				charactersBannedFromRapePlay.add(character);
 			}
 		}
+//		}
 
 		charactersImmobilised = new HashMap<>(sexManager.getStartingCharactersImmobilised());
 		
@@ -1665,7 +1666,9 @@ public class Sex {
 
 				}
 				
-				if(Main.sex.getSexPositionSlot(participant)!=SexSlotGeneric.MISC_WATCHING && !Main.sex.isRemoveEndSexAffection(participant)) {
+				if(Main.sex.getSexPositionSlot(participant)!=SexSlotGeneric.MISC_WATCHING
+						&& !Main.sex.isRemoveEndSexAffection(participant)
+						&& !participant.isAsleep()) {
 					if(Main.sex.getAllParticipants().contains(Main.game.getPlayer())) {
 						if((Main.sex.getSexPace(participant)==SexPace.SUB_RESISTING && !participant.getFetishDesire(Fetish.FETISH_NON_CON_SUB).isPositive())) {
 							for(GameCharacter domParticipant : Main.sex.getDominantParticipants(false).keySet()) {
@@ -1950,7 +1953,7 @@ public class Sex {
 
 		@Override
 		public boolean isContinuesDialogue(){
-			return sexStarted;
+			return sexStarted && turn>1;
 		}
 		
 		@Override
@@ -2296,7 +2299,7 @@ public class Sex {
 												null,
 												SexParticipantType.NORMAL) {
 													@Override
-													public boolean isAvailableDuringImmobilisation(ImmobilisationType type) {
+													public boolean isAvailableDuringImmobilisation(Collection<ImmobilisationType> types) {
 														return true;
 													}
 													@Override
@@ -3242,7 +3245,7 @@ public class Sex {
 			}
 		}
 		dirtiedSlotsSB.append(getDirtyingAreasString(squirtProvider, squirtTarget, slotsDirtied, clothingDirtied));
-		if(Main.game.isMuskContentEnabled() && nonClothingAreaDirtied && squirtProvider.hasCumModifier(FluidModifier.MUSKY)) {
+		if(Main.game.isMuskContentEnabled() && nonClothingAreaDirtied && squirtProvider.hasGirlcumModifier(FluidModifier.MUSKY)) {
 			squirtTarget.setMuskMarker(squirtProvider.getId());
 			dirtiedSlotsSB.append("<br/>[style.colourDirty([npc2.NameIsFull] marked by the musky scent of [npc.namePos] cum!)]");
 		}
@@ -5352,6 +5355,9 @@ public class Sex {
 		} else {
 			for(GameCharacter character : this.getAllParticipants(true)) {
 				for(GameCharacter interactingCharacter : this.getAllParticipants(true)) {
+					if(dominantSpectators.contains(character) || submissiveSpectators.contains(character)) {
+						stopAllOngoingActions(character, interactingCharacter);
+					}
 					if(sexManager.getDominants().containsKey(character)) {
 						if(this.getSexPositionSlot(character)!=sexManager.getDominants().get(character)) {
 							stopAllOngoingActions(character, interactingCharacter);
@@ -6379,22 +6385,30 @@ public class Sex {
 	 * @return A Value with the ImmobilisationType of this character (i.e. how they are currently being immobilised) as the key, and the GameCharacter responsible for performing the immobilisation as the value.
 	 * <br/><b>Returns null if not immobilised.</b>
 	 */
-	public Value<ImmobilisationType, GameCharacter> getImmobilisationType(GameCharacter character) {
+	public Map<ImmobilisationType, GameCharacter> getImmobilisationTypes(GameCharacter character) {
+		Map<ImmobilisationType, GameCharacter> immobilisationMap = new HashMap<>();
 		for(Entry<ImmobilisationType, Map<GameCharacter, Set<GameCharacter>>> entry : getCharactersImmobilised().entrySet()) {
 			for(Entry<GameCharacter, Set<GameCharacter>> innerEntry : entry.getValue().entrySet()) {
 				if(innerEntry.getValue().contains(character)) {
-					return new Value<>(entry.getKey(), innerEntry.getKey());
+					immobilisationMap.put(entry.getKey(), innerEntry.getKey());
 				}
 			}
 		}
-		return null;
+		return immobilisationMap;
 	}
 	
 	/**
 	 * @return true if the supplied character is immobilised in any way.
 	 */
 	public boolean isCharacterImmobilised(GameCharacter character) {
-		return getImmobilisationType(character)!=null;
+		return getImmobilisationTypes(character)!=null && !getImmobilisationTypes(character).isEmpty();
+	}
+	
+	/**
+	 * @return true if the character is immobilised due to ImmobilisationType.SLEEP or ImmobilisationType.COMMAND
+	 */
+	public boolean isCharacterInanimateFromImmobilisation(GameCharacter character) {
+		return getImmobilisationTypes(character).containsKey(ImmobilisationType.SLEEP) || getImmobilisationTypes(character).containsKey(ImmobilisationType.COMMAND);
 	}
 	
 	public boolean addCharacterImmobilised(ImmobilisationType type, GameCharacter characterPerformingImmobilisation, GameCharacter characterImmobilised) {
@@ -6403,12 +6417,18 @@ public class Sex {
 		return getCharactersImmobilised().get(type).get(characterPerformingImmobilisation).add(characterImmobilised);
 	}
 	
-	public void removeCharacterImmobilised(GameCharacter character) {
-		for(Entry<ImmobilisationType, Map<GameCharacter, Set<GameCharacter>>> entry : getCharactersImmobilised().entrySet()) {
-			for(Entry<GameCharacter, Set<GameCharacter>> innerEntry : entry.getValue().entrySet()) {
-				innerEntry.getValue().remove(character);
+	public void removeCharacterImmobilised(GameCharacter character, ImmobilisationType type) {
+		if(charactersImmobilised.containsKey(type)) {
+			for(Entry<GameCharacter, Set<GameCharacter>> entry : charactersImmobilised.get(type).entrySet()) {
+				entry.getValue().remove(character);
 			}
 		}
+		
+//		for(Entry<ImmobilisationType, Map<GameCharacter, Set<GameCharacter>>> entry : getCharactersImmobilised().entrySet()) {
+//			for(Entry<GameCharacter, Set<GameCharacter>> innerEntry : entry.getValue().entrySet()) {
+//				innerEntry.getValue().remove(character);
+//			}
+//		}
 	}
 	
 	public Set<GameCharacter> getCharactersBannedFromPositioning() {

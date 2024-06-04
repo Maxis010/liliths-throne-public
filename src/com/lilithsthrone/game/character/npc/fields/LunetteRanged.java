@@ -150,7 +150,7 @@ public class LunetteRanged extends RandomNPC {
 		if(Math.random()<0.2f) {
 			this.equipClothingFromNowhere(Main.game.getItemGen().generateClothing(ClothingType.WRIST_WRISTBANDS, clothingColour, false), true, this);
 		} else {
-			this.equipClothingFromNowhere(Main.game.getItemGen().generateClothing(ClothingType.WRIST_BANGLE, accessoryColour, false), true, this);
+			this.equipClothingFromNowhere(Main.game.getItemGen().generateClothing("innoxia_wrist_bangle", accessoryColour, false), true, this);
 		}
 		
 		if(Math.random()<0.25f) {

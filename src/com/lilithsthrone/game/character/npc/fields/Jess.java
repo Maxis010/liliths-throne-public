@@ -53,7 +53,6 @@ import com.lilithsthrone.game.character.race.Subspecies;
 import com.lilithsthrone.game.dialogue.DialogueNode;
 import com.lilithsthrone.game.dialogue.utils.UtilText;
 import com.lilithsthrone.game.inventory.CharacterInventory;
-import com.lilithsthrone.game.inventory.clothing.ClothingType;
 import com.lilithsthrone.game.inventory.item.AbstractItem;
 import com.lilithsthrone.game.sex.GenericSexFlag;
 import com.lilithsthrone.game.sex.SexAreaOrifice;
@@ -244,7 +243,7 @@ public class Jess extends NPC {
 		
 		this.equipClothingFromNowhere(Main.game.getItemGen().generateClothing("innoxia_neck_heart_necklace", PresetColour.CLOTHING_GOLD, PresetColour.CLOTHING_GOLD, PresetColour.CLOTHING_GOLD, false), true, this);
 
-		this.equipClothingFromNowhere(Main.game.getItemGen().generateClothing(ClothingType.WRIST_BANGLE, PresetColour.CLOTHING_GOLD, false), true, this);
+		this.equipClothingFromNowhere(Main.game.getItemGen().generateClothing("innoxia_wrist_bangle", PresetColour.CLOTHING_GOLD, false), true, this);
 		
 		this.setPiercedEar(true);
 		this.setPiercedNose(true);

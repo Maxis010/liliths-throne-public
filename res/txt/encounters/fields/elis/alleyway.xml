@@ -916,13 +916,13 @@
 		</p>
 	#ELSE
 		<p>
-			Flashing you a look of confusion, the [npc.name] appears to have been caught off-guard by your question. With a suspicious look in [npc.her] [npc.eyes+], [npc.she] motions to make it clear to you that [npc.sheIs] unable to speak, before waiting to hear what it is you'll say next.
+			Flashing you a look of confusion, the [npc.race] appears to have been caught off-guard by your question. With a suspicious look in [npc.her] [npc.eyes+], [npc.she] motions to make it clear to you that [npc.sheIs] unable to speak, before waiting to hear what it is you'll say next.
 		</p>
 		<p>
-			Telling the [npc.race] that [npc.her] inability to speak isn't a problem, you reassure [npc.herHim] by saying that you have no intention of trying to trick [npc.herHim] or punish [npc.herHim] in any way for attacking you. Realising that it might take a while to try and figure out a way in which the two of you can communicate, you crouch down next to where [npc.name] is still sitting on the floor trying to catch [npc.her] breath.
+			Telling the [npc.race] that [npc.her] inability to speak isn't a problem, you reassure [npc.herHim] by saying that you have no intention of trying to trick [npc.herHim] or punish [npc.herHim] in any way for attacking you. Realising that it might take a while to try and figure out a way in which the two of you can communicate, you crouch down next to where the [npc.race] is still sitting on the floor trying to catch [npc.her] breath.
 		</p>
 		<p>
-			Through a series of gestures and questions, and with the help of a scarp of paper and a pencil, you manage to find out from the [npc.race] that [npc.sheHad] lost [npc.her] job out in the Foloi Fields when [npc.she] had to flee from Lunette's marauders. With no money, friends, or nearby relatives, there's been no way for [npc.herHim] to get food without mugging people, and so that's why [npc.she] ended up falling into a life of crime.
+			Through a series of gestures and questions, and with the help of a scarp of paper and a pencil, you manage to find out from the [npc.race] that [npc.she]'d lost [npc.her] job out in the Foloi Fields when [npc.she] had to flee from Lunette's marauders. With no money, friends, or nearby relatives, there's been no way for [npc.herHim] to get food without mugging people, and so that's why [npc.she] ended up falling into a life of crime.
 		</p>
 		<p>
 			Leaving judgement of [npc.her] actions for another time, you give this [npc.race] your name, before asking for [npc.hers]. The [npc.race] looks a little uncomfortable and initially refuses to give it to you, but after you've remained silent and given [npc.herHim] a moment in which to think, you're rewarded with a short scribble on the paper, which reads; '[npc.name]'.

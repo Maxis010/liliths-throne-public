@@ -156,12 +156,12 @@ public class TooltipInventoryEventListener implements EventListener {
 								slotEquippedTo,
 								dyeColours,
 								InventoryDialogue.dyePreviewPattern,
-								InventoryDialogue.dyePreviewPatterns,
+								InventoryDialogue.dyePreviewPatternColours,
 								InventoryDialogue.getDyePreviewStickersAsStrings())
 						+ "</div>");
 			
 			} else if(patternColour!=null) {
-				List<Colour> dyeColours = new ArrayList<>(InventoryDialogue.dyePreviewPatterns);
+				List<Colour> dyeColours = new ArrayList<>(InventoryDialogue.dyePreviewPatternColours);
 				dyeColours.remove(colourIndex);
 				dyeColours.add(colourIndex, patternColour);
 				tooltipSB.append("<div class='title' style='color:" + subtitleColour.toWebHexString() + ";'>" + Util.capitaliseSentence(dyeClothing.getName()) + "</div>"
@@ -1267,7 +1267,8 @@ public class TooltipInventoryEventListener implements EventListener {
 		
 		for(ItemEffect ie : absClothing.getEffects()) {
 			if(ie.getSecondaryModifier()==TFModifier.CLOTHING_ENSLAVEMENT
-					|| ie.getSecondaryModifier()==TFModifier.CLOTHING_SEALING) {
+					|| ie.getSecondaryModifier()==TFModifier.CLOTHING_SEALING
+					|| ((ie.getPrimaryModifier()==TFModifier.TF_MOD_FETISH_BEHAVIOUR || ie.getPrimaryModifier()==TFModifier.TF_MOD_FETISH_BODY_PART) && (ie.getPotency()==TFPotency.MAJOR_BOOST || ie.getPotency()==TFPotency.MAJOR_DRAIN))) {
 				listIncrease+=1;
 				
 			} else if(ie.getPrimaryModifier()!=TFModifier.CLOTHING_ATTRIBUTE && ie.getPrimaryModifier()!=TFModifier.CLOTHING_MAJOR_ATTRIBUTE) {
@@ -1526,6 +1527,7 @@ public class TooltipInventoryEventListener implements EventListener {
 		
 		if (tattoo.getWriting()!=null && !tattoo.getWriting().getText().isEmpty()) {
 			yIncrease++;
+			yIncrease += tattoo.getWriting().getText().split("<br/>").length - 1;
 		}
 		if (tattoo.getCounter()!=null && tattoo.getCounter().getType()!=TattooCounterType.NONE) {
 			yIncrease++;
@@ -1596,9 +1598,9 @@ public class TooltipInventoryEventListener implements EventListener {
 		tooltipSB.append("</div>");
 
 		tooltipSB.append("</div>");
-
+		
 		tooltipSB.append("<div class='container-full-width' style='padding:8px; height:106px;'>");
-				tooltipSB.append(tattoo.getType().getDescription());
+			tooltipSB.append(tattoo.getType().getDescription());
 		
 			if (tattoo.getWriting()!=null && !tattoo.getWriting().getText().isEmpty()) {
 				tooltipSB.append("<br/>");
@@ -1622,7 +1624,9 @@ public class TooltipInventoryEventListener implements EventListener {
 		tooltipSB.append("</div>");
 		
 		if (tattoo.getWriting()!=null && !tattoo.getWriting().getText().isEmpty()) {
-			tooltipSB.append("<div class='container-full-width' style='padding:4px; height:42px; text-align:center;'>");
+			int writingHeight = tattoo.getWriting().getText().split("<br/>").length;
+			
+			tooltipSB.append("<div class='container-full-width' style='padding:4px; height:"+(28 + writingHeight*LINE_HEIGHT)+"px; text-align:center;'>");
 			tooltipSB.append("The writing reads:<br/>");
 			tooltipSB.append(tattoo.getFormattedWritingOutput()
 					+ "</div>");

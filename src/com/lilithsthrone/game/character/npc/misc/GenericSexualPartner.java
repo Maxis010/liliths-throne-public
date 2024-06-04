@@ -115,6 +115,7 @@ public class GenericSexualPartner extends RandomNPC {
 				generationFlags);
 		
 		// Post-setup
+        this.setLocation(WorldType.EMPTY, PlaceType.GENERIC_HOLDING_CELL);
 		this.setDescription("[npc.NameIsFull] [npc.a_race].");
 		this.removeMilkCrotchModifier(FluidModifier.ADDICTIVE);
 		this.removeMilkModifier(FluidModifier.ADDICTIVE);

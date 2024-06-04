@@ -78,6 +78,9 @@ public interface SexManagerInterface {
 		return null;
 	}
 	
+	/**
+	 * @return Maps ImmobilisationType -> character who applied the immobilisation -> characters immobilised in this manner
+	 */
 	public default Map<ImmobilisationType, Map<GameCharacter, Set<GameCharacter>>> getStartingCharactersImmobilised() {
 		return new HashMap<>();
 	}
@@ -183,7 +186,7 @@ public interface SexManagerInterface {
 	}
 	
 	public default boolean isRapePlayBannedAtStart(GameCharacter character) {
-		return true;
+		return !Main.getProperties().hasValue(PropertyValue.rapePlayAtSexStart);
 	}
 	
 	public default boolean isSlotAvailable(GameCharacter character, SexSlot slot) {
