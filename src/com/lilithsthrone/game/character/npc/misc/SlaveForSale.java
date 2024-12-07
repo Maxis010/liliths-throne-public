@@ -45,7 +45,7 @@ public class SlaveForSale extends RandomNPC {
 		if (isImported) {
 			return;
 		}
-		
+
 		// Pre-setup
 		this.setLevel(Util.random.nextInt(3) + 1);
 		Map<AbstractSubspecies, Integer> subspeciesMap = new HashMap<>();
@@ -63,7 +63,7 @@ public class SlaveForSale extends RandomNPC {
 				AbstractSubspecies.addToSubspeciesMap((int) (10000 * Subspecies.getWorldSpecies(WorldType.SUBMISSION, PlaceType.SLAVER_ALLEY_SLAVERY_ADMINISTRATION, false).get(s).getChanceMultiplier()), gender, s, subspeciesMap);
 			}
 		}
-		
+
 		// Setup
 		this.setupNPC(subspeciesMap,
 				null,
@@ -76,7 +76,7 @@ public class SlaveForSale extends RandomNPC {
 				false,
 				false,
 				generationFlags);
-		
+
 		// Post-setup
 		this.setPlayerKnowsName(true);
 		this.setAttribute(Attribute.MAJOR_CORRUPTION, 0);
@@ -91,6 +91,9 @@ public class SlaveForSale extends RandomNPC {
 	
 	@Override
 	public String getDescription() {
+		if(this.isSlave() && this.isDoll()) {
+			return super.getDescription();
+		}
 		if(this.isSlave()) {
 			return UtilText.parse(this, "For one reason or another, [npc.sheIs] now a slave, and is no more than [npc.her] owner's property.");
 			

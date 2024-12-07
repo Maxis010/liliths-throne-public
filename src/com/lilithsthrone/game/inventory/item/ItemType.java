@@ -739,6 +739,10 @@ public class ItemType {
 		public boolean isAbleToBeUsedInSex() {
 			return true;
 		}
+//		@Override
+//		public boolean isAbleToBeUsedWhileTrading() {
+//			return false;
+//		}
 	};
 
 	public static AbstractItemType CONDOM_USED = new AbstractItemType(1,
@@ -780,6 +784,10 @@ public class ItemType {
 		public boolean isAbleToBeUsedInSex() {
 			return true;
 		}
+//		@Override
+//		public boolean isAbleToBeUsedWhileTrading() {
+//			return false;
+//		}
 	};
 	
 	public static AbstractItemType ORIENTATION_HYPNO_WATCH = new AbstractItemType(50000,
@@ -1248,6 +1256,10 @@ public class ItemType {
 			Rarity.QUEST,
 			Util.newArrayListOfValues(new ItemEffect(ItemEffectType.DOLL_CONSOLE)),
 			Util.newArrayListOfValues()) {
+		@Override
+		public boolean isAbleToBeSold() {
+			return true;
+		}
 		@Override
 		public boolean isAbleToBeUsedInSex() {
 			return false;

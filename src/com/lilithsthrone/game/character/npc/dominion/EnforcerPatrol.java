@@ -57,11 +57,11 @@ public class EnforcerPatrol extends RandomNPC {
 	
 	public EnforcerPatrol(boolean isImported, Occupation occupation, NPCGenerationFlag... generationFlags) {
 		super(isImported, false, generationFlags);
-		
+
 		if (isImported) {
 			return;
 		}
-		
+
 		// Pre-setup
 		this.setLevel(Util.random.nextInt(5)+3);
 
@@ -72,24 +72,24 @@ public class EnforcerPatrol extends RandomNPC {
 			}
 			if(Subspecies.getWorldSpecies(WorldType.DOMINION, null, false, Subspecies.SLIME).containsKey(s)) {
 				AbstractSubspecies.addToSubspeciesMap((int) (5000 * Subspecies.getWorldSpecies(WorldType.DOMINION, null, false, Subspecies.SLIME).get(s).getChanceMultiplier()), this.getGenderIdentity(), s, subspeciesMap);
-				
+
 			} else if(Subspecies.getWorldSpecies(WorldType.SUBMISSION, null, false, Subspecies.SLIME).containsKey(s)) { // Add Submission races at only 20% of the chance of Dominion races
 				AbstractSubspecies.addToSubspeciesMap((int) (1000 * Subspecies.getWorldSpecies(WorldType.SUBMISSION, null, false, Subspecies.SLIME).get(s).getChanceMultiplier()), this.getGenderIdentity(), s, subspeciesMap);
 			}
 		}
-		
+
 		// Setup
 		this.setupEnforcer(subspeciesMap, null, occupation, true, true, generationFlags);
-		
+
 		// Post-setup
 		this.addClothing(Main.game.getItemGen().generateClothing("innoxia_penis_condom", PresetColour.CLOTHING_PURPLE_DARK, false), 5, false, false);
-		
+
 		for(AbstractCombatMove move : new ArrayList<>(this.getEquippedMoves())) {
 			if(move.getType()==CombatMoveType.TEASE) {
 				this.unequipMove(move.getIdentifier());
 			}
 		}
-		
+
 		this.setDescription("A member of the Enforcers' Frontline Patrol division, [npc.name] is expected to carry out a wide variety of day-to-day policing duties.");
 	}
 	
@@ -128,7 +128,7 @@ public class EnforcerPatrol extends RandomNPC {
 		this.equipMainWeaponFromNowhere(Main.game.getItemGen().generateWeapon("dsg_eep_enbaton_enbaton"));
 		this.equipOffhandWeaponFromNowhere(Main.game.getItemGen().generateWeapon(offhandWeaponID));
 	}
-	
+
 	@Override
 	public String getGenericName() {
 		if(this.getHistory()==Occupation.NPC_ENFORCER_PATROL_CONSTABLE) {
@@ -140,7 +140,7 @@ public class EnforcerPatrol extends RandomNPC {
 		}
 		return UtilText.parse(this, "Enforcer");
 	}
-	
+
 	// Combat:
 	@Override
 	public void applyEscapeCombatEffects() {

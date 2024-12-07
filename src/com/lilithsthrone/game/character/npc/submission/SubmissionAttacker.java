@@ -45,27 +45,27 @@ public class SubmissionAttacker extends RandomNPC {
 	
 	public SubmissionAttacker(boolean isImported, NPCGenerationFlag... generationFlags) {
 		super(isImported, false, generationFlags);
-		
+
 		if (isImported) {
 			return;
 		}
-		
+
 		// Pre-setup
 		setLevel(5+Util.random.nextInt(4));
 		int slimeChance = 800;
 		if (Main.game.getDialogueFlags().hasFlag(DialogueFlagValue.slimeQueenHelped) && Main.game.getPlayer().isQuestCompleted(QuestLine.SIDE_SLIME_QUEEN)) {
 			slimeChance *= 3; // Increase chance of encountering slime if the player helped the slime queen (which results in more slimes being in Submission)
-			
+
 		} else if (!Main.game.getPlayer().isQuestProgressGreaterThan(QuestLine.SIDE_SLIME_QUEEN, Quest.SLIME_QUEEN_ONE)) {
 			slimeChance *= 4; // Increase chance of encountering slime if the player is at the start of the slime quest
 		}
-		
+
 		Map<AbstractSubspecies, Integer> subspeciesMap = new HashMap<>();
 		for (AbstractSubspecies s : Subspecies.getAllSubspecies()) {
 			Map<AbstractSubspecies, SubspeciesSpawnRarity> worldSpeciesMap = Subspecies.getWorldSpecies(WorldType.SUBMISSION, PlaceType.SUBMISSION_TUNNELS, false);
 			if (s == Subspecies.SLIME) {
 				AbstractSubspecies.addToSubspeciesMap(slimeChance, this.getGenderIdentity(), s, subspeciesMap, SubspeciesPreference.FOUR_ABUNDANT);
-				
+
 			} else if (worldSpeciesMap.containsKey(s)) {
 				if (s == Subspecies.IMP || s == Subspecies.IMP_ALPHA) {
 					AbstractSubspecies.addToSubspeciesMap((int) (1000*worldSpeciesMap.get(s).getChanceMultiplier()), this.getGenderIdentity(), s, subspeciesMap, SubspeciesPreference.FOUR_ABUNDANT);
@@ -79,7 +79,7 @@ public class SubmissionAttacker extends RandomNPC {
 		if (randomSpecies == Subspecies.SLIME || randomSpecies == Subspecies.IMP || randomSpecies == Subspecies.IMP_ALPHA) {
 			stage = RaceStage.GREATER;
 		}
-		
+
 		// Setup
 		setupNPC(randomSpecies,
 				stage,
@@ -92,7 +92,7 @@ public class SubmissionAttacker extends RandomNPC {
 				true,
 				true,
 				generationFlags);
-		
+
 		// Post-setup
         this.setOccupation(Occupation.NPC_MUGGER);
 		this.setDescription(UtilText.parse(this,
@@ -109,7 +109,7 @@ public class SubmissionAttacker extends RandomNPC {
 			}
 		}
 	}
-	
+
 	@Override
 	public void equipClothing(List<EquipClothingSetting> settings) {
 		this.incrementMoney((int) (this.getInventory().getNonEquippedValue() * 0.5f));
@@ -118,9 +118,12 @@ public class SubmissionAttacker extends RandomNPC {
 		
 		Main.game.getCharacterUtils().equipClothingFromOutfitType(this, OutfitType.MUGGER, settings);
 	}
-	
+
 	@Override
 	public String getDescription() {
+		if(this.isSlave() && this.isDoll()) {
+			return super.getDescription();
+		}
 		if(this.getHistory()==Occupation.NPC_PROSTITUTE) {
 			if(this.isSlave()) {
 				return (UtilText.parse(this,
@@ -146,7 +149,7 @@ public class SubmissionAttacker extends RandomNPC {
 			}
 		}
 	}
-	
+
 	@Override
 	public DialogueNode getEncounterDialogue() {
 		if(this.getBodyMaterial()==BodyMaterial.SLIME) {

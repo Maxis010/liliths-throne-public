@@ -27,18 +27,18 @@ import com.lilithsthrone.world.places.PlaceType;
  * @author Innoxia
  */
 public class ElisAlleywayAttacker extends RandomNPC {
-	
+
 	public ElisAlleywayAttacker(NPCGenerationFlag... generationFlags) {
 		this(false, generationFlags);
 	}
 	
 	public ElisAlleywayAttacker(boolean isImported, NPCGenerationFlag... generationFlags) {
 		super(isImported, false, generationFlags);
-		
+
 		if (isImported) {
 			return;
 		}
-		
+
 		// Pre-setup
 		this.setLevel(Util.random.nextInt(6)+10);
 		Map<AbstractSubspecies, Integer> subspeciesMap = new HashMap<>();
@@ -51,19 +51,19 @@ public class ElisAlleywayAttacker extends RandomNPC {
 				AbstractSubspecies.addToSubspeciesMap((int) (10000*subMap.get(s).getChanceMultiplier()), this.getGenderIdentity(), s, subspeciesMap);
 			}
 		}
-		
+
 		// Setup
 		this.setupAlleyAttacker(subspeciesMap,
 				null,
 				true,
 				generationFlags);
-		
+
 		// Post-setup
 		if (this.getHistory() == Occupation.NPC_PROSTITUTE) {
 			this.setPlayerKnowsName(true);
 		}
 	}
-	
+
 	@Override
 	public void equipClothing(List<EquipClothingSetting> settings) {
 		this.incrementMoney((int) (this.getInventory().getNonEquippedValue()*1f));
@@ -76,7 +76,7 @@ public class ElisAlleywayAttacker extends RandomNPC {
 			Main.game.getCharacterUtils().equipClothingFromOutfitType(this, OutfitType.MUGGER, settings);
 		}
 	}
-	
+
 	@Override
 	public void turnUpdate() {
 		if (!this.isSlave()
@@ -93,6 +93,9 @@ public class ElisAlleywayAttacker extends RandomNPC {
 	
 	@Override
 	public String getDescription() {
+		if(this.isSlave() && this.isDoll()) {
+			return super.getDescription();
+		}
 		if (this.getHistory() == Occupation.NPC_PROSTITUTE) {
 			if (this.isSlave()) {
 				return (UtilText.parse(this,
@@ -118,7 +121,7 @@ public class ElisAlleywayAttacker extends RandomNPC {
 			}
 		}
 	}
-	
+
 	@Override
 	public DialogueNode getEncounterDialogue() {
 		if (this.getHistory() == Occupation.NPC_PROSTITUTE) {
@@ -127,7 +130,7 @@ public class ElisAlleywayAttacker extends RandomNPC {
 			return DialogueManager.getDialogueFromId("innoxia_encounters_fields_elis_alleyway_start");
 		}
 	}
-	
+
 	// Combat:
 	@Override
 	public Response endCombat(boolean applyEffects, boolean victory) {

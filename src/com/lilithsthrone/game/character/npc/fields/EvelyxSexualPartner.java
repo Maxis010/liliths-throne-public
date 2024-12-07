@@ -34,18 +34,18 @@ public class EvelyxSexualPartner extends RandomNPC {
 	public EvelyxSexualPartner(NPCGenerationFlag... generationFlags) {
 		this(false, generationFlags);
 	}
-	
+
 	public EvelyxSexualPartner(boolean isImported, NPCGenerationFlag... generationFlags) {
 		super(isImported, false, generationFlags);
-		
+
 		if (isImported) {
 			return;
 		}
-		
+
 		// Pre-setup
 		this.setLevel(Util.random.nextInt(5) + 5);
 		this.setGenderIdentity(Gender.getGenderFromUserPreferences(false, true));
-		
+
 		Map<AbstractSubspecies, Integer> subspeciesMap = new HashMap<>();
 		AbstractPlaceType placeType = Main.game.getPlayer().getLocationPlace().getPlaceType();
 		for(AbstractSubspecies s : Subspecies.getAllSubspecies()) {
@@ -56,7 +56,7 @@ public class EvelyxSexualPartner extends RandomNPC {
 				AbstractSubspecies.addToSubspeciesMap((int) (10000 * Subspecies.getWorldSpecies(WorldType.WORLD_MAP, placeType, false).get(s).getChanceMultiplier()), getGenderIdentity(), s, subspeciesMap);
 			}
 		}
-		
+
 		// Setup
 		this.setupNPC(subspeciesMap,
 				null,
@@ -69,24 +69,24 @@ public class EvelyxSexualPartner extends RandomNPC {
 				false,
 				false,
 				generationFlags);
-		
+
 		// Post-setup
 		this.setSexualOrientation(SexualOrientation.AMBIPHILIC);
 		this.setHomeLocation(WorldType.EMPTY, PlaceType.GENERIC_HOLDING_CELL);
 		this.setDescription("[npc.Name] is a resident of the Foloi Fields, who travels to Evelyx's Dairy to pay for sex with one of the farm's cows.");
 		this.removePersonalityTrait(PersonalityTrait.MUTE); // Don't want mutes in cow sex as they have dialogue
 	}
-	
+
 	@Override
 	public void equipClothing(List<EquipClothingSetting> settings) {
 		Main.game.getCharacterUtils().equipClothingFromOutfitType(this, OutfitType.CASUAL, settings);
 	}
-	
+
 	@Override
 	public boolean isAbleToBeImpregnated() {
 		return false;
 	}
-	
+
 	// Sex:
 	@Override
 	public SexType getForeplayPreference(GameCharacter target) {

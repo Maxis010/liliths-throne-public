@@ -34,18 +34,18 @@ import com.lilithsthrone.world.places.PlaceType;
  * @author Innoxia
  */
 public class DominionAlleywayAttacker extends RandomNPC {
-	
+
 	public DominionAlleywayAttacker(NPCGenerationFlag... generationFlags) {
 		this(false, generationFlags);
 	}
 	
 	public DominionAlleywayAttacker(boolean isImported, NPCGenerationFlag... generationFlags) {
 		super(isImported, false, generationFlags);
-		
+
 		if (isImported) {
 			return;
 		}
-		
+
 		boolean canalSpecies = false;
 		AbstractPlaceType pt = Main.game.getPlayerCell().getPlace().getPlaceType();
 		if (pt.equals(PlaceType.DOMINION_ALLEYS_CANAL_CROSSING)
@@ -53,10 +53,10 @@ public class DominionAlleywayAttacker extends RandomNPC {
 				|| pt.equals(PlaceType.DOMINION_CANAL_END)) {
 			canalSpecies = true;
 		}
-		
+
 		// Pre-setup
 		this.setLevel(Util.random.nextInt(3)+1);
-		
+
 		Map<AbstractSubspecies, Integer> subspeciesMap = new HashMap<>();
 		for (AbstractSubspecies s : Subspecies.getAllSubspecies()) {
 			if (s.getSubspeciesOverridePriority()>0) { // Do not spawn demonic races, elementals, or youko
@@ -75,27 +75,27 @@ public class DominionAlleywayAttacker extends RandomNPC {
 				}
 			}
 		}
-		
+
 		// Setup
 		setupAlleyAttacker(subspeciesMap,
 				null,
 				Main.game.getCurrentWeather() != Weather.MAGIC_STORM || canalSpecies || pt == PlaceType.DOMINION_BACK_ALLEYS,
 				generationFlags);
-		
+
 		// Post-setup
 		if (Main.game.getCurrentWeather() == Weather.MAGIC_STORM) {
 			this.setHistory(Occupation.NPC_MUGGER);
 		}
-		
+
 		if (this.getHistory() == Occupation.NPC_PROSTITUTE) {
 			this.setPlayerKnowsName(true);
 		}
-		
+
 		if (this.isStormAttacker() && !this.isVulnerableToArcaneStorm()) { // NPCs spawned during a storm should be vulnerable to it.
 			this.addSpecialPerk(Perk.SPECIAL_ARCANE_ALLERGY);
 		}
 	}
-	
+
 	@Override
 	public void equipClothing(List<EquipClothingSetting> settings) {
 		this.incrementMoney((int) (this.getInventory().getNonEquippedValue()*0.5f));
@@ -108,9 +108,12 @@ public class DominionAlleywayAttacker extends RandomNPC {
 			Main.game.getCharacterUtils().equipClothingFromOutfitType(this, OutfitType.MUGGER, settings);
 		}
 	}
-	
+
 	@Override
 	public String getDescription() {
+		if(this.isSlave() && this.isDoll()) {
+			return super.getDescription();
+		}
 		if (this.getHistory() == Occupation.NPC_PROSTITUTE) {
 			if (this.isSlave()) {
 				return (UtilText.parse(this,
@@ -135,7 +138,7 @@ public class DominionAlleywayAttacker extends RandomNPC {
 			}
 		}
 	}
-	
+
 	@Override
 	public DialogueNode getEncounterDialogue() {
 		if (!isStormAttacker()) {
@@ -148,9 +151,9 @@ public class DominionAlleywayAttacker extends RandomNPC {
 			return StormStreetAttackerDialogue.STORM_ATTACK;
 		}
 	}
-	
+
 	// Combat:
-	
+
 	@Override
 	public void applyEscapeCombatEffects() {
 		if (isStormAttacker()) {

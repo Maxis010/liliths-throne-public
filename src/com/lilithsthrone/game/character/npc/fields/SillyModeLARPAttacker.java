@@ -42,11 +42,11 @@ public class SillyModeLARPAttacker extends RandomNPC {
 	
 	public SillyModeLARPAttacker(boolean isImported, NPCGenerationFlag... generationFlags) {
 		super(isImported, false, generationFlags);
-		
+
 		if (isImported) {
 			return;
 		}
-		
+
 		// Pre-setup
 		setLevel(Util.random.nextInt(6) + 1);
 
@@ -60,7 +60,7 @@ public class SillyModeLARPAttacker extends RandomNPC {
 				AbstractSubspecies.addToSubspeciesMap((int) (10000 * subMap.get(s).getChanceMultiplier()), this.getGenderIdentity(), s, subspeciesMap);
 			}
 		}
-		
+
 		// Setup
 		setupNPC(subspeciesMap,
 				null,
@@ -73,7 +73,7 @@ public class SillyModeLARPAttacker extends RandomNPC {
 				true,
 				true,
 				generationFlags);
-		
+
 		// Post-setup
 		if(Math.random()<0.25f) {
 			this.addPersonalityTrait(PersonalityTrait.SLOVENLY);
@@ -81,7 +81,7 @@ public class SillyModeLARPAttacker extends RandomNPC {
 		//An appropriately dorky physique
 		this.setMuscle(Util.random.nextInt(40));
 	}
-	
+
 	// Do not add tease...just...don't do it
 	@Override
 	public void setStartingCombatMoves() {
@@ -116,17 +116,17 @@ public class SillyModeLARPAttacker extends RandomNPC {
 		this.equipClothingFromNowhere(Main.game.getItemGen().generateClothing("dsg_sm_cboard_cbarmor", false), InventorySlot.TORSO_OVER, true, this);
 		this.equipMainWeaponFromNowhere(Main.game.getItemGen().generateWeapon("dsg_sm_cboard_cbsword"));
 	}
-	
+
 	@Override
 	public String getDescription() {
 	    return (UtilText.parse(this, "[npc.Name] is a resident of Elis who has an affinity for live-action roleplay."));
 	}
-	
+
 	@Override
 	public DialogueNode getEncounterDialogue() {
 		return DialogueManager.getDialogueFromId("dsg_encounters_fields_elis_eisek_sillymode_dungeon_combat");
 	}
-	
+
 	@Override
 	public Response endCombat(boolean applyEffects, boolean victory) {
 		if (victory) {

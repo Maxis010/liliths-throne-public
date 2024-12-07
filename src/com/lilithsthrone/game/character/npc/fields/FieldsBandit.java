@@ -29,14 +29,14 @@ public class FieldsBandit extends RandomNPC {
 	
 	public FieldsBandit(boolean isImported, NPCGenerationFlag... generationFlags) {
 		super(isImported, false, generationFlags);
-		
+
 		if (isImported) {
 			return;
 		}
-		
+
 		// Pre-setup
 		this.setLevel(10 + Util.random.nextInt(11));
-		
+
 		Map<AbstractSubspecies, Integer> subspeciesMap = new HashMap<>();
 		AbstractPlaceType placeType = Main.game.getPlayer().getLocationPlace().getPlaceType();
 		for(AbstractSubspecies s : Subspecies.getAllSubspecies()) {
@@ -47,7 +47,7 @@ public class FieldsBandit extends RandomNPC {
 				AbstractSubspecies.addToSubspeciesMap((int) (10000 * Subspecies.getWorldSpecies(WorldType.WORLD_MAP, placeType, false).get(s).getChanceMultiplier()), getGenderIdentity(), s, subspeciesMap);
 			}
 		}
-		
+
 		// Setup
 		this.setupNPC(subspeciesMap,
 				null,
@@ -60,11 +60,11 @@ public class FieldsBandit extends RandomNPC {
 				true,
 				true,
 				generationFlags);
-		
+
 		// Post-setup
 		// No post-setup
 	}
-	
+
 	@Override
 	public void equipClothing(List<EquipClothingSetting> settings) {
 		this.incrementMoney((int) (this.getInventory().getNonEquippedValue() * 2.5f));
@@ -76,9 +76,12 @@ public class FieldsBandit extends RandomNPC {
 		}
 		Main.game.getCharacterUtils().equipClothingFromOutfitId(this, outfitId, settings);
 	}
-	
+
 	@Override
 	public String getDescription() {
+		if(this.isSlave() && this.isDoll()) {
+			return super.getDescription();
+		}
 		if(this.isSlave()) {
 			return UtilText.parse(this,
 					"[npc.NamePos] days of roaming the Foloi Fields and preying upon innocent travellers are now over. Having run afoul of the law, [npc.sheIs] now a slave, and is no more than [npc.her] owner's property.");
@@ -96,7 +99,7 @@ public class FieldsBandit extends RandomNPC {
 	public void applyEscapeCombatEffects() {
 		Main.game.banishNPC(this);
 	}
-	
+
 	// Misc.:
 	public int getPaymentDemand() {
 		return (Math.max(2500, Math.min(Main.game.getPlayer().getMoney()/10, 10000))/500) * 500; // Round to nearest 500

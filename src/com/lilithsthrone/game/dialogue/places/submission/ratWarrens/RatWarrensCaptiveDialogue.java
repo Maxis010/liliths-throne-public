@@ -873,7 +873,7 @@ public class RatWarrensCaptiveDialogue {
 					public void effects() {
 						Main.game.getTextStartStringBuilder().append(UtilText.parseFromXMLFile("places/submission/ratWarrens/captive", "CAPTIVE_DAY_1_MORNING_ENDURE", getMilkers()));
 						Main.game.getTextEndStringBuilder().append(incrementPlayerObedience(5));
-						Main.game.getPlayer().setMuskMarker(getMurk().getId());
+						Main.game.getPlayer().addMuskMarkerCharacter(getMurk());
 						Main.game.getTextEndStringBuilder().append(UtilText.parseFromXMLFile("places/submission/ratWarrens/captive", "CAPTIVE_DAY_1_MORNING_MUSK_APPLIED", getMilkers()));
 					}
 				};
@@ -887,7 +887,7 @@ public class RatWarrensCaptiveDialogue {
 					public void effects() {
 						Main.game.getTextStartStringBuilder().append(UtilText.parseFromXMLFile("places/submission/ratWarrens/captive", "CAPTIVE_DAY_1_MORNING_COMPLIMENT", getMilkers()));
 						Main.game.getTextEndStringBuilder().append(incrementPlayerObedience(10));
-						Main.game.getPlayer().setMuskMarker(getMurk().getId());
+						Main.game.getPlayer().addMuskMarkerCharacter(getMurk());
 						Main.game.getTextEndStringBuilder().append(UtilText.parseFromXMLFile("places/submission/ratWarrens/captive", "CAPTIVE_DAY_1_MORNING_MUSK_APPLIED", getMilkers()));
 					}
 				};
@@ -901,7 +901,7 @@ public class RatWarrensCaptiveDialogue {
 					public void effects() {
 						Main.game.getTextStartStringBuilder().append(UtilText.parseFromXMLFile("places/submission/ratWarrens/captive", "CAPTIVE_DAY_1_MORNING_RESIST", getMilkers()));
 						Main.game.getTextEndStringBuilder().append(incrementPlayerObedience(-10));
-						Main.game.getPlayer().setMuskMarker(getMurk().getId());
+						Main.game.getPlayer().addMuskMarkerCharacter(getMurk());
 						Main.game.getTextEndStringBuilder().append(UtilText.parseFromXMLFile("places/submission/ratWarrens/captive", "CAPTIVE_DAY_1_MORNING_MUSK_APPLIED", getMilkers()));
 					}
 				};
