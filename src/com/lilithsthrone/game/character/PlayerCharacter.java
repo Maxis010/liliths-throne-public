@@ -985,6 +985,11 @@ public class PlayerCharacter extends GameCharacter implements XMLSaving {
 		this.relationshipQuestUpdated = relationshipQuestUpdated;
 	}
 
+	/**
+	 * This is only used in OccupancyUtil for a very specific purpose and unless the player is sleeping or loitering, it should return true.
+	 * <br/>It doesn't really matter if it's true or false if the player is not within Lilaya's mansion at the time of sleeping or loitering.
+	 * @return true if the player's presence should prevent slaves and occupants from leaving their tile.
+	 */
 	public boolean isActive() { return isActive; }
 
 	public void setActive(boolean active) { this.isActive = active; }
@@ -1458,7 +1463,7 @@ public class PlayerCharacter extends GameCharacter implements XMLSaving {
 	
 	@Override
 	public boolean isAbleToBeEgged() {
-		return !this.isDoll();
+		return !this.hasPerkAnywhereInTree(Perk.DOLL_PHYSICAL_2);
 	}
 	
 	// This behaviour is overridden for unique scenes in which the player's orgasm requires special dialogue or effects.
@@ -1934,18 +1939,19 @@ public class PlayerCharacter extends GameCharacter implements XMLSaving {
 		StringBuilder sb = new StringBuilder();
 		
 		String penetrationName = "";
+		// Use simple names as parsed names with descriptors sounds awkward when NPC says it
 		switch(penetration) {
 			case CLIT:
-				penetrationName = "[npc.clit+]";
+				penetrationName = "clit";
 				break;
 			case PENIS:
-				penetrationName = "[npc.penis+]";
+				penetrationName = "cock";
 				break;
 			case TAIL:
-				penetrationName = "[npc.tail+]";
+				penetrationName = "tail";
 				break;
 			case TENTACLE:
-				penetrationName = "[npc.tentacle+]";
+				penetrationName = "tentacle";
 				break;
 			default:
 				break;

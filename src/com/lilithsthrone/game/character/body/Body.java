@@ -758,6 +758,9 @@ public class Body implements XMLSaving {
 		Element bodyPenis = doc.createElement("penis");
 		parentElement.appendChild(bodyPenis);
 			XMLUtil.addAttribute(doc, bodyPenis, "type", PenisType.getIdFromPenisType(this.penis.type));
+			if(this.penis.previousType!=null) {
+				XMLUtil.addAttribute(doc, bodyPenis, "previousType", PenisType.getIdFromPenisType(this.penis.previousType));
+			}
 			XMLUtil.addAttribute(doc, bodyPenis, "size", String.valueOf(this.penis.length));
 			XMLUtil.addAttribute(doc, bodyPenis, "girth", String.valueOf(this.penis.girth));
 			XMLUtil.addAttribute(doc, bodyPenis, "pierced", String.valueOf(this.penis.pierced));
@@ -1462,6 +1465,11 @@ public class Body implements XMLSaving {
 		if(!penis.getAttribute("virgin").isEmpty()) {
 			importedPenis.virgin = (Boolean.valueOf(penis.getAttribute("virgin")));
 		}
+
+		if(!penis.getAttribute("previousType").isEmpty()) {
+			importedPenis.previousType = PenisType.getPenisTypeFromId(penis.getAttribute("previousType"));
+		}
+		
 		
 		Main.game.getCharacterUtils().appendToImportLog(log, "<br/><br/>Body: Penis: "
 				+ "<br/>type: "+importedPenis.getType()
@@ -2076,7 +2084,6 @@ public class Body implements XMLSaving {
 			}
 		}
 		
-		
 		NodeList bodyCoverings = element.getElementsByTagName("bodyCovering");
 		for(int i = 0; i < bodyCoverings.getLength(); i++){
 			Element e = ((Element)bodyCoverings.item(i));
@@ -2573,6 +2580,9 @@ public class Body implements XMLSaving {
 					break;
 				case SIDE_BRAIDS:
 					sb.append((hair.getType().isDefaultPlural(owner)?"have":"has")+" been woven into braids that hang down on either side of [npc.her] face.");
+					break;
+				case SIDE_PARTED:
+					sb.append((hair.getType().isDefaultPlural(owner)?"have":"has")+" been combed away from a parting on the side of [npc.her] head.");
 					break;
 			}
 		}
@@ -6577,6 +6587,9 @@ public class Body implements XMLSaving {
 		if (subspecies == null) {
 			return; 
 		}
+		
+		attributes.applySpecialPreFeralTransformationChanges(this);
+		
 		// Set feral-specific attributes:
 		this.getLeg().getType().applyLegConfigurationTransformation(this, attributes.getLegConfiguration(), true);
 		
@@ -6596,6 +6609,9 @@ public class Body implements XMLSaving {
 		// Set genital relative sizes:
 		AbstractRacialBody rb = targetSubspecies.getRace().getRacialBody();
 		float proportionSizeDifference = ((float)attributes.getSize())/(this.isFeminine()?rb.getFemaleHeight():rb.getMaleHeight());
+		if(attributes.getLegConfiguration().isLargeGenitals()) {
+			proportionSizeDifference += 1; // If large genitals, increase by 100%
+		}
 		this.getPenis().setPenisLength(null, (int) (rb.getPenisSize()*proportionSizeDifference));
 		this.getPenis().setPenisGirth(null, (int) (rb.getPenisGirth()*proportionSizeDifference));
 		this.getPenis().getTesticle().setTesticleSize(null, (int) (rb.getTesticleSize()*proportionSizeDifference));
