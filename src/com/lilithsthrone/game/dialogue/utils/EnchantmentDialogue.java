@@ -1291,6 +1291,8 @@ public class EnchantmentDialogue {
 	}
 
 	public static void setOutputName(String outputName) {
+		// Handle parsing:
+		outputName = outputName.replaceAll("\\[\\#(.*?)]", ""); // Remove game parsing
 		EnchantmentDialogue.outputName = outputName;
 	}
 
